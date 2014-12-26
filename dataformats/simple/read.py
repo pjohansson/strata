@@ -1,5 +1,7 @@
 import numpy as np
 
+"""Read data from simple, brute force file formats."""
+
 def calc_information(X, Y):
     """Return a dict of system information calculated from input cell positions.
 

@@ -1,5 +1,14 @@
 import dataformats.simple.read as smp
 
+"""Module for reading flow field data from specific file formats.
+
+File formats are implemented as submodules, mainly to be called from
+this module through the 'read_flow_data' function. This function calls
+'guess_read_function' to determine the file format, then uses the returned
+file handle to call the correct submodule.
+
+"""
+
 def guess_read_function(filename):
     """Return a function handle to read a file.
 
