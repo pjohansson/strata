@@ -1,6 +1,6 @@
 import numpy as np
 
-def calc_info(X, Y):
+def calc_information(X, Y):
     """Return a dict of system information calculated from input cell positions.
 
     Calculates system size ('size'), bin sizes ('bin_size'), number of cells
@@ -32,30 +32,35 @@ def calc_info(X, Y):
 
 
 def read_binsimple(filename):
-    """Return field data from a simple binary format.
+    """Return data and information read from a simple binary format.
 
     Args:
         filename (str): A file to read data from.
 
     Returns:
-        dict: A dictionary with read values of different data fields in
-              numpy.ndarray format. Field names are the keys of the dict.
+        (dict, dict): Dictionaries with data and information. See
+                      dataformats.read.read_flow_data() for more information.
 
     """
 
-    # Fixed field order of format
-    fields = ['X', 'Y', 'N', 'T', 'M', 'U', 'V']
+    def read_data(filename):
+        # Fixed field order of format
+        fields = ['X', 'Y', 'N', 'T', 'M', 'U', 'V']
+        raw_data = np.fromfile(filename, dtype='float32')
 
-    # Read data
-    raw_data = np.fromfile(filename, dtype='float32')
+        # Unpack into dictionary
+        data = {}
+        stride = len(fields)
+        for i, field in enumerate(fields):
+            data[field] = raw_data[i::stride].copy()
 
-    # Unpack into dictionary
-    data = {}
-    stride = len(fields)
-    for i, field in enumerate(fields):
-        data[field] = raw_data[i::stride].copy()
+        return data
 
-    return data
+    data = read_data(filename)
+    info = calc_information(data['X'], data['Y'])
+
+    return data, info
+
 
 def read_plainsimple(filename):
     """Return field data from a simple plaintext format.
@@ -64,17 +69,23 @@ def read_plainsimple(filename):
         filename (str): A file to read data from.
 
     Returns:
-        dict: A dictionary with read values of different data fields in
-              numpy.ndarray format. Field names are the keys of the dict.
+        (dict, dict): Dictionaries with data and information. See
+                      dataformats.read.read_flow_data() for more information.
+
 
     """
 
-    # Read data
-    raw_data = np.genfromtxt(filename, names=True)
+    def read_data(filename):
+        raw_data = np.genfromtxt(filename, names=True)
 
-    # Unpack into dictionary
-    data = {}
-    for field in raw_data.dtype.names:
-        data[field] = raw_data[field].copy()
+        # Unpack into dictionary
+        data = {}
+        for field in raw_data.dtype.names:
+            data[field] = raw_data[field].copy()
 
-    return data
+        return data
+
+    data = read_data(filename)
+    info = calc_information(data['X'], data['Y'])
+
+    return data, info

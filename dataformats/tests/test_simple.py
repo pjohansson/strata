@@ -5,7 +5,7 @@ FIELDS = set(['X', 'Y', 'U', 'V', 'N', 'T', 'M'])
 
 def test_bin_goodfile():
     filename = 'dataformats/tests/data_binsimple.dat'
-    data = read_binsimple(filename)
+    data, _ = read_binsimple(filename)
     assert (data.keys() == FIELDS)
 
     # Control values
@@ -37,7 +37,7 @@ def test_bin_goodfile():
 
 def test_plain_goodfile():
     filename = 'dataformats/tests/data_plainsimple.dat'
-    data = read_plainsimple(filename)
+    data, _ = read_plainsimple(filename)
     assert (data.keys() == FIELDS)
 
     # Control values
@@ -69,8 +69,7 @@ def test_plain_goodfile():
 
 def test_calc_info():
     filename = 'dataformats/tests/data_binsimple.dat'
-    data = read_binsimple(filename)
-    info = calc_info(data['X'], data['Y'])
+    _, info = read_binsimple(filename)
 
     # Control values
     NUM_BINS = 522720
