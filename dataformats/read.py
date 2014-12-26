@@ -1,4 +1,4 @@
-import dataformats.simple as smp
+import dataformats.simple.read as smp
 
 def guess_read_function(filename):
     """Return a function handle to read a file.

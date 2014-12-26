@@ -1,10 +1,10 @@
-from dataformats.simple import *
+from dataformats.simple.read import *
 
 MAX_ERR = 1e-5
 FIELDS = set(['X', 'Y', 'U', 'V', 'N', 'T', 'M'])
 
 def test_bin_goodfile():
-    filename = 'dataformats/tests/data_binsimple.dat'
+    filename = 'dataformats/simple/tests/data_binsimple.dat'
     data, _ = read_binsimple(filename)
     assert (data.keys() == FIELDS)
 
@@ -36,7 +36,7 @@ def test_bin_goodfile():
     assert (np.abs(float(np.sum(data['N'])) - NUM_ATOMS) <= MAX_ERR)
 
 def test_plain_goodfile():
-    filename = 'dataformats/tests/data_plainsimple.dat'
+    filename = 'dataformats/simple/tests/data_plainsimple.dat'
     data, _ = read_plainsimple(filename)
     assert (data.keys() == FIELDS)
 
@@ -68,7 +68,7 @@ def test_plain_goodfile():
     assert (np.abs(np.sum(data['N']) - NUM_ATOMS) <= MAX_ERR)
 
 def test_calc_info():
-    filename = 'dataformats/tests/data_binsimple.dat'
+    filename = 'dataformats/simple/tests/data_binsimple.dat'
     _, info = read_binsimple(filename)
 
     # Control values
