@@ -30,6 +30,7 @@ def calc_info(X, Y):
 
     return info
 
+
 def read_binsimple(filename):
     """Return field data from a simple binary format.
 
@@ -52,6 +53,28 @@ def read_binsimple(filename):
     data = {}
     stride = len(fields)
     for i, field in enumerate(fields):
-        data[field] = raw_data[i::stride]
+        data[field] = raw_data[i::stride].copy()
+
+    return data
+
+def read_plainsimple(filename):
+    """Return field data from a simple plaintext format.
+
+    Args:
+        filename (str): A file to read data from.
+
+    Returns:
+        dict: A dictionary with read values of different data fields in
+              numpy.ndarray format. Field names are the keys of the dict.
+
+    """
+
+    # Read data
+    raw_data = np.genfromtxt(filename, names=True)
+
+    # Unpack into dictionary
+    data = {}
+    for field in raw_data.dtype.names:
+        data[field] = raw_data[field].copy()
 
     return data
