@@ -52,6 +52,7 @@ class FlowData(object):
 
     def __init__(self, input_data, info={}):
         self.set_data(input_data)
+        self.set_info(info)
         return
 
     @property
@@ -71,7 +72,7 @@ class FlowData(object):
 
     @property
     def U(self):
-        """Return array with label 'U', popularly used as mass flow along 'X'."""
+        """Return array with label 'U', popularly used for mass flow along 'X'."""
         return self.get_data('U')
 
     @property
@@ -82,8 +83,7 @@ class FlowData(object):
     def get_data(self, label):
         """Return data for a parameter label."""
 
-        data = self.data[label] if label in self.properties else None
-        return data
+        return self.data[label] if label in self.properties else None
 
     def set_data(self, input_data):
         """Create and set a data record from input data.
@@ -102,3 +102,22 @@ class FlowData(object):
 
         for label, bindata in input_data.items():
             self.data[label] = bindata.ravel()
+
+    def set_info(self, info):
+        """Set system information properties.
+
+        Args:
+            info (dict): Dictionary containing system information as keywords:
+                'shape' (2-tuple): Number of cells in dimension 1 and 2.
+                'size' (dict): {'X': (min(X), max(X)), 'Y': (min(Y), max(Y))}
+                'bin_size' (2-tuple): Bin size in dimension 1 and 2.
+                'num_bins' (int): Number of bins.
+
+        """
+
+        self.shape = info.get('shape', None)
+        self.size = info.get('size', {'X': [None, None], 'Y': [None, None]})
+        self.bin_size = info.get('bin_size', [None, None])
+        self.binx = self.bin_size[0]
+        self.biny = self.bin_size[1]
+        self.num_bins = info.get('num_bins', None)
