@@ -1,26 +1,33 @@
 import numpy as np
 from flow.flow import *
 
+X = np.arange(9)
+Y = np.arange(9)
+
+good_info = {
+        'shape': [len(X), len(Y)],
+        'size': (
+            (min(X), max(X)),
+            (min(Y), max(Y))
+            ),
+        'bin_size': (X[1]-X[0], Y[1]-Y[0]),
+        'num_bins': len(X)*len(Y)
+        }
+
 def test_set_info():
-    xs = np.linspace(0, 2, 9)
-    ys = np.linspace(0, 1, 5)
+    flow = FlowData({'X': X, 'Y': Y}, good_info)
 
-    x, y = np.meshgrid(xs, ys, indexing='ij')
-    info = {
-            'shape': [len(xs), len(ys)],
-            'size': {
-                'X': [xs[0], xs[-1]],
-                'Y': [ys[0], ys[-1]]
-                },
-            'bin_size': [xs[1]-xs[0], ys[1]-ys[0]],
-            'num_bins': len(xs)*len(ys)
-            }
+    assert (np.shape(flow.shape) == (2,))
+    assert (flow.shape == good_info['shape'])
 
-    flow = FlowData({'X': x, 'Y': y}, info)
+    assert (np.shape(flow.bin_size) == (2,))
+    assert (flow.bin_size == good_info['bin_size'])
+    assert (flow.binx == good_info['bin_size'][0])
+    assert (flow.biny == good_info['bin_size'][1])
 
-    assert (flow.shape == info['shape'])
-    assert (flow.bin_size == info['bin_size'])
-    assert (flow.binx == info['bin_size'][0])
-    assert (flow.biny == info['bin_size'][1])
-    assert (flow.size == info['size'])
-    assert (flow.num_bins == info['num_bins'])
+    assert (np.shape(flow.size) == (2,2))
+    assert (flow.size[0] == good_info['size'][0])
+    assert (flow.size[1] == good_info['size'][1])
+
+    assert (type(flow.num_bins) == int)
+    assert (flow.num_bins == good_info['num_bins'])
