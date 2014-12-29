@@ -1,0 +1,7 @@
+[run]
+omit = flow/__init__.py
+       flow/tests/test_*.py
+       dataformats/__init__.py
+       dataformats/tests/test_*.py
+       dataformats/simple/__init__.py
+       dataformats/simple/tests/test_*.py
