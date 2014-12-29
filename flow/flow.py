@@ -95,13 +95,22 @@ class FlowData(object):
 
         """
 
+        # Get size of data
         num_data = len(input_data)
-        len_data = len(input_data['X'].ravel())
-        dtype = np.dtype([(i, 'float') for i in input_data.keys()])
-        self.data = np.zeros((num_data,len_data), dtype=dtype)
+        key = list(input_data.keys())[0]
+        sizeof = np.size(input_data[key])
 
-        for label, bindata in input_data.items():
-            self.data[label] = bindata.ravel()
+        # Create dtype for array
+        dtype = np.dtype([(i, 'float') for i in input_data.keys()])
+
+        # Allocate and fill structured array
+        self.data = np.zeros((num_data,sizeof), dtype=dtype)
+
+        try:
+            for label, bindata in input_data.items():
+                self.data[label] = np.array(bindata).ravel()
+        except ValueError:
+            raise ValueError("All added array_like objects not of equal size.")
 
     def set_info(self, info):
         """Set system information properties.
