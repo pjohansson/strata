@@ -1,9 +1,10 @@
 import numpy as np
+import pytest
 from flow.flow import *
 
 def test_set_data():
-    xs = np.linspace(0, 2, 9)
-    ys = np.linspace(0, 1, 5)
+    xs = np.arange(9)
+    ys = np.arange(5)
 
     x, y = np.meshgrid(xs, ys, indexing='ij')
     u = np.sin(x)**2
@@ -32,3 +33,15 @@ def test_set_as_list():
     flow = FlowData({'f0': X})
     assert (type(flow.get_data('f0')) == np.ndarray)
     assert (set(flow.properties) == set(['f0']))
+
+def test_set_empty():
+    X = np.arange(0)
+    flow = FlowData({'X': X})
+
+def test_oddlists_error():
+    X = np.arange(5)
+    Y = np.arange(10)
+
+    with pytest.raises(ValueError) as excinfo:
+        flow = FlowData({'X': X, 'Y': Y})
+    assert ("added array_like objects not all of equal size" in str(excinfo.value))
