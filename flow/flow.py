@@ -24,9 +24,9 @@ class FlowData(object):
         input_data (dict): Initialise with data contained in this dict,
             where keys are data labels and values are 1D array_like objects.
 
+    Keyword Args:
         info (dict, optional): Dict with system information.
 
-    Keyword Args:
         dtype (data-type, optional): The desired Numpy data-type of record.
 
     Example:
@@ -45,16 +45,16 @@ class FlowData(object):
             'num_bins': len(X)
             }
 
-        flow = FlowData(data, info)
+        flow = FlowData(data, info=info)
         flow.X is X
         flow.V is V
         flow.data['mass'] is M
 
     """
 
-    def __init__(self, input_data, info={}, **kwargs):
+    def __init__(self, input_data, **kwargs):
         self.set_data(input_data, **kwargs)
-        self.set_info(info)
+        self.set_info(kwargs.pop('info', {}))
         return
 
     @property

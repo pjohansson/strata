@@ -17,7 +17,7 @@ good_info = {
         }
 
 def test_set_info():
-    flow = FlowData(data, good_info)
+    flow = FlowData(data, info=good_info)
 
     assert (np.shape(flow.shape) == (2,))
     assert (flow.shape == tuple(good_info['shape']))
@@ -44,7 +44,7 @@ def test_no_info():
     assert (flow.num_bins == None)
 
 def test_bad_shapes():
-    flow = FlowData(data, good_info)
+    flow = FlowData(data, info=good_info)
 
     # Verify shape control for shape, size and bin_size
     info = {}
@@ -91,7 +91,7 @@ def test_type_conversion():
         'num_bins': 3.4
         }
 
-    flow = FlowData(data, mixed_types)
+    flow = FlowData(data, info=mixed_types)
     assert (type(flow.shape[1] == int) and flow.shape[1] == 2)
     assert (type(flow.size[0][0] == float))
     assert (type(flow.bin_size[0] == float))
