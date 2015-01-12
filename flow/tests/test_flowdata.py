@@ -45,3 +45,44 @@ def test_oddlists_error():
     with pytest.raises(ValueError) as excinfo:
         flow = FlowData({'X': X, 'Y': Y})
     assert ("added array_like objects not all of equal size" in str(excinfo.value))
+
+def test_infer_homogenous_dtype():
+    types = ('float32', 'float64', 'int')
+    for dtype in types:
+        X = np.arange(5, dtype=dtype)
+        flow = FlowData({'X': X})
+
+        assert (np.equal(flow.X, X).all())
+        assert (flow.X.dtype == dtype)
+
+def test_infer_heterogenous_dtype():
+    X = np.arange(5, dtype='int')
+    Y = np.arange(5, dtype='float32')
+
+    flow = FlowData({'X': X, 'Y': Y})
+    assert (flow.X.dtype == 'int')
+    assert (flow.Y.dtype == 'float32')
+    assert (np.equal(flow.X, X).all())
+    assert (np.equal(flow.Y, Y).all())
+
+def test_set_simple_dtype():
+    X = np.arange(5, dtype='int')
+    Y = np.arange(5, dtype='float64')
+    flow = FlowData({'X': X, 'Y': Y}, dtype='float32')
+
+    assert (flow.X.dtype == 'float32')
+    assert (flow.Y.dtype == 'float32')
+    assert (np.equal(flow.X, X).all())
+    assert (np.equal(flow.Y, Y).all())
+
+def test_set_complex_dtype():
+    X = np.arange(5)
+    Y = np.arange(5)
+    dtype = [('X', 'float32'), ('Y', 'int32')]
+
+    flow = FlowData({'X': X, 'Y': Y}, dtype=dtype)
+
+    assert (flow.X.dtype == 'float32')
+    assert (flow.Y.dtype == 'int32')
+    assert (np.equal(flow.X, X).all())
+    assert (np.equal(flow.Y, Y).all())

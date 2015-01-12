@@ -26,6 +26,9 @@ class FlowData(object):
 
         info (dict, optional): Dict with system information.
 
+    Keyword Args:
+        dtype (data-type, optional): The desired Numpy data-type of record.
+
     Example:
         import numpy as np
 
@@ -49,8 +52,8 @@ class FlowData(object):
 
     """
 
-    def __init__(self, input_data, info={}):
-        self.set_data(input_data)
+    def __init__(self, input_data, info={}, **kwargs):
+        self.set_data(input_data, **kwargs)
         self.set_info(info)
         return
 
@@ -164,7 +167,7 @@ class FlowData(object):
         return self.data[label] if label in self.properties else None
 
 
-    def set_data(self, input_data):
+    def set_data(self, input_data, **kwargs):
         """Create and set a data record from input data.
 
         Args:
@@ -172,18 +175,49 @@ class FlowData(object):
                 labels and values are 1D array_likes containing the data.
                 Data arrays must be of equal length.
 
+        Keyword Args:
+            dtype (data-type, optional): The desired Numpy data-type of record.
+                If a single dtype_like, all fields are cast to that type.
+                Can also be a complex data-type if the fields catch all
+                labels of the input data.
+
         """
+
+        def get_dtype(input_data, dtype=None):
+            """Return a dtype for the record.
+
+            Reads the dtype of array_likes in input data and creates
+            a record dtype. If several different types are present
+            in the array_like a mixed type record is returned.
+
+            """
+
+            # If explicit data-type fields are set, return them
+            if len(np.dtype(dtype)) != 0:
+                return np.dtype(dtype)
+
+            # Construct data-type for record from given or present dtypes
+            types = []
+            for label, values in input_data.items():
+                if dtype:
+                    atype = dtype
+                else:
+                    try:
+                        atype = values.dtype
+                    except AttributeError:
+                        atype = type(values[0])
+                types.append((label, atype))
+
+            return np.dtype(types)
 
         # Get size of data
         num_data = len(input_data)
         key = list(input_data.keys())[0]
         sizeof = np.size(input_data[key])
 
-        # Create dtype for array
-        dtype = np.dtype([(i, 'float') for i in input_data.keys()])
-
-        # Allocate and fill structured array
-        self.data = np.zeros((num_data,sizeof), dtype=dtype)
+        # Get record data-type and allocate memory
+        array_type = get_dtype(input_data, kwargs.pop('dtype', None))
+        self.data = np.zeros((num_data,sizeof), dtype=array_type)
 
         try:
             for label, bindata in input_data.items():
