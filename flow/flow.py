@@ -21,8 +21,10 @@ class FlowData(object):
         self.data['M']
 
     Args:
-        input_data (dict): Initialise with data contained in this dict,
-            where keys are data labels and values are 1D array_like objects.
+        input_data (2-tuples, dict's): Each input argument must be
+            either a dict or 2-tuple object with labeled data:
+            {label: data} or (label, data). All data arrays must be
+            of equal length.
 
     Keyword Args:
         info (dict, optional): Dict with system information.
@@ -37,7 +39,6 @@ class FlowData(object):
         U, V = np.sin(3*X), np.exp(Y-3)
         M = 100 - np.cos(12*X*Y)
 
-        data = {'X': X, 'Y': Y, 'U': U, 'V': V, 'mass': M}
         info = {
             'shape': [len(xv), len(yv)],
             'bin_size': [xv[1]-xv[0], yv[1]-yv[0]],
@@ -45,15 +46,16 @@ class FlowData(object):
             'num_bins': len(X)
             }
 
-        flow = FlowData(data, info=info)
+        data = [('X', X), ('Y', Y), ('U', U), ('V', V), ('mass', M)]
+        flow = FlowData(*data, info=info)
         flow.X is X
         flow.V is V
         flow.data['mass'] is M
 
     """
 
-    def __init__(self, input_data, **kwargs):
-        self.set_data(input_data, **kwargs)
+    def __init__(self, *input_data, **kwargs):
+        self.set_data(*input_data, **kwargs)
         self.set_info(kwargs.pop('info', {}))
         return
 
@@ -167,13 +169,14 @@ class FlowData(object):
         return self.data[label] if label in self.properties else None
 
 
-    def set_data(self, input_data, **kwargs):
+    def set_data(self, *input_data, **kwargs):
         """Create and set a data record from input data.
 
         Args:
-            input_data (dict): Dictionary whose keys are parameter data
-                labels and values are 1D array_likes containing the data.
-                Data arrays must be of equal length.
+            input_data (2-tuples, dict's): Each input argument must be
+                either a dict or 2-tuple object with labeled data:
+                {label: data} or (label, data). All data arrays must be
+                of equal length.
 
         Keyword Args:
             dtype (data-type, optional): The desired Numpy data-type of record.
@@ -182,6 +185,26 @@ class FlowData(object):
                 labels of the input data.
 
         """
+
+        def collate_input_data(input_data):
+            """Return variable input data as a list of 2-tuples.
+
+            """
+
+            def add_data(label, values):
+                collated_data.append((label, values))
+
+            collated_data = []
+            for data in input_data:
+                if type(data) == tuple:
+                    add_data(*data)
+                elif type(data) == dict:
+                    for label, values in data.items():
+                        add_data(label, values)
+                else:
+                    raise TypeError
+
+            return collated_data
 
         def get_dtype(input_data, dtype=None):
             """Return a dtype for the record.
@@ -198,7 +221,7 @@ class FlowData(object):
 
             # Construct data-type for record from given or present dtypes
             types = []
-            for label, values in input_data.items():
+            for label, values in input_data:
                 if dtype:
                     atype = dtype
                 else:
@@ -210,17 +233,21 @@ class FlowData(object):
 
             return np.dtype(types)
 
+        try:
+            data_list = collate_input_data(input_data)
+        except TypeError:
+            raise TypeError("input must be 2-tuples or dict's")
+
         # Get size of data
-        num_data = len(input_data)
-        key = list(input_data.keys())[0]
-        sizeof = np.size(input_data[key])
+        num_data = len(data_list)
+        sizeof = np.size(data_list[0][1])
 
         # Get record data-type and allocate memory
-        array_type = get_dtype(input_data, kwargs.pop('dtype', None))
+        array_type = get_dtype(data_list, kwargs.pop('dtype', None))
         self.data = np.zeros((1,sizeof), dtype=array_type).ravel()
 
         try:
-            for label, bindata in input_data.items():
+            for label, bindata in data_list:
                 self.data[label] = np.array(bindata).ravel()
         except ValueError:
             raise ValueError("added array_like objects not all of equal size.")

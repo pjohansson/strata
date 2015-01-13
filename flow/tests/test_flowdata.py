@@ -27,6 +27,21 @@ def test_set_data():
     # Check the set properties
     assert (set(flow.properties) == set(['X', 'Y', 'U', 'V']))
 
+def test_set_input_args():
+    X = np.arange(8)
+    Y = np.arange(8)
+    U = np.sin(X*Y)
+
+    flow = FlowData({'X': X}, {'Y': Y}, {'U': U})
+    assert (np.array_equal(flow.data['X'], X))
+    assert (np.array_equal(flow.data['Y'], Y))
+    assert (np.array_equal(flow.data['U'], U))
+
+    flow = FlowData(('X', X), ('Y', Y), ('U', U))
+    assert (np.array_equal(flow.data['X'], X))
+    assert (np.array_equal(flow.data['Y'], Y))
+    assert (np.array_equal(flow.data['U'], U))
+
 def test_set_as_list():
     X = np.arange(5).tolist()
 
