@@ -5,20 +5,10 @@ class FlowData(object):
 
     Flow fields consist of a number of 2D bins, whose positions are
     specified in 1D arrays. Various data for these bins can be added
-    and accessed through a common interface.
+    and accessed through a common interface:
 
-    Positions and flow velocities (if present) can be accessed through
-    methods:
-
-        self.X
-        self.Y
-        self.U
-        Self.V
-
-    Any field, including the above, can be added and accessed through
-    a common data structure:
-
-        self.data['M']
+        self.data['X']
+        self.data['Y']
 
     Args:
         input_data (2-tuples, dict's): Each input argument must be
@@ -48,8 +38,8 @@ class FlowData(object):
 
         data = [('X', X), ('Y', Y), ('U', U), ('V', V), ('mass', M)]
         flow = FlowData(*data, info=info)
-        flow.X is X
-        flow.V is V
+        flow.data['X'] is X
+        flow.data['V'] is V
         flow.data['mass'] is M
 
     """
@@ -142,26 +132,6 @@ class FlowData(object):
         """Return list of data parameters."""
         return self.data.dtype.names
 
-    @property
-    def X(self):
-        """Return array with label 'X', popularly used as a bin position."""
-        return self.get_data('X')
-
-    @property
-    def Y(self):
-        """Return array with label 'Y', popularly used as a bin position."""
-        return self.get_data('Y')
-
-    @property
-    def U(self):
-        """Return array with label 'U', popularly used for mass flow along 'X'."""
-        return self.get_data('U')
-
-    @property
-    def V(self):
-        """Return array with label 'V', popularly used for mass flow along 'Y'."""
-        return self.get_data('V')
-
 
     def get_data(self, label):
         """Return data for a parameter label."""
@@ -169,7 +139,7 @@ class FlowData(object):
         return self.data[label] if label in self.properties else None
 
 
-    def set_data(self, *input_data, **kwargs):
+    def set_data(self, *data, **kwargs):
         """Create and set a data record from input data.
 
         Args:
@@ -234,7 +204,7 @@ class FlowData(object):
             return np.dtype(types)
 
         try:
-            data_list = collate_input_data(input_data)
+            data_list = collate_input_data(data)
         except TypeError:
             raise TypeError("input must be 2-tuples or dict's")
 
