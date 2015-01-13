@@ -217,7 +217,7 @@ class FlowData(object):
 
         # Get record data-type and allocate memory
         array_type = get_dtype(input_data, kwargs.pop('dtype', None))
-        self.data = np.zeros((num_data,sizeof), dtype=array_type)
+        self.data = np.zeros((1,sizeof), dtype=array_type).ravel()
 
         try:
             for label, bindata in input_data.items():
