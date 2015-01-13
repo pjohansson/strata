@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from flow.flow import FlowData
 
 def get_lim_indices(data, limits):
@@ -39,3 +40,20 @@ def get_lim_indices(data, limits):
             indices = np.intersect1d(indices, indices_new)
 
     return indices
+
+def draw_flowfield(data):
+    """Draw a flow field from input data as a quiver graph.
+
+    Args:
+        data (record): Field data in record format. Must have fields
+            'X', 'Y', 'U' and 'V' present.
+
+    Returns:
+        fig: Figure handle to drawn graph.
+
+    """
+
+    fields = [data[label] for label in ('X', 'Y', 'U', 'V')]
+    fig = plt.quiver(*fields)
+
+    return fig

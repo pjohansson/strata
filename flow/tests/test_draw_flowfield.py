@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 from flow.flow import FlowData
 from flow.flowfield import *
 
@@ -45,3 +47,22 @@ def test_get_indices_other_formats():
     lims = {}
     indices = get_lim_indices(flow.data, lims)
     assert (np.array_equiv(indices, np.arange(8)))
+
+def test_draw_flowfield():
+    X = np.arange(9)
+    Y = np.arange(5)
+
+    xs, ys = np.meshgrid(X, Y)
+    us = np.sin(xs*ys)*5
+    vs = np.cos(xs)*10 - np.exp(0.1*ys)
+
+    flow = FlowData({'X': xs, 'Y': ys, 'U': us, 'V': vs})
+
+    fig = draw_flowfield(flow.data)
+    assert (type(fig) == matplotlib.quiver.Quiver)
+
+    # Verify that plotting with limits set works
+    lims = {'X': (2, 6), 'Y': (None, 3), 'U': (None, 1.5)}
+    indices = get_lim_indices(flow.data, lims)
+    fig = draw_flowfield(flow.data[indices])
+    assert (type(fig) == matplotlib.quiver.Quiver)
