@@ -15,7 +15,7 @@ class PyTest(Command):
                 '--cov', 'dataformats',
                 '--cov-report', 'term-missing'
                 ]
-        errno = subprocess.call([sys.executable, 'runtests.py'] + coverage)
+        errno = subprocess.call([sys.executable, 'runtests.py', '-v'] + coverage)
         raise SystemExit(errno)
 
 setup(

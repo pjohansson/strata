@@ -45,5 +45,3 @@ def test_get_indices_other_formats():
     lims = {}
     indices = get_lim_indices(flow.data, lims)
     assert (np.array_equiv(indices, np.arange(8)))
-
-
