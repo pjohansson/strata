@@ -67,7 +67,7 @@ class FlowData(object):
         except TypeError:
             raise TypeError("bin_size must be two int's")
         except ValueError:
-            raise ValueError ("bin_size must be two int's")
+            raise ValueError("bin_size must be two int's")
 
     @property
     def num_bins(self):
@@ -105,7 +105,7 @@ class FlowData(object):
         except TypeError:
             raise TypeError("size must be (2,2)-tuple of int's")
         except ValueError:
-            raise ValueError ("size must be 2-by-2 int's")
+            raise ValueError("size must be 2-by-2 int's")
 
     @property
     def shape(self):
@@ -123,9 +123,9 @@ class FlowData(object):
             else:
                 raise TypeError
         except TypeError:
-            raise TypeError ("shape must be 2-tuple")
+            raise TypeError("shape must be 2-tuple")
         except ValueError:
-            raise ValueError ("shape must be two int's")
+            raise ValueError("shape must be two int's")
 
     @property
     def properties(self):
