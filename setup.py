@@ -13,6 +13,7 @@ class PyTest(Command):
         coverage = [
                 '--cov', 'flow',
                 '--cov', 'dataformats',
+                '--cov', 'scripts',
                 '--cov-report', 'term-missing'
                 ]
         errno = subprocess.call([sys.executable, 'runtests.py', '-v'] + coverage)

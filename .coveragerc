@@ -5,3 +5,4 @@ omit = flow/__init__.py
        dataformats/tests/test_*.py
        dataformats/simple/__init__.py
        dataformats/simple/tests/test_*.py
+       scripts/tests/test_*.py
