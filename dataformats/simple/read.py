@@ -54,7 +54,7 @@ def read_binsimple(filename):
         data = {}
         stride = len(fields)
         for i, field in enumerate(fields):
-            data[field] = raw_data[i::stride].copy()
+            data[field] = raw_data[i::stride]
 
         return data
 
@@ -83,7 +83,7 @@ def read_plainsimple(filename):
         # Unpack into dictionary
         data = {}
         for field in raw_data.dtype.names:
-            data[field] = raw_data[field].copy()
+            data[field] = raw_data[field]
 
         return data
 

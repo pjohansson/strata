@@ -21,13 +21,14 @@ class PyTest(Command):
 setup(
         name='flowfield',
         version='0.1',
-        description='A module for use with 2D flow fields and droplet systems',
-        url='http://',
+        description='Tools for studying droplet and fluid dynamics data.',
+        url='https://github.com/pjohansson/flowtools-rewrite',
         author='Petter Johansson',
         author_email='pettjoha@kth.se',
         license='None',
-        packages=find_packages(),
-        cmdclass = {'test': PyTest},
-        install_requires = ['setuptools'],
-        zip_safe=False
+        packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+        cmdclass={'test': PyTest},
+        install_requires=['setuptools'],
+        tests_require=['pytest', 'pytest-cov', 'coverage'],
+        zip_safe=True
         )
