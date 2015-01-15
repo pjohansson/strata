@@ -1,3 +1,5 @@
+import numpy as np
+import pytest
 from dataformats.simple.read import *
 
 FIELDS = set(['X', 'Y', 'U', 'V', 'N', 'T', 'M'])
@@ -83,3 +85,10 @@ def test_calc_info():
     assert (info['size']['X'] == [MIN_X, MAX_X])
     assert (info['size']['Y'] == [MIN_Y, MAX_Y])
     assert (info['bin_size'] == [BIN_X, BIN_Y])
+
+def test_calc_badinfo():
+    X = np.arange(4)
+    Y = np.arange(8)
+
+    with pytest.raises(ValueError):
+        calc_information(X, Y)

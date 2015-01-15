@@ -28,8 +28,8 @@ def guess_read_function(filename):
     def is_binary(filename, checksize=512):
         """Return True if a file is binary-like, else False.
 
-        Tries to find a unicode '\n' character within checksize bytes
-        of the file and catches a UnicodeDecodeError if raised.
+        Tries to read checksize bytes from a file and catches a
+        UnicodeDecodeError if the file is binary.
 
         Args:
             filename (str): File to control.
@@ -43,10 +43,8 @@ def guess_read_function(filename):
 
         with open(filename, 'r') as fp:
             try:
-                if '\n' in fp.read(checksize):
-                    return False
-                else:
-                    raise UnicodeDecodeError
+                fp.read(checksize)
+                return False
             except UnicodeDecodeError:
                 return True
 
