@@ -1,6 +1,5 @@
 from dataformats.simple.read import *
 
-MAX_ERR = 1e-5
 FIELDS = set(['X', 'Y', 'U', 'V', 'N', 'T', 'M'])
 
 def test_bin_goodfile():
@@ -31,9 +30,9 @@ def test_bin_goodfile():
     assert (data['X'][-1] == MAX_X)
     assert (data['Y'][0] == MIN_Y)
     assert (data['Y'][-1] == MAX_Y)
-    assert (np.abs(np.mean(data['M'][full_bins]) - AVG_MASS) <= MAX_ERR)
-    assert (np.abs(np.mean(data['T'][full_bins]) - AVG_TEMP) <= MAX_ERR)
-    assert (np.abs(float(np.sum(data['N'])) - NUM_ATOMS) <= MAX_ERR)
+    assert (np.allclose(np.mean(data['M'][full_bins]), AVG_MASS))
+    assert (np.allclose(np.mean(data['T'][full_bins]), AVG_TEMP))
+    assert (np.allclose(np.sum(data['N'][full_bins]), NUM_ATOMS))
 
 def test_plain_goodfile():
     filename = 'dataformats/simple/tests/data_plainsimple.dat'
@@ -63,9 +62,9 @@ def test_plain_goodfile():
     assert (data['X'][-1] == MAX_X)
     assert (data['Y'][0] == MIN_Y)
     assert (data['Y'][-1] == MAX_Y)
-    assert (np.abs(np.mean(data['M'][full_bins]) - AVG_MASS) <= MAX_ERR)
-    assert (np.abs(np.mean(data['T'][full_bins]) - AVG_TEMP) <= MAX_ERR)
-    assert (np.abs(np.sum(data['N']) - NUM_ATOMS) <= MAX_ERR)
+    assert (np.allclose(np.mean(data['M'][full_bins]), AVG_MASS))
+    assert (np.allclose(np.mean(data['T'][full_bins]), AVG_TEMP))
+    assert (np.allclose(np.sum(data['N'][full_bins]), NUM_ATOMS))
 
 def test_calc_info():
     filename = 'dataformats/simple/tests/data_binsimple.dat'
