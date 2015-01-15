@@ -48,6 +48,10 @@ def test_set_empty():
     X = np.arange(0)
     flow = FlowData({'X': X})
 
+def test_set_data_badformats():
+    with pytest.raises(TypeError):
+        flow = FlowData(['X', [1,2,3]])
+
 def test_oddlists_error():
     X = np.arange(5)
     Y = np.arange(10)
