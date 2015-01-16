@@ -6,7 +6,7 @@ FIELDS = set(['X', 'Y', 'U', 'V', 'N', 'T', 'M'])
 
 def test_bin_goodfile():
     filename = 'strata/dataformats/simple/tests/data_binsimple.dat'
-    data, _ = read_binsimple(filename)
+    data, _ = read(filename)
     assert (data.keys() == FIELDS)
 
     # Control values
@@ -38,7 +38,7 @@ def test_bin_goodfile():
 
 def test_plain_goodfile():
     filename = 'strata/dataformats/simple/tests/data_plainsimple.dat'
-    data, _ = read_plainsimple(filename)
+    data, _ = read(filename)
     assert (data.keys() == FIELDS)
 
     # Control values
@@ -70,7 +70,7 @@ def test_plain_goodfile():
 
 def test_calc_info():
     filename = 'strata/dataformats/simple/tests/data_binsimple.dat'
-    _, info = read_binsimple(filename)
+    _, info = read(filename)
 
     # Control values
     NUM_BINS = 522720

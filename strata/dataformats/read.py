@@ -1,59 +1,32 @@
-import strata.dataformats.simple.read as smp
+import strata.dataformats as formats
 
 """Module for reading flow field data from specific file formats.
 
 File formats are implemented as submodules, mainly to be called from
 this module through the 'read_flow_data' function. This function calls
-'guess_read_function' to determine the file format, then uses the returned
-file handle to call the correct submodule.
+'guess_read_module' to determine the file format, then uses the returned
+handle to call the correct submodule.
 
 """
 
-def guess_read_function(filename):
-    """Return a function handle to read a file.
+def guess_read_module(filename):
+    """Return a handle of a module to read the input file.
 
     Makes a guess on the data format by trying to access the file and assess
     its characteristics, judging which of the implemented data formats is
-    the best match. Defaults to dataformats.simple.read_plainsimple if
-    file is not binary.
+    the best match.
+
+    Currently only one module is implemented: A very simple format.
 
     Args:
         filename (str): File to read.
 
     Returns:
-        function: Function handle.
+        module: Module handle.
 
     """
 
-    def is_binary(filename, checksize=512):
-        """Return True if a file is binary-like, else False.
-
-        Tries to read checksize bytes from a file and catches a
-        UnicodeDecodeError if the file is binary.
-
-        Args:
-            filename (str): File to control.
-
-            checksize (int): Number of bytes to control over.
-
-        Returns:
-            bool: Whether file is binary-like or not.
-
-        """
-
-        with open(filename, 'r') as fp:
-            try:
-                fp.read(checksize)
-                return False
-            except UnicodeDecodeError:
-                return True
-
-    if is_binary(filename):
-        function = smp.read_binsimple
-    else:
-        function = smp.read_plainsimple
-
-    return function
+    return formats.simple
 
 
 def read_flow_data(filename):
@@ -83,7 +56,7 @@ def read_flow_data(filename):
 
     """
 
-    function = guess_read_function(filename)
-    data, info = function(filename)
+    module = guess_read_module(filename)
+    data, info = module.read.read(filename)
 
     return data, info

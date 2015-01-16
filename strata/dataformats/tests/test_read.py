@@ -1,12 +1,12 @@
+import strata.dataformats as formats
 from strata.dataformats.read import *
-from strata.dataformats.simple.read import *
 
 def test_guess_dataformat():
     bin_filename = 'strata/dataformats/simple/tests/data_binsimple.dat'
     plain_filename = 'strata/dataformats/simple/tests/data_plainsimple.dat'
 
-    assert (guess_read_function(bin_filename) == read_binsimple)
-    assert (guess_read_function(plain_filename) == read_plainsimple)
+    assert (guess_read_module(bin_filename) == formats.simple)
+    assert (guess_read_module(plain_filename) == formats.simple)
 
 def test_read_file():
     filename = 'strata/dataformats/simple/tests/data_plainsimple.dat'
