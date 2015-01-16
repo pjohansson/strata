@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from strata.dataformats.simple.average import *
-from strata.dataformats.simple.read import read
+from strata.dataformats.simple.main import read
 
 data_fields = ('U', 'V', 'M', 'T', 'N')
 all_fields = data_fields + ('X', 'Y')

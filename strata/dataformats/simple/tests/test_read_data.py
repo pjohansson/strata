@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from strata.dataformats.simple.main import read
 from strata.dataformats.simple.read import *
 
 FIELDS = set(['X', 'Y', 'U', 'V', 'N', 'T', 'M'])

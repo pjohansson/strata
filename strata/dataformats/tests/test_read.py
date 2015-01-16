@@ -5,8 +5,8 @@ def test_guess_dataformat():
     bin_filename = 'strata/dataformats/simple/tests/data_binsimple.dat'
     plain_filename = 'strata/dataformats/simple/tests/data_plainsimple.dat'
 
-    assert (guess_read_module(bin_filename) == formats.simple)
-    assert (guess_read_module(plain_filename) == formats.simple)
+    assert (guess_read_module(bin_filename) == formats.simple.main)
+    assert (guess_read_module(plain_filename) == formats.simple.main)
 
 def test_read_file():
     filename = 'strata/dataformats/simple/tests/data_plainsimple.dat'

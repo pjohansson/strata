@@ -26,7 +26,7 @@ def guess_read_module(filename):
 
     """
 
-    return formats.simple
+    return formats.simple.main
 
 
 def read_flow_data(filename):
@@ -57,6 +57,6 @@ def read_flow_data(filename):
     """
 
     module = guess_read_module(filename)
-    data, info = module.read.read(filename)
+    data, info = module.read(filename)
 
     return data, info
