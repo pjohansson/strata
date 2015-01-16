@@ -3,8 +3,39 @@ import os
 
 """Utilities for interacting with data files."""
 
+
+def gen_filenames(base, end=np.inf, **kwargs):
+    """Generates a number of file names from a base.
+
+    Joins the input base and extension with a five-digit integer
+    signifying the file number ('%s%05d%s').
+
+    Args:
+        base (str): Base of data map files.
+
+    Keyword Args:
+        begin (int, default=1): First data map number.
+
+        end (int, default=inf): Final data map number. Can be input
+            as the second positional argument.
+
+        ext (str, default='.dat'): File extension.
+
+    Yields:
+        str: File name.
+
+    """
+
+    num = kwargs.pop('begin', 1)
+    ext = kwargs.pop('ext', '.dat')
+
+    while num <= end:
+        yield('%s%05d%s' % (base, num, ext))
+        num += 1
+
+
 def find_datamap_files(base, **kwargs):
-    """Generates data map file names at input path base.
+    """Generates data map file names found at input path base.
 
     If the keyword 'group' is specified file names are yielded as
     bundled lists of input length. If not enough files are found to
@@ -31,36 +62,34 @@ def find_datamap_files(base, **kwargs):
 
     """
 
-    def yield_singles(base, num, end, ext):
-        def get_filename(num):
-            return os.path.join(directory, '%s%05d%s' % (fnbase, num, ext))
+    def yield_singles(base, begin, end, ext):
+        for filename in gen_filenames(base, begin=begin, end=end, ext=ext):
+            if os.access(filename, os.F_OK) == True:
+                yield(filename)
+            else:
+                break
 
-        directory, fnbase = os.path.split(base)
-        fn = get_filename(num)
+    def yield_groups(base, begin, end, ext):
+        group_end = begin + group - 1
 
-        while os.access(fn, os.F_OK) == True and num <= end:
-            yield(fn)
-            num += 1
-            fn = get_filename(num)
-
-    def yield_groups(base, num, end, ext):
-        group_end = num + group - 1
         while group_end <= end:
-            files = list(yield_singles(base, num, group_end, ext))
+            files = list(yield_singles(base, begin, group_end, ext))
 
             if len(files) == group:
                 yield(files)
+                begin += group
+                group_end += group
             else:
                 break
-            num += group
-            group_end += group
 
-    begin = kwargs.pop('begin', 1)
-    end = kwargs.pop('end', np.inf)
-    ext = kwargs.pop('ext', '.dat')
+    args = [
+            kwargs.pop('begin', 1),
+            kwargs.pop('end', np.inf),
+            kwargs.pop('ext', '.dat')
+            ]
     group = kwargs.pop('group', 1)
 
     if group == 1:
-        yield from yield_singles(base, begin, end, ext)
+        yield from yield_singles(base, *args)
     else:
-        yield from yield_groups(base, begin, end, ext)
+        yield from yield_groups(base, *args)

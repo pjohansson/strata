@@ -1,24 +1,39 @@
 import numpy as np
 import os
 import tempfile as tmp
-from strata.utils import find_datamap_files
+from strata.utils import *
 
 fnbase = 'data_'
 begin_def = 1
 end_def=np.inf
 num_files_def = 10
-extension_def = '.dat'
+ext_def = '.dat'
 group_def = 1
 
-def run_datamaps_test(**kwargs):
+def test_gen_filenames():
+    filenames = list(gen_filenames(fnbase, 5, begin=4))
+    assert (filenames == ['%s%05d%s' % (fnbase, i, ext_def) for i in (4,5)])
+    filenames = list(gen_filenames(fnbase, 2, ext='.tmp'))
+    assert (filenames == ['%s%05d%s' % (fnbase, i, '.tmp') for i in (1,2)])
+    filenames = list(gen_filenames(fnbase, ext='.tmp', begin=3, end=5))
+    assert (filenames == ['%s%05d%s' % (fnbase, i, '.tmp') for i in (3,4,5)])
+    filenames = list(gen_filenames(fnbase, ext='.tmp', begin=5, end=3))
+    assert (filenames == [])
+
+def test_gen_filenames_inf():
+    for i, filename in enumerate(gen_filenames(fnbase)):
+        if i == 5: break
+    assert (filename == '%s%05d%s' % (fnbase, i+1, ext_def))
+
+def find_datamaps_test_runner(**kwargs):
     first = kwargs.setdefault('begin', begin_def)
     last = kwargs.setdefault('end', end_def)
-    ext = kwargs.setdefault('ext', extension_def)
+    ext = kwargs.setdefault('ext', ext_def)
     num_files = kwargs.setdefault('num_files', num_files_def)
     group = kwargs.setdefault('group', group_def)
 
+    # Create a number of files to find in a tmpdir
     with tmp.TemporaryDirectory() as tmp_dir:
-        # Create a number of files to find
         files = []
         num_files = min(num_files, last - first + 1)
         for i in np.arange(first, first+num_files):
@@ -50,18 +65,18 @@ def run_datamaps_test(**kwargs):
 
 
 def test_find_datamaps():
-    run_datamaps_test()
+    find_datamaps_test_runner()
 
 def test_find_datamaps_otherext():
-    run_datamaps_test(ext='.tmp')
+    find_datamaps_test_runner(ext='.tmp')
 
 def test_find_datamaps_othernums():
-    run_datamaps_test(begin=23, end=25)
-    run_datamaps_test(begin=0, end=9)
-    run_datamaps_test(begin=5, end=1)
+    find_datamaps_test_runner(begin=23, end=25)
+    find_datamaps_test_runner(begin=0, end=9)
+    find_datamaps_test_runner(begin=5, end=1)
 
 def test_find_datamaps_group():
-    run_datamaps_test(num_files=20, end=20, group=5)
-    run_datamaps_test(num_files=20, group=5)
-    run_datamaps_test(num_files=23, group=5)
-    run_datamaps_test(begin=5, end=1, group=5)
+    find_datamaps_test_runner(num_files=20, end=20, group=5)
+    find_datamaps_test_runner(num_files=20, group=5)
+    find_datamaps_test_runner(num_files=23, group=5)
+    find_datamaps_test_runner(begin=5, end=1, group=5)
