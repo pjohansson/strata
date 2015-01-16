@@ -80,3 +80,48 @@ def test_find_datamaps_group():
     find_datamaps_test_runner(num_files=20, group=5)
     find_datamaps_test_runner(num_files=23, group=5)
     find_datamaps_test_runner(begin=5, end=1, group=5)
+
+def test_prepare_path_decorator():
+    @prepare_path
+    def wrapped_output(*args, **kwargs):
+        assert (len(args) == 1)
+        assert (kwargs == {})
+
+    cwd = os.getcwd()
+    with tmp.TemporaryDirectory() as tmp_dir:
+        os.chdir(tmp_dir)
+        # Test creation of a new directory
+        path = os.path.join(tmp_dir, 'dirone/dirtwo/tmpfile')
+        directory, filename = os.path.split(path)
+        wrapped_output(path)
+        assert (os.path.isdir(directory))
+        assert (os.access(path, os.F_OK) == False)
+
+        # Test back-up functionality of two backups
+        path = os.path.basename(path)
+        open(path, 'w')
+        wrapped_output(path, _pp_verbose=True)
+        assert (os.access(path, os.F_OK) == False)
+        open(path, 'w')
+        wrapped_output(path, _pp_verbose=False)
+
+        backup_one = os.path.join('#%s.1#' % filename)
+        backup_two = os.path.join('#%s.2#' % filename)
+        assert (os.access(path, os.F_OK) == False)
+        assert (os.access(backup_one, os.F_OK) == True)
+        assert (os.access(backup_two, os.F_OK) == True)
+        os.chdir(cwd)
+
+def test_prepare_path_moreargs():
+    @prepare_path
+    def wrapped_output_twoargs(*args):
+        assert (len(args) == 2)
+    @prepare_path
+    def wrapped_output_twokeys(path, **kwargs):
+        assert (kwargs == {'k0': 'key0', 'k1': 'key1'})
+
+    with tmp.TemporaryDirectory() as tmp_dir:
+        path = os.path.join(tmp_dir, 'tmpfile')
+        wrapped_output_twoargs(path, [1,2,3])
+        wrapped_output_twokeys(path, k0='key0', k1='key1')
+

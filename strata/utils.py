@@ -93,3 +93,55 @@ def find_datamap_files(base, **kwargs):
         yield from yield_singles(base, *args)
     else:
         yield from yield_groups(base, *args)
+
+
+def prepare_path(func):
+    """Wrapper for file output: Prepare a path for writing.
+
+    Ensures that the directory exists and backs up a possible conflicting
+    file. Such a file is backed up by appending pounds and a number to
+    the name: '#%s.%d#'.
+
+    Input arguments are passed on to the decorated function, the exception
+    being the keyword argument _pp_verbose detailed below.
+
+    Args:
+        path (str): Path to prepare, must be the first positional argument.
+
+    Keyword Args:
+        _pp_verbose (bool, default=True): Whether or not to print information
+            about a performed backup.
+
+    """
+
+    def prepare_path_wrapper(*args, **kwargs):
+        def prepare_directory(path):
+            directory, filename = os.path.split(path)
+            if directory == "":
+                directory = "."
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+
+            return directory, filename
+
+        def backup_conflict(path):
+            i = 1
+            backup = path
+            while os.path.exists(backup):
+                new_file = '#%s.%d#' % (filename, i)
+                backup = os.path.join(directory, new_file)
+                i += 1
+
+            if backup != path:
+                os.rename(path, backup)
+                if verbose:
+                    print("Backed up '%s' to '%s'." % (path, backup))
+
+        path = args[0]
+        verbose = kwargs.pop('_pp_verbose', True)
+        directory, filename = prepare_directory(path)
+        backup_conflict(path)
+
+        return func(*args, **kwargs)
+
+    return prepare_path_wrapper
