@@ -1,4 +1,4 @@
-import dataformats.simple.read as smp
+import strata.dataformats.simple.read as smp
 
 """Module for reading flow field data from specific file formats.
 

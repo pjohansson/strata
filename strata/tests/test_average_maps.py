@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import tempfile as tmp
-from scripts.utils import find_datamap_files
+from strata.utils import find_datamap_files
 
 fnbase = 'data_'
 begin = 1

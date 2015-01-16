@@ -1,8 +1,9 @@
 [run]
-omit = flow/__init__.py
-       flow/tests/test_*.py
-       dataformats/__init__.py
-       dataformats/tests/test_*.py
-       dataformats/simple/__init__.py
-       dataformats/simple/tests/test_*.py
-       scripts/tests/test_*.py
+omit = droplets/__init__.py
+       droplets/tests/test_*.py
+       strata/__init__.py
+       strata/tests/test_*.py
+       strata/dataformats/__init__.py
+       strata/dataformats/tests/test_*.py
+       strata/dataformats/simple/__init__.py
+       strata/dataformats/simple/tests/test_*.py

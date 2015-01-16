@@ -1,6 +1,6 @@
 import numpy as np
-from flow.data_utils import get_lim_indices
-from flow.flow import FlowData
+from droplets.data_utils import get_lim_indices
+from droplets.flow import FlowData
 
 def test_get_indices_lims():
     X = np.arange(8)    #  0    1     2     3    4     5     6     7

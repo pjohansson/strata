@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-from flow.flow import FlowData
-from flow.droplet import *
+from droplets.flow import FlowData
+from droplets.droplet import *
 
 # Create grid
 x = np.arange(11)

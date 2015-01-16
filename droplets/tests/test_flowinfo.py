@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from flow.flow import *
+from droplets.flow import *
 
 X = np.arange(9)
 Y = np.arange(9)

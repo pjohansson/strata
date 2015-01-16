@@ -11,9 +11,8 @@ class PyTest(Command):
     def run(self):
         import sys,subprocess
         coverage = [
-                '--cov', 'flow',
-                '--cov', 'dataformats',
-                '--cov', 'scripts',
+                '--cov', 'droplets',
+                '--cov', 'strata',
                 '--cov-report', 'term-missing'
                 ]
         errno = subprocess.call([sys.executable, 'runtests.py', '-v'] + coverage)

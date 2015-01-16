@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
-from dataformats.simple.read import *
+from strata.dataformats.simple.read import *
 
 FIELDS = set(['X', 'Y', 'U', 'V', 'N', 'T', 'M'])
 
 def test_bin_goodfile():
-    filename = 'dataformats/simple/tests/data_binsimple.dat'
+    filename = 'strata/dataformats/simple/tests/data_binsimple.dat'
     data, _ = read_binsimple(filename)
     assert (data.keys() == FIELDS)
 
@@ -37,7 +37,7 @@ def test_bin_goodfile():
     assert (np.allclose(np.sum(data['N'][full_bins]), NUM_ATOMS))
 
 def test_plain_goodfile():
-    filename = 'dataformats/simple/tests/data_plainsimple.dat'
+    filename = 'strata/dataformats/simple/tests/data_plainsimple.dat'
     data, _ = read_plainsimple(filename)
     assert (data.keys() == FIELDS)
 
@@ -69,7 +69,7 @@ def test_plain_goodfile():
     assert (np.allclose(np.sum(data['N'][full_bins]), NUM_ATOMS))
 
 def test_calc_info():
-    filename = 'dataformats/simple/tests/data_binsimple.dat'
+    filename = 'strata/dataformats/simple/tests/data_binsimple.dat'
     _, info = read_binsimple(filename)
 
     # Control values

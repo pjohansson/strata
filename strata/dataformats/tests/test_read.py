@@ -1,15 +1,15 @@
-from dataformats.read import *
-from dataformats.simple.read import *
+from strata.dataformats.read import *
+from strata.dataformats.simple.read import *
 
 def test_guess_dataformat():
-    bin_filename = 'dataformats/simple/tests/data_binsimple.dat'
-    plain_filename = 'dataformats/simple/tests/data_plainsimple.dat'
+    bin_filename = 'strata/dataformats/simple/tests/data_binsimple.dat'
+    plain_filename = 'strata/dataformats/simple/tests/data_plainsimple.dat'
 
     assert (guess_read_function(bin_filename) == read_binsimple)
     assert (guess_read_function(plain_filename) == read_plainsimple)
 
 def test_read_file():
-    filename = 'dataformats/simple/tests/data_plainsimple.dat'
+    filename = 'strata/dataformats/simple/tests/data_plainsimple.dat'
     data, info = read_flow_data(filename)
 
     # Control values for simple file

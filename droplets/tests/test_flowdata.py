@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from flow.flow import *
+from droplets.flow import *
 
 def test_set_data():
     xs = np.arange(9)

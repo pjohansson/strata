@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from flow.data_utils import get_lim_indices
-from flow.flow import FlowData
-from flow.flowfield import *
+from droplets.data_utils import get_lim_indices
+from droplets.flow import FlowData
+from droplets.flowfield import *
 
 def test_draw_flowfield():
     X = np.arange(9)

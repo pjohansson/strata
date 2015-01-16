@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-from dataformats.simple.average import *
-from dataformats.simple.read import read_plainsimple
+from strata.dataformats.simple.average import *
+from strata.dataformats.simple.read import read_plainsimple
 
 data_fields = ('U', 'V', 'M', 'T', 'N')
 all_fields = data_fields + ('X', 'Y')
@@ -87,7 +87,7 @@ def test_fields_nan():
         average_simple_data(*data)
 
 def test_read_and_average():
-    filename = 'dataformats/simple/tests/data_avgsimple.dat'
+    filename = 'strata/dataformats/simple/tests/data_avgsimple.dat'
     data1, _ = read_plainsimple(filename)
     data2 = {l: v.copy() for l, v in data1.items()}
 
