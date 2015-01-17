@@ -3,7 +3,7 @@ import numpy as np
 import tempfile as tmp
 from strata.average import *
 from strata.utils import gen_filenames, find_datamap_files
-from strata.dataformats.read import read_flow_data
+from strata.dataformats.read import read_data_file
 from strata.dataformats.simple.main import average_data, write
 
 tmpfn = 'tmp_'
@@ -39,7 +39,7 @@ def test_average_datamaps():
             control_tmpdata = tmp_data[i*group:(i+1)*group]
             control = average_data(*control_tmpdata)
 
-            data, _ = read_flow_data(filename)
+            data, _, _ = read_data_file(filename)
             for l in data.keys():
                 assert (np.allclose(data[l], control[l], atol=1e-6))
 

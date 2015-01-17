@@ -1,6 +1,4 @@
-import numpy as np
 from strata.dataformats.read import read_from_files
-from strata.dataformats.simple.main import average_data, write
 from strata.utils import *
 
 def average(base, output, group=1, **kwargs):
@@ -21,8 +19,7 @@ def average(base, output, group=1, **kwargs):
     Keyword Args:
         begin (int, default=1): First data map number.
 
-        end (int, default=inf): Final data map number. Can be input
-            as the second positional argument.
+        end (int, default=inf): Final data map number.
 
         group (int, default=1): Group input files in bundles of this length.
             Can be input as the third positional argument.
@@ -31,9 +28,19 @@ def average(base, output, group=1, **kwargs):
 
     """
 
-    opts = pop_fileopts(kwargs)
+    fopts = pop_fileopts(kwargs)
 
-    for fn_group, fn_out in find_groups_to_singles(base, output, group, **opts):
-        data = [d for d, _ in read_from_files(*fn_group)]
-        avg_data = average_data(*data)
-        write(fn_out, avg_data)
+    for fn_group, fn_out in find_groups_to_singles(base, output, group, **fopts):
+        group_data = []
+        used_modules = set([])
+
+        for data, _, module in read_from_files(*fn_group):
+            group_data.append(data)
+            used_modules.add(module)
+
+        # Assert that a single module was used and retrieve it
+        assert (len(used_modules) == 1)
+        module = used_modules.pop()
+
+        avg_data = module.average_data(*group_data)
+        module.write(fn_out, avg_data)

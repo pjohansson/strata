@@ -13,7 +13,7 @@ def read(filename):
 
     Returns:
         (dict, dict): 2-tuple of dict's with data and information. See
-            strata.dataformats.read.read_flow_data for more information.
+            strata.dataformats.read.read_data_file for more information.
 
     """
 

@@ -16,7 +16,7 @@ def test_guess_dataformat():
     assert (guess_read_module(plain_filename) == formats.simple.main)
 
 def test_read_file():
-    data, info = read_flow_data(plain_filename)
+    _, info, _ = read_data_file(plain_filename)
 
     # Verify that plaintext file was read
     assert (info['num_bins'] == NUM_BINS)
@@ -27,11 +27,11 @@ def test_read_file():
 
 def test_read_files_generator():
     files = []
-    for i, (data, info) in enumerate(read_from_files(*files)):
+    for i, _ in enumerate(read_from_files(*files)):
         assert (False) # Shouldn't be reached
 
     files = [plain_filename]
-    for i, (data, info) in enumerate(read_from_files(*files)):
+    for i, (_, info, _) in enumerate(read_from_files(*files)):
         assert (info['num_bins'] == NUM_BINS)
         assert (info['shape'] == [NUM_X, NUM_Y])
         assert (info['size']['X'] == [MIN_X, MAX_X])
@@ -39,6 +39,6 @@ def test_read_files_generator():
         assert (info['bin_size'] == [BIN_X, BIN_Y])
 
     files = [bin_filename, plain_filename]
-    for i, (data, info) in enumerate(read_from_files(*files)):
+    for i, (_, info, _) in enumerate(read_from_files(*files)):
         pass
     assert (i == 1)

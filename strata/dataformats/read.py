@@ -3,9 +3,9 @@ import strata.dataformats as formats
 """Module for reading flow field data from specific file formats.
 
 File formats are implemented as submodules, mainly to be called from
-this module through the 'read_flow_data' function. This function calls
-'guess_read_module' to determine the file format, then uses the returned
-handle to call the correct submodule.
+this module through the 'read_data_file' and 'read_files' functions.
+These function call the 'guess_read_module' to determine the file format
+and uses the returned handle to call the correct submodule.
 
 """
 
@@ -36,16 +36,17 @@ def read_from_files(*files):
         files (str's): File names to yield data from, one per argument.
 
     Yields:
-        (dict, dict): Data and information dictionaries.
-            See read_flow_data for details.
+        (dict, dict, module): 3-tuple of dict's with read data and
+            information and a handle to the used read module. See
+            read_data_file for details.
 
     """
 
     for filename in files:
-        yield read_flow_data(filename)
+        yield read_data_file(filename)
 
 
-def read_flow_data(filename):
+def read_data_file(filename):
     """Return data and information about a flow field map.
 
     Data and information are separate dict's returned as tuple. The data
@@ -68,11 +69,12 @@ def read_flow_data(filename):
         filename (str): File to read data from.
 
     Returns:
-        (dict, dict): data and information dictionaries.
+        (dict, dict, module): 3-tuple of dict's with read data and information
+            and a handle to the used read module.
 
     """
 
     module = guess_read_module(filename)
     data, info = module.read(filename)
 
-    return data, info
+    return data, info, module
