@@ -30,7 +30,7 @@ def test_average_data():
         control['N'] = np.mean([d['N'] for d in data], 0)
 
         # Verify averaging function
-        avg_data = average_simple_data(*data)
+        avg_data = average_data(*data)
         for label in all_fields:
             assert (np.allclose(avg_data[label], control[label]))
 
@@ -53,18 +53,18 @@ def test_avg_different_sizes():
     data.append(d)
 
     with pytest.raises(ValueError):
-        average_simple_data(*data)
+        average_data(*data)
 
 def test_avg_empty():
     # Assert that no data returns empty dict
-    assert (average_simple_data() == {})
+    assert (average_data() == {})
 
     # Assert that empty data works
     data = {}
     for label in all_fields:
         data[label] = np.array([])
 
-    avg_data = average_simple_data(data)
+    avg_data = average_data(data)
     for label in all_fields:
         assert (np.array_equal(avg_data[label], data[label]))
 
@@ -84,7 +84,7 @@ def test_fields_nan():
             data.append(d)
 
         # No error should be raised
-        average_simple_data(*data)
+        average_data(*data)
 
 def test_read_and_average():
     filename = 'strata/dataformats/simple/tests/data_avgsimple.dat'
@@ -96,7 +96,7 @@ def test_read_and_average():
     data2['V'] *= 3
     data2['T'] *= 3
 
-    avg_data = average_simple_data(data1, data2)
+    avg_data = average_data(data1, data2)
     for label in ('U', 'V', 'T'):
         assert (np.allclose(np.sum(avg_data[label]), 2*np.sum(data1[label])))
 
@@ -104,6 +104,6 @@ def test_read_and_average():
     data2['M'] *= 3
     data2['N'] *= 3
 
-    avg_data = average_simple_data(data1, data2)
+    avg_data = average_data(data1, data2)
     for label in ('M', 'N'):
         assert (np.allclose(np.sum(avg_data[label]), 2*np.sum(data1[label])))

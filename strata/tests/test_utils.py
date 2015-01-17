@@ -8,7 +8,7 @@ begin_def = 1
 end_def=np.inf
 num_files_def = 10
 ext_def = '.dat'
-group_def = 1
+group_def = None
 
 def test_gen_filenames():
     filenames = list(gen_filenames(fnbase, 5, begin=4))
@@ -36,8 +36,8 @@ def find_datamaps_test_runner(**kwargs):
     with tmp.TemporaryDirectory() as tmp_dir:
         files = []
         num_files = min(num_files, last - first + 1)
-        for i in np.arange(first, first+num_files):
-            fndata = '%s%05d%s' % (fnbase, i, ext)
+        fn_gen = gen_filenames(fnbase, begin=first, end=first+num_files-1, ext=ext)
+        for fndata in fn_gen:
             files.append(os.path.join(tmp_dir, fndata))
             open(files[-1], 'w')
 
@@ -46,7 +46,7 @@ def find_datamaps_test_runner(**kwargs):
         paths = find_datamap_files(paths_base, **kwargs)
 
         # If singles are requested, try to access each file
-        if group == 1:
+        if group == None:
             for p in paths:
                 files.remove(p)
                 assert (os.access(p, os.F_OK) == True)
@@ -77,9 +77,54 @@ def test_find_datamaps_othernums():
 
 def test_find_datamaps_group():
     find_datamaps_test_runner(num_files=20, end=20, group=5)
+    find_datamaps_test_runner(num_files=5, group=1)
     find_datamaps_test_runner(num_files=20, group=5)
     find_datamaps_test_runner(num_files=23, group=5)
     find_datamaps_test_runner(begin=5, end=1, group=5)
+
+def test_groups_to_singles_filenames():
+    num_files = 10
+    group = 5
+    with tmp.TemporaryDirectory() as tmpdir:
+        base = os.path.join(tmpdir, fnbase)
+        outbase = os.path.join(tmpdir, 'out_')
+        files = []
+        for filename in gen_filenames(base, num_files):
+            files.append(filename)
+            open(filename, 'w')
+
+        # Assert that groups and singles are correct
+        out_gen = gen_filenames(outbase)
+        gen = find_groups_to_singles(base, outbase, group)
+        i, j = 0, 0
+        for from_fns, to_fn in gen:
+            assert (to_fn == next(out_gen))
+            for fn in from_fns:
+                assert (fn == files[j])
+                j += 1
+            i += 1
+        assert (i == np.floor(num_files/group))
+        assert (j == num_files)
+
+        # Assert that begin and end can be entered
+        begin, end = 3, 5
+        gen = find_groups_to_singles(base, outbase, group, begin=begin, end=end)
+        for _, _ in gen:
+            assert (False) # Should not be reached
+
+        begin, end = 5, 3
+        gen = find_groups_to_singles(base, outbase, group, begin=begin, end=end)
+        for _, _ in gen:
+            assert (False)
+
+        # Assert that numbering is correct for larger begins
+        group = 3
+        for begin in (4, 5, 6):
+            end = begin + group - 1
+            gen = find_groups_to_singles(base, outbase, group, begin=begin, end=end)
+            out_gen = gen_filenames(outbase, begin=2)
+            for _, to_fn in gen:
+                assert (to_fn == next(out_gen))
 
 def test_prepare_path_decorator():
     @prepare_path
@@ -125,3 +170,11 @@ def test_prepare_path_moreargs():
         wrapped_output_twoargs(path, [1,2,3])
         wrapped_output_twokeys(path, k0='key0', k1='key1')
 
+def test_catch_fileattr():
+    kwargs = {'begin': 2, 'end': 4, 'ext': '.tmp', 'extra': [1,2,3]}
+    attr = pop_fileopts(kwargs)
+    assert (kwargs == {'extra': [1,2,3]})
+    assert (attr == {'begin': 2, 'end': 4, 'ext': '.tmp'})
+    for i, _ in enumerate(gen_filenames('test_', **attr)):
+        pass
+    assert (i == 2)

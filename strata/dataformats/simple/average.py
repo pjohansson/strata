@@ -1,6 +1,6 @@
 import numpy as np
 
-def average_simple_data(*data):
+def average_data(*data):
     """Return a sample average of several plain maps.
 
     Note that flow ('U', 'V') are mass averaged and that the temperature

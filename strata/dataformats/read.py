@@ -29,6 +29,22 @@ def guess_read_module(filename):
     return formats.simple.main
 
 
+def read_from_files(*files):
+    """Yield data and information from a set of files to read.
+
+    Args:
+        files (str's): File names to yield data from, one per argument.
+
+    Yields:
+        (dict, dict): Data and information dictionaries.
+            See read_flow_data for details.
+
+    """
+
+    for filename in files:
+        yield read_flow_data(filename)
+
+
 def read_flow_data(filename):
     """Return data and information about a flow field map.
 
