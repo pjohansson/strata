@@ -2,7 +2,7 @@ import numpy as np
 
 """Read data from simple, naive file formats."""
 
-def read(filename):
+def read_data(filename):
     """Read field data from a file name.
 
     Determines which of the simple formats in this module to use and
@@ -82,7 +82,7 @@ def read_binsimple(filename):
 
     """
 
-    def read_data(filename):
+    def read_file(filename):
         # Fixed field order of format
         fields = ['X', 'Y', 'N', 'T', 'M', 'U', 'V']
         raw_data = np.fromfile(filename, dtype='float32')
@@ -95,7 +95,7 @@ def read_binsimple(filename):
 
         return data
 
-    data = read_data(filename)
+    data = read_file(filename)
 
     return data
 
@@ -110,7 +110,7 @@ def read_plainsimple(filename):
         dict: Data with field labels as keys.
     """
 
-    def read_data(filename):
+    def read_file(filename):
         raw_data = np.genfromtxt(filename, names=True)
 
         # Unpack into dictionary
@@ -120,6 +120,6 @@ def read_plainsimple(filename):
 
         return data
 
-    data = read_data(filename)
+    data = read_file(filename)
 
     return data

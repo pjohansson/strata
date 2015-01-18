@@ -4,7 +4,7 @@ from strata.utils import prepare_path
 """Module for writing data to disk in simple formats."""
 
 @prepare_path
-def write(path, data, binary=True):
+def write_data(path, data, binary=True):
     """Write data to disk in a simple data format.
 
     Input data must contain fields ('X', 'Y', 'U', 'V', 'N', 'T', 'M').

@@ -4,7 +4,7 @@ import tempfile as tmp
 from strata.average import *
 from strata.utils import gen_filenames, find_datamap_files
 from strata.dataformats.read import read_data_file
-from strata.dataformats.simple.main import average_data, write
+from strata.dataformats.simple.main import average_data, write_data
 
 tmpfn = 'tmp_'
 outfn = 'out_'
@@ -28,7 +28,7 @@ def test_average_datamaps():
                 save_data.update({l: np.random.sample(datasize)})
             tmp_data.append(save_data.copy())
 
-            write(path, save_data)
+            write_data(path, save_data)
 
         # Average data
         average(tmpbase, outbase, group)
@@ -62,7 +62,7 @@ def test_average_datamaps_othernums():
             for l in fields:
                 save_data.update({l: np.random.sample(datasize)})
             tmp_data.append(save_data.copy())
-            write(path, save_data)
+            write_data(path, save_data)
 
         # Average data
         average(tmpbase, outbase, group, begin=begin, end=end, ext=ext)

@@ -75,6 +75,6 @@ def read_data_file(filename):
     """
 
     module = guess_read_module(filename)
-    data, info = module.read(filename)
+    data, info = module.read_data(filename)
 
     return data, info, module

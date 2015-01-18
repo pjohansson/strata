@@ -126,6 +126,15 @@ def test_groups_to_singles_filenames():
             for _, to_fn in gen:
                 assert (to_fn == next(out_gen))
 
+def test_catch_fileattr():
+    kwargs = {'begin': 2, 'end': 4, 'ext': '.tmp', 'extra': [1,2,3]}
+    attr = pop_fileopts(kwargs)
+    assert (kwargs == {'extra': [1,2,3]})
+    assert (attr == {'begin': 2, 'end': 4, 'ext': '.tmp'})
+    for i, _ in enumerate(gen_filenames('test_', **attr)):
+        pass
+    assert (i == 2)
+
 def test_prepare_path_decorator():
     @prepare_path
     def wrapped_output(*args, **kwargs):
@@ -169,12 +178,3 @@ def test_prepare_path_moreargs():
         path = os.path.join(tmp_dir, 'tmpfile')
         wrapped_output_twoargs(path, [1,2,3])
         wrapped_output_twokeys(path, k0='key0', k1='key1')
-
-def test_catch_fileattr():
-    kwargs = {'begin': 2, 'end': 4, 'ext': '.tmp', 'extra': [1,2,3]}
-    attr = pop_fileopts(kwargs)
-    assert (kwargs == {'extra': [1,2,3]})
-    assert (attr == {'begin': 2, 'end': 4, 'ext': '.tmp'})
-    for i, _ in enumerate(gen_filenames('test_', **attr)):
-        pass
-    assert (i == 2)

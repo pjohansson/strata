@@ -1,4 +1,5 @@
 from strata.dataformats.read import read_from_files
+from strata.dataformats.write import write
 from strata.utils import *
 
 def average(base, output, group=1, **kwargs):
@@ -43,4 +44,4 @@ def average(base, output, group=1, **kwargs):
         module = used_modules.pop()
 
         avg_data = module.average_data(*group_data)
-        module.write(fn_out, avg_data)
+        write(fn_out, avg_data)

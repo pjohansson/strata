@@ -137,6 +137,33 @@ def find_groups_to_singles(base, output, group=1, **kwargs):
         yield(input_group, next(output_gen))
 
 
+def pop_fileopts(kwargs):
+    """Pop common options pertaining to file reading from dict.
+
+    The pop'd options are returned as a dict, set to default values.
+
+    Keyword Args:
+        begin (int, default=1): First data map number.
+
+        end (int, default=inf): Final data map number. Can be input
+            as the second positional argument.
+
+        ext (str, default='.dat'): File extension.
+
+    Return:
+        dict: Input options with set or default values.
+
+    """
+
+    opts = {
+            'begin': kwargs.pop('begin', 1),
+            'end': kwargs.pop('end', np.inf),
+            'ext': kwargs.pop('ext', '.dat')
+            }
+
+    return opts
+
+
 def prepare_path(func):
     """Wrapper for file output: Prepare a path for writing.
 
@@ -187,30 +214,3 @@ def prepare_path(func):
         return func(*args, **kwargs)
 
     return prepare_path_wrapper
-
-
-def pop_fileopts(kwargs):
-    """Pop common options pertaining to file reading from dict.
-
-    The pop'd options are returned as a dict, set to default values.
-
-    Keyword Args:
-        begin (int, default=1): First data map number.
-
-        end (int, default=inf): Final data map number. Can be input
-            as the second positional argument.
-
-        ext (str, default='.dat'): File extension.
-
-    Return:
-        dict: Input options with set or default values.
-
-    """
-
-    opts = {
-            'begin': kwargs.pop('begin', 1),
-            'end': kwargs.pop('end', np.inf),
-            'ext': kwargs.pop('ext', '.dat')
-            }
-
-    return opts
