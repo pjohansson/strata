@@ -30,7 +30,7 @@ def gen_filenames(base, end=np.inf, **kwargs):
     ext = kwargs.pop('ext', '.dat')
 
     while num <= end:
-        yield('%s%05d%s' % (base, num, ext))
+        yield '%s%05d%s' % (base, num, ext)
         num += 1
 
 
@@ -65,7 +65,7 @@ def find_datamap_files(base, **kwargs):
     def yield_singles(base, begin, end, ext):
         for filename in gen_filenames(base, begin=begin, end=end, ext=ext):
             if os.access(filename, os.F_OK) == True:
-                yield(filename)
+                yield filename
             else:
                 break
 
@@ -76,7 +76,7 @@ def find_datamap_files(base, **kwargs):
             files = list(yield_singles(base, begin, group_end, ext))
 
             if len(files) == group:
-                yield(files)
+                yield files
                 begin += group
                 group_end += group
             else:
@@ -93,6 +93,34 @@ def find_datamap_files(base, **kwargs):
         yield from yield_singles(base, *args)
     else:
         yield from yield_groups(base, *args)
+
+
+def find_singles_to_singles(base, output, **kwargs):
+    """Find input file names and generates with output file names.
+
+    Used to easily read from and write to file groups.
+
+    Args:
+        base (str): Base path to input files.
+
+        output (str): Base path to output files.
+
+    Keyword Args:
+        begin (int, default=1): First data map numbering to read.
+
+        end (int, default=inf): Final data map numbering to read.
+
+        ext (str, default='.dat'): File extension.
+
+    Yields:
+        str, str: 2-tuple with input and corresponding output paths.
+
+    """
+
+    fopts = pop_fileopts(kwargs)
+    out = gen_filenames(output, **fopts)
+    for path in find_datamap_files(base, **fopts):
+        yield path, next(out)
 
 
 def find_groups_to_singles(base, output, group=1, **kwargs):
@@ -134,7 +162,7 @@ def find_groups_to_singles(base, output, group=1, **kwargs):
     output_gen = gen_filenames(output, begin=begin_out_num, ext=opts['ext'])
     input_gen = find_datamap_files(base, group=group, **opts)
     for input_group in input_gen:
-        yield(input_group, next(output_gen))
+        yield input_group, next(output_gen)
 
 
 def pop_fileopts(kwargs):
@@ -155,13 +183,13 @@ def pop_fileopts(kwargs):
 
     """
 
-    opts = {
+    fopts = {
             'begin': kwargs.pop('begin', 1),
             'end': kwargs.pop('end', np.inf),
             'ext': kwargs.pop('ext', '.dat')
             }
 
-    return opts
+    return fopts
 
 
 def prepare_path(func):

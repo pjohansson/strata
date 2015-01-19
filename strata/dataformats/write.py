@@ -26,8 +26,8 @@ def write(path, data, *args, **kwargs):
 
     Keyword Args:
         ftype (str, default='simple'): File type to write. Choices:
-            'simple'       - Simple binary    (strata.dataformats.simple.write)
-            'simple_plain' - Simple plaintext (strata.dataformats.simple.write)
+            'simple'       - Simple binary    (strata.dataformats.simple)
+            'simple_plain' - Simple plaintext (strata.dataformats.simple)
 
     Raises:
         KeyError: If a non-existant 'ftype' is specified.

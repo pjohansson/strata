@@ -24,7 +24,9 @@ def write_data(path, data, binary=True):
 
     def write_plainsimple():
         header = ' '.join(fields_ordered)
-        np.savetxt(path, save_data, fmt='%6f', delimiter=' ', header=header)
+        np.savetxt(path, save_data, fmt='%6f', delimiter=' ',
+                header=header, comments='')
+
 
     fields_ordered = ['X', 'Y', 'N', 'T', 'M', 'U', 'V']
 

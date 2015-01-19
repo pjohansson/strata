@@ -126,6 +126,43 @@ def test_groups_to_singles_filenames():
             for _, to_fn in gen:
                 assert (to_fn == next(out_gen))
 
+def test_find_singles_to_singles():
+    num_files = 10
+
+    with tmp.TemporaryDirectory() as tmpdir:
+        base = os.path.join(tmpdir, fnbase)
+        outbase = os.path.join(tmpdir, 'out_')
+
+        files = []
+        for fn in gen_filenames(base, num_files):
+            open(fn, 'w')
+            files.append(fn)
+
+        out_gen = gen_filenames(outbase, num_files)
+        gen = find_singles_to_singles(base, outbase)
+        for i, (fnin, fnout) in enumerate(gen):
+            assert (fnin == files[i])
+            assert (fnout == next(out_gen))
+
+def test_find_singles_to_singles_fopts():
+    num_files = 10
+    fopts = {'begin': 4, 'end': 6, 'ext': '.tmp'}
+
+    with tmp.TemporaryDirectory() as tmpdir:
+        base = os.path.join(tmpdir, fnbase)
+        outbase = os.path.join(tmpdir, 'out_')
+
+        files = []
+        for fn in gen_filenames(base, **fopts):
+            open(fn, 'w')
+            files.append(fn)
+
+        out_gen = gen_filenames(outbase, **fopts)
+        gen = find_singles_to_singles(base, outbase, **fopts)
+        for i, (fnin, fnout) in enumerate(gen):
+            assert (fnin == files[i])
+            assert (fnout == next(out_gen))
+
 def test_catch_fileattr():
     kwargs = {'begin': 2, 'end': 4, 'ext': '.tmp', 'extra': [1,2,3]}
     attr = pop_fileopts(kwargs)
