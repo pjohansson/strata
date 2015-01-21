@@ -2,6 +2,7 @@ from strata.dataformats.read import read_from_files
 from strata.dataformats.write import write
 from strata.utils import find_groups_to_singles, pop_fileopts
 
+
 def average(base, output, group=1, **kwargs):
     """Average and output data maps from input base.
 

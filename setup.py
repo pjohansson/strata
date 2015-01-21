@@ -15,7 +15,7 @@ class PyTest(Command):
                 '--cov', 'strata',
                 '--cov-report', 'term-missing'
                 ]
-        errno = subprocess.call([sys.executable, 'runtests.py', '-v'] + coverage)
+        errno = subprocess.call([sys.executable, 'runtests.py'] + coverage)
         raise SystemExit(errno)
 
 setup(
@@ -28,7 +28,14 @@ setup(
         license='None',
         packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
         cmdclass={'test': PyTest},
-        install_requires=['setuptools'],
+        install_requires=['setuptools', 'Click'],
+        include_package_data=True,
+        entry_points='''
+            [console_scripts]
+            avg_strata=strata.strata:average_cli
+            conv_strata=strata.strata:convert_cli
+            strata=strata.strata:strata
+        ''',
         tests_require=['pytest', 'pytest-cov', 'coverage'],
-        zip_safe=True
+        zip_safe=False
         )
