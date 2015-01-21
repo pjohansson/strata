@@ -1,6 +1,6 @@
-from strata.utils import *
 from strata.dataformats.read import read_data_file
 from strata.dataformats.write import write
+from strata.utils import find_singles_to_singles, pop_fileopts
 
 
 def convert(base, output, **kwargs):
