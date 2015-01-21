@@ -19,9 +19,9 @@ def strata():
 
 # Average wrapper
 @strata.command(name='average', short_help='Sample average data files.')
-@add_argument('base',   type=str)
+@add_argument('base', type=str)
 @add_argument('output', type=str)
-@add_argument('group',  type=int)
+@add_argument('group', type=click.IntRange(1, None))
 @add_option('-b', '--begin', default=1, type=click.IntRange(0, None),
         help='Begin reading from BASE at this number. (1)')
 @add_option('-e', '--end', default=None, type=click.IntRange(0, None),

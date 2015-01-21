@@ -32,8 +32,6 @@ setup(
         include_package_data=True,
         entry_points='''
             [console_scripts]
-            avg_strata=strata.strata:average_cli
-            conv_strata=strata.strata:convert_cli
             strata=strata.strata:strata
         ''',
         tests_require=['pytest', 'pytest-cov', 'coverage'],
