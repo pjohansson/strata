@@ -80,7 +80,6 @@ def spreading(base, **kwargs):
             radius = 0.5*(right - left)
             spreading_radius.append(radius)
             times.append(time)
-            print(time, left, right, radius)
 
             if output != None:
                 if not impact:
@@ -143,7 +142,6 @@ def get_spreading_edges(flow, label, include_radius, **kwargs):
         try:
             ileft, iright = next(interface)
             ylayer = ys[ileft]
-            print(ylayer, ileft, iright)
         except StopIteration:
             return None, None
         else:
