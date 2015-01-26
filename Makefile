@@ -8,7 +8,7 @@ tests: ${runtests_file}
 
 vtest: vtests
 vtests: ${runtests_file}
-	${python} $< -v
+	${python} $< -v -r w
 
 install: ${setup_file}
 	${python} $< $@

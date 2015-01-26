@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import warnings
 
 
 def get_interface(flow, label, radius, **kwargs):
@@ -7,6 +8,16 @@ def get_interface(flow, label, radius, **kwargs):
 
     Indices are yielded from bottom to the top and correspond to found
     left and right indices of the boundary.
+
+    The simple for cells to be a part of the liquid is that the cell
+    and a given number of cells within a radius of it must have a given
+    parameter value (the input label) larger than or equal to a cut-off
+    value.
+
+    Periodic boundary conditions are not applied for the radius search.
+    This means that cells on the outermost edges of the system are searching
+    for neighbouring cells in a smaller area around themselves and might
+    not be detected given identical settings.
 
     Args:
         flow (FlowData): A FlowData object. Must contain a data record
@@ -24,30 +35,64 @@ def get_interface(flow, label, radius, **kwargs):
         num_cells (int, default=1): Number of cells inside the set radius
             which must pass the cut-off criteria.
 
+        ylims (2-tuple, default=(None, None)): Only return interface boundary
+            within these height limits.
+
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
     Yields:
         int, int: Indices for the left and right boundary of an
             interface layer.
 
+    Warnings:
+        UserWarning: If a cutoff is not specified and the system is homogenous
+            for the input parameter label no interface can be found.
+            (None, None) is returned.
+
     """
+
+    def get_cutoff(cutoff, data):
+        if cutoff == None:
+            vmin = np.min(data[label])
+            vmax = np.max(data[label])
+            assert (vmin != vmax)
+
+            cutoff = 0.5*(vmin + vmax)
+
+        return cutoff
+
+    def get_yvalues(Y, ymin, ymax):
+        ymin = -np.inf if ymin == None else ymin
+        ymax =  np.inf if ymax == None else ymax
+        ys = np.unique(Y)
+
+        return ys[(ys >= ymin) & (ys <= ymax)]
 
     def traverse_layer(sorted_layer):
         for cell in sorted_layer:
             index = np.where(flow.data == cell)[0][0]
 
-            if cell_is_droplet(index, flow.data, label, radius, **kwargs):
+            if cell_is_droplet(index, flow.data, label, radius, cutoff, **kwargs):
                 return index
 
         else:
             return None
 
-    Y = flow.data['Y']
-    ys = np.unique(Y)
+    try:
+        cutoff = get_cutoff(kwargs.pop('cutoff', None), flow.data)
+    except AssertionError:
+        warnings.warn("system is homogenous: no interface can be found", UserWarning)
+        return None, None
+
+    ylims = kwargs.pop('ylims', (None, None))
+
+    xlabel, ylabel = kwargs.get('coord_labels', ('X', 'Y'))
+    Y = flow.data[ylabel]
+    ys = get_yvalues(Y, *ylims)
 
     for i, y in enumerate(ys):
         layer = flow.data[Y == y]
-        sorted_layer = np.sort(layer)
+        sorted_layer = np.sort(layer, order=xlabel)
 
         left = traverse_layer(sorted_layer)
         right = traverse_layer(reversed(sorted_layer))
@@ -56,14 +101,10 @@ def get_interface(flow, label, radius, **kwargs):
             yield left, right
 
 
-def cell_is_droplet(cell, system, label, radius, **kwargs):
+def cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
     """Determine whether a cell is a connected part of a liquid system.
 
-    The simple rule is that the cell and a given number of cells within
-    a radius of it must have a parameter value larger than or equal to
-    a cut-off value.
-
-    Periodic boundary conditions are not applied for the radius search.
+    See 'get_interface' for details on the cell search.
 
     Args:
         cell (int): Index of origin cell in system record array.
@@ -74,10 +115,9 @@ def cell_is_droplet(cell, system, label, radius, **kwargs):
 
         radius (float): Radius to include cells within.
 
-    Keyword Args:
-        cutoff (float, default=None): Which interface height to cut the
-            boundary at. Defaults to the midpoint height.
+        cutoff (float): Which interface height to cut the boundary at.
 
+    Keyword Args:
         num_cells (int, default=1): Number of cells inside the set radius
             which must pass the cut-off criteria.
 
@@ -91,24 +131,18 @@ def cell_is_droplet(cell, system, label, radius, **kwargs):
 
     """
 
-    cutoff = kwargs.pop('cutoff', None)
     num_cells = kwargs.pop('num_cells', 1)
 
     try:
-        if cutoff == None:
-            cutoff = 0.5*(np.max(system[label]) + np.min(system[label]))
-
-        try:
-            assert (system[cell][label] >= cutoff)
-            indices = get_indices_in_radius(cell, system, radius, **kwargs)
-            assert (len(system[system[label][indices] >= cutoff]) >= num_cells)
-        except AssertionError:
-            return False
-        else:
-            return True
-
+        assert (system[cell][label] >= cutoff)
+        indices = get_indices_in_radius(cell, system, radius, **kwargs)
+        assert (len(system[system[label][indices] >= cutoff]) >= num_cells)
+    except AssertionError:
+        return False
     except IndexError:
         raise IndexError("could not find set labels in system")
+    else:
+        return True
 
 
 def get_indices_in_radius(cell, system, radius, **kwargs):

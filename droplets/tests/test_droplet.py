@@ -56,10 +56,11 @@ def test_cell_is_droplet():
 
     label = 'C'
     radius = 1.5
+    cutoff = 0.5
 
     droplet = []
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius))
+        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff))
     assert (droplet == [False, True, True, True, False])
 
 def test_cell_is_droplet_cutoff():
@@ -75,16 +76,14 @@ def test_cell_is_droplet_cutoff():
     droplet = []
     cutoff = 2
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff=cutoff))
+        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff))
     assert (droplet == [False, False, False, False, False])
 
     droplet = []
     cutoff = 0.5
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff=cutoff))
+        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff))
     assert (droplet == [False, True, True, True, False])
-
-
 
 def test_cell_is_droplet_numcells():
     datasize = 5
@@ -95,11 +94,12 @@ def test_cell_is_droplet_numcells():
 
     label = 'C'
     radius = 1.5
+    cutoff = 0.5
     num_cells = 2
 
     droplet = []
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius,
+        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff,
             num_cells=num_cells))
     assert (droplet == [False, False, True, False, False])
 
@@ -118,7 +118,7 @@ def test_cell_is_droplet_general_names():
 
     droplet = []
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius,
+        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff,
             coord_labels=coord_labels))
     assert (droplet == [False, True, True, True, False])
 
@@ -130,11 +130,12 @@ def test_cell_is_droplet_bad_names():
     system['f1'] = np.arange(datasize)
 
     coord_labels = ('c0', 'c1')
-    label = 'C'
+    label = 'E'
     radius = 1.5
+    cutoff = 0.5
 
     with pytest.raises(IndexError):
-        cell_is_droplet(0, system, label, radius)
+        cell_is_droplet(0, system, label, radius, cutoff)
 
 def test_find_interface_bottom():
     datasize = 5
@@ -180,3 +181,31 @@ def test_find_interface():
             cutoff=cutoff)):
         interface.append(flow.data[[ileft, iright]])
     assert (len(interface) == 0)
+
+def test_find_interface_ylims():
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
+
+    label = 'C'
+    radius = 1.1
+    ylims = (4.5, 7.5)
+
+    yvalues = []
+    for i, (ileft, _) in enumerate(get_interface(flow, label, radius,
+            ylims=ylims)):
+        yvalues.append(flow.data[ileft]['Y'])
+    assert (yvalues == [5, 6, 7])
+
+def test_find_interface_noboundaries(recwarn):
+    from warnings import warn
+
+    cs = 0*xs
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
+
+    label = 'C'
+    radius = 1.1
+
+    for left, right in get_interface(flow, label, radius):
+        warning = recwarn.pop(UserWarning)
+        assert (left == None and right == None)
+
+
