@@ -65,16 +65,25 @@ def read_data_file(filename):
             'num_bins': number of bins in system.
             }
 
+    The returned metadata contains:
+
+        metadata = {
+            'module': handle to the module used for reading,
+            'path': path to read file
+            }
+
     Args:
         filename (str): File to read data from.
 
     Returns:
         (dict, dict, module): 3-tuple of dict's with read data and information
-            and a handle to the used read module.
+            from the data map and one with metadata.
 
     """
 
     module = guess_read_module(filename)
     data, info = module.read_data(filename)
 
-    return data, info, module
+    metadata = {'path': filename, 'module': module}
+
+    return data, info, metadata

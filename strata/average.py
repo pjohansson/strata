@@ -36,9 +36,9 @@ def average(base, output, group=1, **kwargs):
         group_data = []
         used_modules = set([])
 
-        for data, _, module in read_from_files(*fn_group):
+        for data, _, meta in read_from_files(*fn_group):
             group_data.append(data)
-            used_modules.add(module)
+            used_modules.add(meta.pop('module'))
 
         # Assert that a single module was used and retrieve it
         assert (len(used_modules) == 1)

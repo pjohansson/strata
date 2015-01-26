@@ -72,7 +72,7 @@ def spreading(base, **kwargs):
     times = []
     spreading_radius = []
     files = list(find_datamap_files(base, **fopts))
-    for i, (data, _, _) in enumerate(read_from_files(*files)):
+    for i, (data, _, meta) in enumerate(read_from_files(*files)):
         flow = FlowData(data)
         left, right = get_spreading_edges(flow, 'M', include_radius, **kwargs)
 
@@ -83,7 +83,7 @@ def spreading(base, **kwargs):
 
             if output != None:
                 if not impact:
-                    output_impact_time(output, i*dt)
+                    output_impact_time(output, i*dt, meta.pop('path'))
                     impact = True
                 output_spreading(output, time, radius)
 
@@ -170,13 +170,14 @@ def prepare_output(output):
     return output
 
 
-def output_impact_time(path, time):
+def output_impact_time(path, time, fn):
     """Write impact time and column header."""
     with open(path, 'a') as fp:
         impact_comment = (
                 "# Droplet impact at t = %.3f\n"
+                "# ('%s')\n"
                 "#\n"
-                "# Time (ps) Radius (nm)\n" % time
+                "# Time (ps) Radius (nm)\n" % (time, fn)
                 )
         fp.write(impact_comment)
 
