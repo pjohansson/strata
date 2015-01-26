@@ -71,7 +71,7 @@ class TestGetSpread(object):
         floor = 1.1
         flow = FlowData(('X', xs), ('Y', ys), (label, cs))
 
-        # Assert that cells are in second layer
+        # Assert that bins are in second layer
         left, right = get_spreading_edges(flow, label, radius, floor=floor)
         assert (left == X[xmin] and right == X[xmax])
 
@@ -86,13 +86,13 @@ class TestGetSpread(object):
         label = 'C'
         clabels = ('f0', 'f1')
         radius = 2*(xs[1] - xs[0])*1.1
-        num_cells = 2
+        num_bins = 2
         cutoff = 2
 
         kwargs = {
                 'coord_labels': clabels,
                 'cutoff': cutoff,
-                'num_cells': num_cells
+                'num_bins': num_bins
                 }
 
         flow = FlowData((clabels[0], xs), (clabels[1], ys), (label, cs))

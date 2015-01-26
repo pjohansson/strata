@@ -9,14 +9,14 @@ def get_interface(flow, label, radius, **kwargs):
     Indices are yielded from bottom to the top and correspond to found
     left and right indices of the boundary.
 
-    The simple for cells to be a part of the liquid is that the cell
-    and a given number of cells within a radius of it must have a given
+    The simple for bins to be a part of the liquid is that the cell
+    and a given number of bins within a radius of it must have a given
     parameter value (the input label) larger than or equal to a cut-off
     value.
 
     Periodic boundary conditions are not applied for the radius search.
-    This means that cells on the outermost edges of the system are searching
-    for neighbouring cells in a smaller area around themselves and might
+    This means that bins on the outermost edges of the system are searching
+    for neighbouring bins in a smaller area around themselves and might
     not be detected given identical settings.
 
     Args:
@@ -26,13 +26,13 @@ def get_interface(flow, label, radius, **kwargs):
 
         label (str): Record label used as base for the interface height map.
 
-        radius (float): Radius to include cells within.
+        radius (float): Radius to include bins within.
 
     Keyword Args:
         cutoff (float, default=None): Which interface height to cut the
             boundary at. Defaults to the midpoint height.
 
-        num_cells (int, default=1): Number of cells inside the set radius
+        num_bins (int, default=1): Number of bins inside the set radius
             which must pass the cut-off criteria.
 
         ylims (2-tuple, default=(None, None)): Only return interface boundary
@@ -113,12 +113,12 @@ def cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
 
         label (str): Record label used as base for the boundary determination.
 
-        radius (float): Radius to include cells within.
+        radius (float): Radius to include bins within.
 
         cutoff (float): Which interface height to cut the boundary at.
 
     Keyword Args:
-        num_cells (int, default=1): Number of cells inside the set radius
+        num_bins (int, default=1): Number of bins inside the set radius
             which must pass the cut-off criteria.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
@@ -131,12 +131,12 @@ def cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
 
     """
 
-    num_cells = kwargs.pop('num_cells', 1)
+    num_bins = kwargs.pop('num_bins', 1)
 
     try:
         assert (system[cell][label] >= cutoff)
         indices = get_indices_in_radius(cell, system, radius, **kwargs)
-        assert (len(system[system[label][indices] >= cutoff]) >= num_cells)
+        assert (len(system[system[label][indices] >= cutoff]) >= num_bins)
     except AssertionError:
         return False
     except IndexError:
@@ -146,20 +146,20 @@ def cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
 
 
 def get_indices_in_radius(cell, system, radius, **kwargs):
-    """Return indices of cells within a given radius of input cell.
+    """Return indices of bins within a given radius of input cell.
 
     Args:
         cell (int): Index of origin cell in system record array.
 
         system (record): Field data in record format.
 
-        radius (float): Radius to include cells within.
+        radius (float): Radius to include bins within.
 
     Keyword Args:
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
     Returns:
-        ndarray: Numpy array of indices of cells within set radius of origin.
+        ndarray: Numpy array of indices of bins within set radius of origin.
 
     """
 

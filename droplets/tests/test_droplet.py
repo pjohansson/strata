@@ -85,7 +85,7 @@ def test_cell_is_droplet_cutoff():
         droplet.append(cell_is_droplet(cell, system, label, radius, cutoff))
     assert (droplet == [False, True, True, True, False])
 
-def test_cell_is_droplet_numcells():
+def test_cell_is_droplet_numbins():
     datasize = 5
     system = np.zeros(datasize, dtype=dtype).ravel()
     system['X'] = np.arange(datasize)
@@ -95,12 +95,12 @@ def test_cell_is_droplet_numcells():
     label = 'C'
     radius = 1.5
     cutoff = 0.5
-    num_cells = 2
+    num_bins = 2
 
     droplet = []
     for cell in np.arange(system.size):
         droplet.append(cell_is_droplet(cell, system, label, radius, cutoff,
-            num_cells=num_cells))
+            num_bins=num_bins))
     assert (droplet == [False, False, True, False, False])
 
 def test_cell_is_droplet_general_names():
@@ -152,8 +152,8 @@ def test_find_interface_bottom():
         assert (ileft == 1 and iright == 3)
         break
 
-    num_cells = 2
-    for ileft, iright in get_interface(flow, label, radius, num_cells=num_cells):
+    num_bins = 2
+    for ileft, iright in get_interface(flow, label, radius, num_bins=num_bins):
         assert (ileft == 2 and iright == 2)
         break
 

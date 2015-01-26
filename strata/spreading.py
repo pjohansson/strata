@@ -16,7 +16,7 @@ def spreading(base, **kwargs):
     """Return the spreading radius of a droplet as a function of time.
 
     Droplets are contained in data map files at input base. The spreading
-    radius is found as the outermost filled cells of the
+    radius is found as the outermost filled bins of the
     bottom interface layer as found by 'droplets.droplet.get_interface'.
     The accumulated mass inside bins is used as the parameter determining
     whether a system bin is full or not.
@@ -37,14 +37,14 @@ def spreading(base, **kwargs):
         dt (float): Time difference between input maps.
 
         floor (float): Height at which spreading occurs. Defaults to the
-            bottom interface cells found in the data maps.
+            bottom interface bins found in the data maps.
 
         cutoff (float): Which mass value to cut the boundary at.
             Defaults to the midpoint mass.
 
-        include_radius (float, default=1): Radius to include cells within.
+        include_radius (float, default=1): Radius to include bins within.
 
-        num_cells (int, default=1): Number of cells inside the set radius
+        num_bins (int, default=1): Number of bins inside the set radius
             which must pass the cut-off criteria.
 
         begin (int, default=1): First data map number.
@@ -107,16 +107,16 @@ def get_spreading_edges(flow, label, include_radius, **kwargs):
 
         label (str): Record label used as base for the interface height map.
 
-        include_radius (float): Radius to include cells within.
+        include_radius (float): Radius to include bins within.
 
     Keyword Args:
         floor (float): Height at which spreading occurs. Defaults to the
-            bottom interface cells found in the data map.
+            bottom interface bins found in the data map.
 
         cutoff (float): Which interface height to cut the boundary at.
             Defaults to the midpoint height.
 
-        num_cells (int, default=1): Number of cells inside the set radius
+        num_bins (int, default=1): Number of bins inside the set radius
             which must pass the cut-off criteria.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
