@@ -1,4 +1,14 @@
+import inspect
+import os
 from setuptools import setup, Command, find_packages
+
+def get_version():
+    version_filename = 'VERSION'
+    root_dir, _ = os.path.split(os.path.realpath(__file__))
+    with open(os.path.join(root_dir, version_filename)) as fp:
+        version = fp.readline().strip()
+
+    return version
 
 class PyTest(Command):
     user_options = []
@@ -20,7 +30,7 @@ class PyTest(Command):
 
 setup(
         name='flowfield',
-        version='0.1',
+        version=get_version(),
         description='Tools for studying droplet and fluid dynamics data.',
         url='https://github.com/pjohansson/flowtools-rewrite',
         author='Petter Johansson',

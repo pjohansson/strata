@@ -1,8 +1,11 @@
+import os
 import numpy as np
+import warnings
+
 from droplets.flow import FlowData
 from droplets.droplet import get_interface
-from strata.utils import find_datamap_files, pop_fileopts, prepare_path
 from strata.dataformats.read import read_from_files
+from strata.utils import *
 
 """Module for finding the spreading of a droplet.
 
@@ -58,43 +61,57 @@ def spreading(base, **kwargs):
 
     """
 
+    def prepare_output(output, header_opts, fopts):
+        header_opts.update(fopts)
+
+        try:
+            write_header(output, base, header_opts)
+        except PermissionError:
+            print("[WARNING] Output disabled: could not open '%s' for writing."
+                    % output)
+            output = None
+
+        return output
+
+    def get_spreading_ndarray(times, radii):
+        dtype=[('t', 'float32'), ('r', 'float32')]
+        data = np.zeros(len(times), dtype=dtype)
+
+        data['t'] = times
+        data['r'] = radii
+
+        return data
+
     fopts = pop_fileopts(kwargs)
 
     output = kwargs.pop('output', None)
     if output != None:
-        output = prepare_output(output)
-        impact = False
+        output = prepare_output(output, kwargs.copy(), fopts)
 
     time = 0
     dt = kwargs.pop('dt', 1)
     include_radius = kwargs.pop('include_radius', 1)
 
     times = []
-    spreading_radius = []
+    radii = []
+
     files = list(find_datamap_files(base, **fopts))
-    for i, (data, _, meta) in enumerate(read_from_files(*files)):
+    for data, _, meta in read_from_files(*files):
         flow = FlowData(data)
         left, right = get_spreading_edges(flow, 'M', include_radius, **kwargs)
 
         if left != None and right != None:
             radius = 0.5*(right - left)
-            spreading_radius.append(radius)
+
+            radii.append(radius)
             times.append(time)
 
             if output != None:
-                if not impact:
-                    output_impact_time(output, i*dt, meta.pop('path'))
-                    impact = True
-                output_spreading(output, time, radius)
+                write_spreading(output, time, radius, meta.pop('path'))
 
             time += dt
 
-    dtype=[('t', 'float32'), ('r', 'float32')]
-    spreading_data = np.zeros(len(times), dtype=dtype)
-    spreading_data['t'] = times
-    spreading_data['r'] = spreading_radius
-
-    return spreading_data
+    return get_spreading_ndarray(times, radii)
 
 
 def get_spreading_edges(flow, label, include_radius, **kwargs):
@@ -152,37 +169,63 @@ def get_spreading_edges(flow, label, include_radius, **kwargs):
 
 
 # Output helper functions
-def prepare_output(output):
+@prepare_path
+def write_header(output_path, input_base, kwargs):
     """Verify that output path is writable and write header."""
-    try:
-        prepare_path(output)
-        fp = open(output, 'w')
-    except PermissionError:
-        warnings.warn("Output disabled: could not open '%s' for writing"
-                % output, UserWarning)
-        output = None
-    else:
-        header = "# Spreading radius of a droplet impacting a substrate\n"
 
-        fp.write(header)
-        fp.close()
+    import pkg_resources
+    import time
 
-    return output
+    with open(output_path, 'w') as fp:
+        time_str = time.strftime('%c', time.localtime())
+        version_str = pkg_resources.require("flowfield")[0].version
+
+        header = (
+                "# Spreading radius of a droplet impacting a substrate\n"
+                "# \n"
+                "# Creation date: %s\n"
+                "# Using module version: %s\n"
+                "# \n"
+                % (time_str, version_str))
+
+        inputs = (
+                "# Inputs:\n"
+                "#   File base path: %r\n"
+                "#   Begin, end: %r, %r\n"
+                "#   Floor: %r\n"
+                "#   Delta-t: %r\n"
+                "#   Mass cut-off: %r\n"
+                "#   Radius cut-off: %r\n"
+                "#   Required # of bins: %r\n"
+                "# \n"
+                % (os.path.realpath(input_base),
+                    kwargs.get('begin', None), kwargs.get('end', None),
+                    kwargs.get('floor', None), kwargs.get('dt', 1.),
+                    kwargs.get('cutoff', None), kwargs.get('include_radius', 1.),
+                    kwargs.get('num_bins', 1)))
+
+        fp.write(header + inputs)
 
 
-def output_impact_time(path, time, fn):
-    """Write impact time and column header."""
-    with open(path, 'a') as fp:
+@static_variable('impact', False)
+def write_spreading(output_path, time, radius, cur_filename):
+    """Write time and spreading radius to output file."""
+
+    def output_impact_time(fp, time, impact_path):
+        """Write impact time and column header."""
+
+        _, filename = os.path.split(impact_path)
         impact_comment = (
                 "# Droplet impact at t = %.3f\n"
-                "# ('%s')\n"
-                "#\n"
-                "# Time (ps) Radius (nm)\n" % (time, fn)
+                "#                file = '%s'\n"
+                "# \n"
+                "# Time (ps) Radius (nm)\n" % (time, filename)
                 )
         fp.write(impact_comment)
 
+    with open(output_path, 'a') as fp:
+        if not write_spreading.impact:
+            output_impact_time(fp, time, cur_filename)
+            write_spreading.impact = True
 
-def output_spreading(path, time, radius):
-    """Write time and spreading radius."""
-    with open(path, 'a') as fp:
         fp.write('%.3f %.3f\n' % (time, radius))

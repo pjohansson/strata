@@ -242,3 +242,13 @@ def prepare_path(func):
         return func(*args, **kwargs)
 
     return prepare_path_wrapper
+
+
+def static_variable(variable, value):
+    """Add a static variable to a function."""
+
+    def wrapper(func):
+        setattr(func, variable, value)
+        return func
+
+    return wrapper
