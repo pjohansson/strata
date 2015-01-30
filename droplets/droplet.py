@@ -20,8 +20,7 @@ def get_interface(flow, label, radius, **kwargs):
 
     Args:
         flow (FlowData): A FlowData object. Must contain a data record
-            with coordinates and selected height map label, as well
-            as an input shape of the system.
+            with coordinates and selected height map label.
 
         label (str): Record label used as base for the interface height map.
 
