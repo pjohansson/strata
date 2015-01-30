@@ -120,9 +120,9 @@ def spreading(name=cmd_spreading['name'], short_help=cmd_spreading['desc']):
     help='Time difference between data map files. (1)')
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Boundary bins require this much mass. (0)')
-@add_option('-ir', '--include_radius', default=1.,
+@add_option('-cr', '--cutoff_radius', default=1.,
         help='Boundary bins search for neighbours within this radius. (1 nm)')
-@add_option('-nb', '--num_bins', default=1,
+@add_option('-cb', '--cutoff_bins', default=1,
         help='Boundary bins require this many neighbours.')
 @add_option('-b', '--begin', default=1, type=click.IntRange(0, None),
         help='Begin reading from BASE at this number. (1)')

@@ -86,13 +86,13 @@ class TestGetSpread(object):
         label = 'C'
         clabels = ('f0', 'f1')
         radius = 2*(xs[1] - xs[0])*1.1
-        num_bins = 2
+        cutoff_bins = 2
         cutoff = 2
 
         kwargs = {
                 'coord_labels': clabels,
                 'cutoff': cutoff,
-                'num_bins': num_bins
+                'cutoff_bins': cutoff_bins
                 }
 
         flow = FlowData((clabels[0], xs), (clabels[1], ys), (label, cs))

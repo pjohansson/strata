@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from droplets.flow import FlowData
-from droplets.droplet import *
+from droplets.interface import *
 
 # Create grid
 x = np.arange(11)
@@ -95,12 +95,12 @@ def test_cell_is_droplet_numbins():
     label = 'C'
     radius = 1.5
     cutoff = 0.5
-    num_bins = 2
+    cutoff_bins = 2
 
     droplet = []
     for cell in np.arange(system.size):
         droplet.append(cell_is_droplet(cell, system, label, radius, cutoff,
-            num_bins=num_bins))
+            cutoff_bins=cutoff_bins))
     assert (droplet == [False, False, True, False, False])
 
 def test_cell_is_droplet_general_names():
@@ -148,12 +148,12 @@ def test_find_interface_bottom():
     label = 'C'
     radius = 1.5
 
-    for i, (ileft, iright) in enumerate(get_interface(flow, label, radius)):
+    for i, (ileft, iright) in enumerate(get_interface(flow, label, cutoff_radius=radius)):
         assert (ileft == 1 and iright == 3)
         break
 
-    num_bins = 2
-    for ileft, iright in get_interface(flow, label, radius, num_bins=num_bins):
+    cutoff_bins = 2
+    for ileft, iright in get_interface(flow, label, cutoff_radius=radius, cutoff_bins=cutoff_bins):
         assert (ileft == 2 and iright == 2)
         break
 
@@ -164,20 +164,20 @@ def test_find_interface():
     radius = 1.5
 
     interface = []
-    for i, (ileft, iright) in enumerate(get_interface(flow, label, radius)):
+    for i, (ileft, iright) in enumerate(get_interface(flow, label, cutoff_radius=radius)):
         interface.append(flow.data[[ileft, iright]])
     assert (len(interface) == 5)
 
     interface = []
     cutoff = 0.2
-    for i, (ileft, iright) in enumerate(get_interface(flow, label, radius,
+    for i, (ileft, iright) in enumerate(get_interface(flow, label, cutoff_radius=radius,
             cutoff=cutoff)):
         interface.append(flow.data[[ileft, iright]])
     assert (len(interface) == 9)
 
     interface = []
     cutoff = 1.1
-    for i, (ileft, iright) in enumerate(get_interface(flow, label, radius,
+    for i, (ileft, iright) in enumerate(get_interface(flow, label, cutoff_radius=radius,
             cutoff=cutoff)):
         interface.append(flow.data[[ileft, iright]])
     assert (len(interface) == 0)
@@ -190,22 +190,27 @@ def test_find_interface_ylims():
     ylims = (4.5, 7.5)
 
     yvalues = []
-    for i, (ileft, _) in enumerate(get_interface(flow, label, radius,
+    for i, (ileft, _) in enumerate(get_interface(flow, label, cutoff_radius=radius,
             ylims=ylims)):
         yvalues.append(flow.data[ileft]['Y'])
     assert (yvalues == [5, 6, 7])
 
 def test_find_interface_noboundaries(recwarn):
-    from warnings import warn
-
     cs = 0*xs
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
 
     label = 'C'
     radius = 1.1
 
-    for left, right in get_interface(flow, label, radius):
-        warning = recwarn.pop(UserWarning)
+    for left, right in get_interface(flow, label, cutoff_radius=radius):
         assert (left == None and right == None)
 
+def test_find_interface_noradius():
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
 
+    label = 'C'
+
+    interface = []
+    for i, (ileft, iright) in enumerate(get_interface(flow, label, cutoff_radius=None)):
+        interface.append(flow.data[[ileft, iright]])
+    assert (len(interface) == 5)

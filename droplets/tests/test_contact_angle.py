@@ -45,7 +45,7 @@ def some_contact_angles(request):
 def test_contact_angles(some_contact_angles):
     data, contact_angle, label, height = some_contact_angles
     angles = get_contact_angle(FlowData(data), height, label,
-        radius=1., num_bins=0, cutoff=None)
+        cutoff_radius=1., cutoff_bins=0, cutoff=None)
     assert (np.allclose(angles.mean(), contact_angle))
 
 def test_floor(some_contact_angles):
@@ -57,7 +57,7 @@ def test_floor(some_contact_angles):
     assert (floor != height)
 
     angles = get_contact_angle(FlowData(data), height, label,
-        radius=1., floor=floor, num_bins=0)
+        cutoff_radius=1., floor=floor, cutoff_bins=0)
     assert (np.allclose(angles.mean(), contact_angle))
 
 def test_nofloor(some_contact_angles):
@@ -68,5 +68,5 @@ def test_nofloor(some_contact_angles):
     floor = data['Y'][0][0]
 
     angles = get_contact_angle(FlowData(data), height, label,
-        radius=1., floor=floor, num_bins=0)
+        cutoff_radius=1., floor=floor, cutoff_bins=0)
     assert (angles == (None, None))

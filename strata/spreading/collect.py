@@ -1,9 +1,12 @@
 import os
 import numpy as np
+<<<<<<< HEAD:strata/spreading/collect.py
 import progressbar as pbar
+=======
+>>>>>>> Move `get_interface` functions to `interface` module:strata/spreading.py
 
 from droplets.flow import FlowData
-from droplets.droplet import get_interface
+from droplets.interface import get_interface
 from strata.dataformats.read import read_from_files
 from strata.utils import *
 
@@ -45,9 +48,9 @@ def collect(base, **kwargs):
         cutoff (float): Which mass value to cut the boundary at.
             Defaults to the midpoint mass.
 
-        include_radius (float, default=1): Radius to include bins within.
+        cutoff_radius (float, default=1): Radius to include bins within.
 
-        num_bins (int, default=1): Number of bins inside the set radius
+        cutoff_bins (int, default=1): Number of bins inside the set radius
             which must pass the cut-off criteria.
 
         begin (int, default=1): First data map number.
@@ -94,7 +97,7 @@ def collect(base, **kwargs):
 
     time = 0
     dt = kwargs.pop('dt', 1)
-    include_radius = kwargs.pop('include_radius', 1)
+    cutoff_radius = kwargs.pop('cutoff_radius', 1)
 
     times = []
     radii = []
@@ -109,7 +112,7 @@ def collect(base, **kwargs):
 
     for i, (data, _, meta) in enumerate(read_from_files(*files)):
         flow = FlowData(data)
-        left, right = get_spreading_edges(flow, 'M', include_radius, **kwargs)
+        left, right = get_spreading_edges(flow, 'M', cutoff_radius, **kwargs)
 
         if left != None and right != None:
             radius = 0.5*(right - left)
@@ -137,7 +140,7 @@ def collect(base, **kwargs):
     return get_spreading_ndarray(times, radii)
 
 
-def get_spreading_edges(flow, label, include_radius, **kwargs):
+def get_spreading_edges(flow, label, cutoff_radius, **kwargs):
     """Return the left and right edges of wetting.
 
     Args:
@@ -147,7 +150,7 @@ def get_spreading_edges(flow, label, include_radius, **kwargs):
 
         label (str): Record label used as base for the interface height map.
 
-        include_radius (float): Radius to include bins within.
+        cutoff_radius (float): Radius to include bins within.
 
     Keyword Args:
         floor (float): Height at which spreading occurs. Defaults to the
@@ -156,7 +159,7 @@ def get_spreading_edges(flow, label, include_radius, **kwargs):
         cutoff (float): Which interface height to cut the boundary at.
             Defaults to the midpoint height.
 
-        num_bins (int, default=1): Number of bins inside the set radius
+        cutoff_bins (int, default=1): Number of bins inside the set radius
             which must pass the cut-off criteria.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
@@ -176,7 +179,7 @@ def get_spreading_edges(flow, label, include_radius, **kwargs):
     yfloor = get_floor_height(floor, ys)
     kwargs['ylims'] = (yfloor, yfloor)
 
-    interface = get_interface(flow, label, include_radius, **kwargs)
+    interface = get_interface(flow, label, cutoff_radius=cutoff_radius, **kwargs)
 
     while True:
         try:
@@ -225,7 +228,7 @@ def write_header(output_path, input_base, kwargs):
                     kwargs.get('begin', None), kwargs.get('end', None),
                     kwargs.get('floor', None), kwargs.get('dt', 1.),
                     kwargs.get('cutoff', None), kwargs.get('include_radius', 1.),
-                    kwargs.get('num_bins', 1)))
+                    kwargs.get('cutoff_bins', 1)))
 
         fp.write(header + inputs)
 
