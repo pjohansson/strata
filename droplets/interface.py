@@ -173,7 +173,7 @@ def get_interface(flow, label, **kwargs):
         for cell in sorted_layer:
             index = np.where(flow.data == cell)[0][0]
 
-            if cell_is_droplet(index, flow.data, label,
+            if _cell_is_droplet(index, flow.data, label,
                     cutoff_radius, cutoff, **kwargs):
                 return index
         else:
@@ -205,7 +205,7 @@ def get_interface(flow, label, **kwargs):
             yield left, right
 
 
-def cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
+def _cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
     """Determine whether a cell is a connected part of a liquid system.
 
     See 'get_interface' for details on the cell search.
@@ -239,7 +239,7 @@ def cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
 
     try:
         assert (system[cell][label] >= cutoff)
-        indices = get_indices_in_radius(cell, system, radius, **kwargs)
+        indices = _get_indices_in_radius(cell, system, radius, **kwargs)
         assert (len(system[system[label][indices] >= cutoff]) >= cutoff_bins)
     except AssertionError:
         return False
@@ -249,7 +249,7 @@ def cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
         return True
 
 
-def get_indices_in_radius(cell, system, radius, **kwargs):
+def _get_indices_in_radius(cell, system, radius, **kwargs):
     """Return indices of bins within a given radius of input cell.
 
     Args:

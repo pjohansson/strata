@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
+
+import droplets.interface as intf
 from droplets.flow import FlowData
-from droplets.interface import *
+from droplets.interface import get_interface
 
 # Create grid
 x = np.arange(11)
@@ -24,15 +26,15 @@ def test_find_indices_in_radius():
     cell = np.floor(system.size/2)
 
     radius = 1 - 1e-6
-    indices = get_indices_in_radius(cell, system, radius)
+    indices = intf._get_indices_in_radius(cell, system, radius)
     assert (len(indices) == 0)
 
     radius = 1
-    indices = get_indices_in_radius(cell, system, radius)
+    indices = intf._get_indices_in_radius(cell, system, radius)
     assert (set(indices) == set([49, 59, 61, 71]))
 
     radius = 1.5
-    indices = get_indices_in_radius(cell, system, radius)
+    indices = intf._get_indices_in_radius(cell, system, radius)
     assert (set(indices) == set([48, 49, 50, 59, 61, 70, 71, 72]))
 
 def test_find_indices_in_radius_general_names():
@@ -44,7 +46,7 @@ def test_find_indices_in_radius_general_names():
     cell = np.floor(system.size/2)
 
     radius = 1
-    indices = get_indices_in_radius(cell, system, radius, coord_labels=('f0', 'f1'))
+    indices = intf._get_indices_in_radius(cell, system, radius, coord_labels=('f0', 'f1'))
     assert (set(indices) == set([49, 59, 61, 71]))
 
 def test_cell_is_droplet():
@@ -60,7 +62,7 @@ def test_cell_is_droplet():
 
     droplet = []
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff))
+        droplet.append(intf._cell_is_droplet(cell, system, label, radius, cutoff))
     assert (droplet == [False, True, True, True, False])
 
 def test_cell_is_droplet_cutoff():
@@ -76,13 +78,13 @@ def test_cell_is_droplet_cutoff():
     droplet = []
     cutoff = 2
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff))
+        droplet.append(intf._cell_is_droplet(cell, system, label, radius, cutoff))
     assert (droplet == [False, False, False, False, False])
 
     droplet = []
     cutoff = 0.5
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff))
+        droplet.append(intf._cell_is_droplet(cell, system, label, radius, cutoff))
     assert (droplet == [False, True, True, True, False])
 
 def test_cell_is_droplet_numbins():
@@ -99,7 +101,7 @@ def test_cell_is_droplet_numbins():
 
     droplet = []
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff,
+        droplet.append(intf._cell_is_droplet(cell, system, label, radius, cutoff,
             cutoff_bins=cutoff_bins))
     assert (droplet == [False, False, True, False, False])
 
@@ -118,7 +120,7 @@ def test_cell_is_droplet_general_names():
 
     droplet = []
     for cell in np.arange(system.size):
-        droplet.append(cell_is_droplet(cell, system, label, radius, cutoff,
+        droplet.append(intf._cell_is_droplet(cell, system, label, radius, cutoff,
             coord_labels=coord_labels))
     assert (droplet == [False, True, True, True, False])
 
@@ -135,7 +137,7 @@ def test_cell_is_droplet_bad_names():
     cutoff = 0.5
 
     with pytest.raises(IndexError):
-        cell_is_droplet(0, system, label, radius, cutoff)
+        intf._cell_is_droplet(0, system, label, radius, cutoff)
 
 def test_find_interface_bottom():
     datasize = 5
