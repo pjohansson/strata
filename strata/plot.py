@@ -22,13 +22,26 @@ def plot(files):
     """
 
     data = read_spreading_data(*files)
+    df = combine_spreading_data(data)
 
-    for d in data:
-        d.plot()
-
+    df.plot(legend=False)
     plt.show()
 
     return None
+
+
+def combine_spreading_data(data):
+    """Return a DataFrame of combined data.
+
+    Input:
+        data (pd.Series): List of pandas Series objects to combine.
+
+    Returns:
+        pd.DataFrame: Combined DataFrame.
+
+    """
+
+    return pd.DataFrame(data).T
 
 
 def read_spreading_data(*files):

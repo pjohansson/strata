@@ -32,3 +32,12 @@ def test_read_files():
     assert (data[2].name == ('%s.1' % fndata2))
     assert (np.array_equal(data[2].index, data2['t']))
     assert (np.array_equal(data[2], data2['d1']))
+
+def test_combine_data():
+    data = read_spreading_data(fndata1, fndata2)
+    df = combine_spreading_data(data)
+
+    assert (np.array_equal(df.index, np.union1d(data[0].index, data[2].index)))
+    for d in data:
+        assert (df[d.name].name == d.name)
+        assert (np.array_equal(df[d.name].dropna(), d))
