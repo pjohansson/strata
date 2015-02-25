@@ -96,7 +96,7 @@ def spreading(base, **kwargs):
     radii = []
 
     files = list(find_datamap_files(base, **fopts))
-    for data, _, meta in read_from_files(*files):
+    for i, (data, _, meta) in enumerate(read_from_files(*files)):
         flow = FlowData(data)
         left, right = get_spreading_edges(flow, 'M', include_radius, **kwargs)
 
@@ -107,7 +107,13 @@ def spreading(base, **kwargs):
             times.append(time)
 
             if output != None:
-                write_spreading(output, time, radius, meta.pop('path'))
+                cur_path = meta.pop('path')
+
+                if not write_spreading.impact:
+                    output_impact_time(output, i*dt, cur_path)
+                    write_spreading.impact = True
+
+                write_spreading(output, time, radius, cur_path)
 
             time += dt
 
@@ -207,25 +213,27 @@ def write_header(output_path, input_base, kwargs):
         fp.write(header + inputs)
 
 
+def output_impact_time(output_path, time, impact_path):
+    """Write impact time and column header."""
+
+    _, filename = os.path.split(impact_path)
+    impact_comment = (
+            "# Droplet impact at t = %.3f\n"
+            "#                file = '%s'\n"
+            "# \n"
+            "# Time (ps) Radius (nm)\n" % (time, filename)
+            )
+
+    with open(output_path, 'a') as fp:
+        fp.write(impact_comment)
+
+
 @static_variable('impact', False)
 def write_spreading(output_path, time, radius, cur_filename):
     """Write time and spreading radius to output file."""
 
-    def output_impact_time(fp, time, impact_path):
-        """Write impact time and column header."""
-
-        _, filename = os.path.split(impact_path)
-        impact_comment = (
-                "# Droplet impact at t = %.3f\n"
-                "#                file = '%s'\n"
-                "# \n"
-                "# Time (ps) Radius (nm)\n" % (time, filename)
-                )
-        fp.write(impact_comment)
-
     with open(output_path, 'a') as fp:
         if not write_spreading.impact:
             output_impact_time(fp, time, cur_filename)
-            write_spreading.impact = True
 
         fp.write('%.3f %.3f\n' % (time, radius))
