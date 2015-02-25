@@ -195,7 +195,7 @@ def write_header(output_path, input_base, kwargs):
                 % (time_str, version_str))
 
         inputs = (
-                "# Inputs:\n"
+                "# Input:\n"
                 "#   File base path: %r\n"
                 "#   Begin, end: %r, %r\n"
                 "#   Floor: %r\n"
@@ -225,6 +225,14 @@ def output_impact_time(output_path, time, impact_path):
             )
 
     with open(output_path, 'a') as fp:
+        _, filename = os.path.split(impact_path)
+        impact_comment = (
+                "# Droplet impact:\n"
+                "#   Time: %.3f ps\n"
+                "#   File: '%s'\n"
+                "# \n"
+                "# Time (ps) Radius (nm)\n" % (time, filename)
+                )
         fp.write(impact_comment)
 
 
@@ -233,7 +241,4 @@ def write_spreading(output_path, time, radius, cur_filename):
     """Write time and spreading radius to output file."""
 
     with open(output_path, 'a') as fp:
-        if not write_spreading.impact:
-            output_impact_time(fp, time, cur_filename)
-
         fp.write('%.3f %.3f\n' % (time, radius))
