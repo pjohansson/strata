@@ -3,8 +3,8 @@ import os
 from strata.plot import *
 
 fndir = os.path.dirname(os.path.realpath(__file__))
-fndata1 = os.path.join(fndir, 'spread.1.xvg')
-fndata2 = os.path.join(fndir, 'spread.2.xvg')
+fndata1 = os.path.join(fndir, 'spread-01.xvg')
+fndata2 = os.path.join(fndir, 'spread-02.xvg')
 
 data1 = np.zeros(4, dtype=[('t', 'float'), ('d1', 'float'), ('d2', 'float')])
 data1['t'] = np.arange(0, 40, 10)
@@ -41,3 +41,12 @@ def test_combine_data():
     for d in data:
         assert (df[d.name].name == d.name)
         assert (np.array_equal(df[d.name].dropna(), d))
+
+def test_sync_time_at_radius():
+    radius = 4.
+    data = read_spreading_data(fndata1, fndata2)
+    sync_data = sync_time_at_radius(data, radius)
+
+    assert np.array_equal(sync_data[0].index, data[0].index - 10)
+    assert np.array_equal(sync_data[1].index, data[1].index)
+    assert np.array_equal(sync_data[2].index, data[2].index - 90)
