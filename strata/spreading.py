@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import warnings
 
 from droplets.flow import FlowData
 from droplets.droplet import get_interface

@@ -7,7 +7,6 @@ def get_version():
     root_dir, _ = os.path.split(os.path.realpath(__file__))
     with open(os.path.join(root_dir, version_filename)) as fp:
         version = fp.readline().strip()
-
     return version
 
 class PyTest(Command):
