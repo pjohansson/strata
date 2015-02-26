@@ -1,8 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import click
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
+
+#from strata.utils import prepare_path
 
 """Module for plotting the spreading of droplets."""
 
@@ -10,6 +13,7 @@ import pandas as pd
 @click.command(name='plot', short_help='Plot input spreading files.')
 @click.argument('files', type=click.Path(exists=True), nargs=-1)
 @click.option('-rs', '--sync_radius', type=float, default=None)
+@click.option('-x', '--save_xvg', type=click.Path(), default=None)
 def spreading_plot(files, **kwargs):
     """Plot the spreading curves of input files.
 
@@ -26,13 +30,23 @@ def spreading_plot(files, **kwargs):
     Keyword Args:
         sync_radius (float): Synchronise times at this radius.
 
+        save_xvg (path): Save combined data to path in .xvg format.
+
     """
 
     data = read_spreading_data(*files)
     df = combine_spreading_data(data, kwargs.pop('sync_radius'))
 
-    df.plot(legend=False, grid=False)
-    plt.show()
+    save_path = kwargs.pop('save_xvg')
+    if save_path:
+        write_spreading_data(save_path, df)
+
+    try:
+        df.plot(legend=False, grid=False)
+    except TypeError:
+        pass
+    else:
+        plt.show()
 
     return None
 
@@ -77,7 +91,7 @@ def sync_time_at_radius(data, radius):
 
     def get_adjusted_series(s, radius, sync_time):
         times = s.index - (calc_closest_time(s, radius) - sync_time)
-        return pd.Series(s.values, index=times)
+        return pd.Series(s.values, index=times, name=s.name)
 
     sync_time = np.min([calc_closest_time(s, radius) for s in data])
     return [get_adjusted_series(s, radius, sync_time) for s in data]
@@ -103,9 +117,65 @@ def read_spreading_data(*files):
 
     data = []
     for filename in files:
-        data.extend(read_file(filename))
+        try:
+            data.extend(read_file(filename))
+        except Exception:
+            print("[WARNING] Could not read file at '%s'." % filename)
+            raise SyntaxError
 
     return data
+
+
+#@prepare_path
+def write_spreading_data(path, df):
+    """Write spreading data to file at path.
+
+    Data is output in whitespace separated xmgrace format. NaN values
+    are converted to 0 for compliance with column based plotting tools.
+
+    Args:
+        path (str): Path to output file.
+
+        df (pd.DataFrame): Spreading data.
+
+    """
+
+    def write_header(path, df):
+        import pkg_resources
+        import time
+
+        with open(path, 'w') as fp:
+            time_str = time.strftime('%c', time.localtime())
+            version_str = pkg_resources.require("flowfield")[0].version
+
+            header = (
+                    "# Spreading radius of a droplet impacting a substrate\n"
+                    "# \n"
+                    "# Created by module: %s\n"
+                    "# Creation date: %s\n"
+                    "# Using module version: %s\n"
+                    "# \n"
+                    % (__name__, time_str, version_str))
+
+            inputs = (
+                    "# Working directory: '%s'\n"
+                    "# Input files:\n"
+                    ) % os.path.abspath(os.curdir)
+
+            names = [k.rsplit('.', 1)[0] for k in df.keys()]
+            for name in names:
+                inputs += "#   '%s'\n" % name
+
+            inputs += (
+                    "# \n"
+                    "# Time (ps) Radius (nm)\n"
+                    )
+
+            fp.write(header + inputs)
+
+    write_header(path, df)
+    df.to_csv(path, sep=' ', mode='a', na_rep=0., header=False,
+        float_format='%.3f')
 
 
 if __name__ == '__main__':
