@@ -7,6 +7,7 @@ import numpy as np
 from strata.average import average
 from strata.convert import convert
 from strata.spreading import spreading
+from strata.view import spreading_view
 
 """Command line utility to invoke the functionality of strata."""
 
@@ -121,6 +122,33 @@ def spreading_cli(base, floor, **kwargs):
         print("Time (ps) Radius (nm)")
         for time, radius in data:
             print("%.3f %.3f" % (time, radius))
+
+
+@strata.command(name='view', short_help='View data of spreading files.')
+@add_argument('files', type=click.Path(exists=True), nargs=-1)
+@add_option('-rs', '--sync_radius', type=float, default=None,
+        help='Synchronise data at this radius (None).')
+@add_option('-o', '--save_fig', type=click.Path(), default=None,
+        help='Save figure to path (None).')
+@add_option('-x', '--save_xvg', type=click.Path(), default=None,
+        help='Save read data to path (None).')
+@add_option('--show/--noshow', default=True,
+        help='Whether or not to draw graph (True).')
+@add_option('--loglog', is_flag=True,
+        help='Scale graph axes logarithmically (False).')
+def spreading_view_cli(files, **kwargs):
+    """View spreading data of input FILES.
+
+    Input files must be in whitespace separated format, the first column
+    designating time with all following being their corresponding spreading
+    radii.
+
+    The combined data can be saved to disk in an XmGrace compatible format.
+    For data output non-existing data at any time point is set to 0.
+
+    """
+
+    spreading_view(files, **kwargs)
 
 
 def set_none_to_inf(kwargs, label='end'):

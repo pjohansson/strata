@@ -1,20 +1,12 @@
-#!/usr/bin/env python3
-import click
 import numpy as np
 import os
 import pandas as pd
 
-#from strata.utils import prepare_path
+from strata.utils import decorate_graph, prepare_path
 
 """Module for plotting the spreading of droplets."""
 
 
-@click.command(name='view', short_help='Plot input spreading files.')
-@click.argument('files', type=click.Path(exists=True), nargs=-1)
-@click.option('-rs', '--sync_radius', type=float, default=None)
-@click.option('-x', '--save_xvg', type=click.Path(), default=None)
-@click.option('--plot/--noplot', default=True)
-@click.option('--loglog', is_flag=True)
 def spreading_view(files, **kwargs):
     """Plot the spreading curves of input files.
 
@@ -31,7 +23,13 @@ def spreading_view(files, **kwargs):
     Keyword Args:
         sync_radius (float): Synchronise times at this radius.
 
+        save_fig (path): Save figure to path.
+
         save_xvg (path): Save combined data to path in .xvg format.
+
+        loglog (bool, default=False): Set graph axes to logarithmic scale.
+
+        show (bool, default=True): Whether or not to show graph.
 
     """
 
@@ -45,77 +43,10 @@ def spreading_view(files, **kwargs):
         except Exception:
             print("[ERROR] Could not save data to '%s'" % save_path)
 
-    if kwargs.pop('plot'):
+    if kwargs.get('show') or kwargs.get('save_fig') != None:
         plot_spreading_data(df, **kwargs)
 
     return None
-
-
-def decorate_graph(func):
-    """Wrapper for decorating a figure.
-
-    Creates a new figure window and sets options described below.
-
-    Keyword Args:
-        title (str, default=''): Title of graph.
-
-        xlabel, ylabel (str, default=''): Axis labels.
-
-        xlim, ylim (2-tuples, default=None): Limits of axes.
-
-        loglog (bool, default=False): Set both axes to logarithmic scale.
-
-        show (bool, default=True): Show the graph.
-
-    Raises:
-        StandardError: If something went wrong.
-
-    """
-
-    import matplotlib.pyplot as plt
-
-    def graph_wrapper(*args, **kwargs):
-        def pop_figure_kwargs(kwargs):
-            fargs = {}
-
-            key_defaults = (
-                    (['title', 'xlabel', 'ylabel'], ''),
-                    (['xlim', 'ylim'], None),
-                    (['show'], True),
-                    (['loglog'], False)
-            )
-
-            for keys, default in key_defaults:
-                for k in keys:
-                    fargs[k] = kwargs.pop(k, default)
-
-            return fargs
-
-        fargs = pop_figure_kwargs(kwargs)
-        func(*args, **kwargs)
-
-        plt.title(fargs['title'])
-        plt.xlabel(fargs['xlabel'])
-        plt.ylabel(fargs['ylabel'])
-
-        plt.xlim(fargs['xlim'])
-        plt.ylim(fargs['ylim'])
-
-        if fargs['loglog']:
-            plt.xscale('log')
-            plt.yscale('log')
-
-        if fargs['show']:
-            plt.show()
-
-        return func(*args, **kwargs)
-
-    return graph_wrapper
-
-
-@decorate_graph
-def plot_spreading_data(df, **kwargs):
-    df.plot(legend=False, grid=False)
 
 
 def combine_spreading_data(data, sync_radius=None):
@@ -193,7 +124,7 @@ def read_spreading_data(*files):
     return data
 
 
-#@prepare_path
+@prepare_path
 def write_spreading_data(path, df):
     """Write spreading data to file at path.
 
@@ -245,5 +176,12 @@ def write_spreading_data(path, df):
         float_format='%.3f')
 
 
-if __name__ == '__main__':
-    spreading_view()
+@decorate_graph
+def plot_spreading_data(df, **kwargs):
+    """Plot input spreading data.
+
+    See `strata.plot.decorate_graph` for input options.
+
+    """
+
+    df.plot(legend=False, grid=False)
