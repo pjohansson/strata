@@ -6,7 +6,7 @@ import numpy as np
 
 from strata.average import average
 from strata.convert import convert
-from strata.spreading import spreading
+from strata.collect import spreading_collect
 from strata.view import spreading_view
 
 """Command line utility to invoke the functionality of strata."""
@@ -70,8 +70,8 @@ def convert_cli(base, output, **kwargs):
 
 
 # Spreading wrapper
-@strata.command(name='spreading',
-        short_help='Find the spreading radius per time for a droplet.')
+@strata.command(name='collect',
+        short_help='Collect the spreading radius per time for a droplet.')
 @add_argument('base', type=str)
 @add_argument('floor', type=float)
 @add_option('-o', '--output', type=click.Path(), default=None,
@@ -92,8 +92,8 @@ def convert_cli(base, output, **kwargs):
         help='Read using this file extension. (.dat)')
 @add_option('-v', '--verbose', default=False, is_flag=True,
         help='Verbose output: Print spreading to stdout.')
-def spreading_cli(base, floor, **kwargs):
-    """Find the spreading radius r(t) at height FLOOR for input files at BASE.
+def spreading_collect_cli(base, floor, **kwargs):
+    """Collect the spreading radius r(t) at height FLOOR for input files at BASE.
 
     The radius is calculated by finding the outermost bins fulfilling set
     criteria to be considered parts of the droplet. For each considered bin
@@ -116,7 +116,7 @@ def spreading_cli(base, floor, **kwargs):
 
     set_none_to_inf(kwargs)
     kwargs['floor'] = floor
-    data = spreading(base, **kwargs)
+    data = spreading_collect(base, **kwargs)
 
     if verbose:
         print("Time (ps) Radius (nm)")
@@ -124,6 +124,7 @@ def spreading_cli(base, floor, **kwargs):
             print("%.3f %.3f" % (time, radius))
 
 
+# Plotting wrapper
 @strata.command(name='view', short_help='View data of spreading files.')
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
 @add_option('-rs', '--sync_radius', type=float, default=None,

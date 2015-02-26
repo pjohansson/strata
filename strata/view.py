@@ -29,7 +29,7 @@ def spreading_view(files, **kwargs):
 
         loglog (bool, default=False): Set graph axes to logarithmic scale.
 
-        show (bool, default=True): Whether or not to show graph.
+    See `strata.utils.decorate_graph` for more figure drawing options.
 
     """
 
@@ -43,7 +43,7 @@ def spreading_view(files, **kwargs):
         except Exception:
             print("[ERROR] Could not save data to '%s'" % save_path)
 
-    if kwargs.get('show') or kwargs.get('save_fig') != None:
+    if kwargs.get('show', True) or kwargs.get('save_fig', None) != None:
         plot_spreading_data(df, **kwargs)
 
     return None
@@ -180,7 +180,7 @@ def write_spreading_data(path, df):
 def plot_spreading_data(df, **kwargs):
     """Plot input spreading data.
 
-    See `strata.plot.decorate_graph` for input options.
+    See `strata.utils.decorate_graph` for input options.
 
     """
 
