@@ -1,3 +1,5 @@
+import progressbar as pbar
+
 from strata.dataformats.read import read_data_file
 from strata.dataformats.write import write
 from strata.utils import find_singles_to_singles, pop_fileopts
@@ -25,10 +27,27 @@ def convert(base, output, **kwargs):
 
         ext (str, default='.dat'): File extension.
 
+        quiet (bool, default=False): Do not print progress.
+
     """
 
     fopts = pop_fileopts(kwargs)
+    quiet = kwargs.pop('quiet', False)
 
-    for fnin, fnout in find_singles_to_singles(base, output, **fopts):
+    zip_files = list(find_singles_to_singles(base, output, **fopts))
+
+    if not quiet:
+        widgets = ['Converting files: ',
+                pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
+        progress = pbar.ProgressBar(widgets=widgets, maxval=len(zip_files))
+        progress.start()
+
+    for i, (fnin, fnout) in enumerate(zip_files):
         data, _, _ = read_data_file(fnin)
         write(fnout, data, **kwargs)
+
+        if not quiet:
+            progress.update(i+1)
+
+    if not quiet:
+        progress.finish()

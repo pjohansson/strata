@@ -1,3 +1,5 @@
+import progressbar as pbar
+
 from strata.dataformats.read import read_from_files
 from strata.dataformats.write import write
 from strata.utils import find_groups_to_singles, pop_fileopts
@@ -28,11 +30,22 @@ def average(base, output, group=1, **kwargs):
 
         ext (str, default='.dat'): File extension.
 
+        quiet (bool, default=False): Do not print progress.
+
     """
 
     fopts = pop_fileopts(kwargs)
+    quiet = kwargs.pop('quiet', False)
 
-    for fn_group, fn_out in find_groups_to_singles(base, output, group, **fopts):
+    groups_singles = list(find_groups_to_singles(base, output, group, **fopts))
+
+    if not quiet:
+        widgets = ['Averaging files: ',
+                pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
+        progress = pbar.ProgressBar(widgets=widgets, maxval=len(groups_singles))
+        progress.start()
+
+    for i, (fn_group, fn_out) in enumerate(groups_singles):
         group_data = []
         used_modules = set([])
 
@@ -46,3 +59,8 @@ def average(base, output, group=1, **kwargs):
 
         avg_data = module.average_data(*group_data)
         write(fn_out, avg_data)
+
+        if not quiet:
+            progress.update(i+1)
+
+    progress.finish()
