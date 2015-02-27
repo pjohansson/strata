@@ -255,4 +255,4 @@ def plot_spreading_data(df, **kwargs):
 
     """
 
-    df.plot()
+    df.plot(legend=False, **kwargs)

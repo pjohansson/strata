@@ -175,6 +175,14 @@ def spreading_collect_cli(base, floor, **kwargs):
         metavar='MIN MAX', help='Set limits on the x axis.')
 @add_option('--ylim', type=float, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the y axis.')
+@add_option('--title', default='Droplet spreading',
+        help='Figure title.')
+@add_option('--xlabel', default='Time (ps)',
+        help='Label of x axis.')
+@add_option('--ylabel', default='Radius (nm)',
+        help='Label of y axis.')
+@add_option('--grid/--nogrid', default=False,
+        help='Draw background grid in figure.')
 def spreading_view_cli(files, **kwargs):
     """View spreading data of input FILES.
 
