@@ -157,14 +157,18 @@ def spreading_collect_cli(base, floor, **kwargs):
 # Plotting wrapper
 @spreading.command(name=cmd_view['name'], short_help=cmd_view['desc'])
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
+@add_option('-t', '--tau', type=float, default=1., metavar='TAU',
+        help='Time scaling factor.')
+@add_option('-r', '--radius', 'R', type=float, default=1., metavar='R',
+        help='Radius scaling factor.')
 @add_option('-rs', '--sync_radius', type=float, default=None,
-        help='Synchronise data at this radius (None).')
+        help='Synchronise data at this radius. Done after scaling by R. (None)')
 @add_option('-o', '--save_fig', type=click.Path(), default=None,
-        help='Save figure to path (None).')
+        help='Save figure to path. (None)')
 @add_option('-x', '--save_xvg', type=click.Path(), default=None,
-        help='Save read data to path (None).')
+        help='Save read data to path. (None)')
 @add_option('--show/--noshow', default=True,
-        help='Whether or not to draw graph (True).')
+        help='Whether or not to draw graph. (True)')
 @add_option('--loglog', is_flag=True,
         help='Scale graph axes logarithmically.')
 @add_option('--xlim', type=float, nargs=2, default=(None, None),

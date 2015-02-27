@@ -17,11 +17,20 @@ def view(files, **kwargs):
     Optionally synchronises the spreading data times to a common spreading
     radius if one is input.
 
+    Spreading times and radii can be scaled by supplying scaling factors.
+    Input scaling factors are broadcasted to the data. This means that
+    the input factors must be either a single factor scaling all data,
+    or a list with separate factors for the entire data set.
+
     Args:
         files (paths): List of input files to plot.
 
     Keyword Args:
         sync_radius (float): Synchronise times at this radius.
+
+        tau (float): Time scaling factors.
+
+        R (float): Radius scaling factors.
 
         loglog (bool, default=False): Set graph axes to logarithmic scale.
 
@@ -34,14 +43,17 @@ def view(files, **kwargs):
     """
 
     data = read_spreading_data(*files)
-    df = combine_spreading_data(data, kwargs.pop('sync_radius'))
+    df = combine_spreading_data(data,
+            sync_radius=kwargs.pop('sync_radius', None),
+            tau=kwargs.pop('tau', 1.), R=kwargs.pop('R', 1.)
+            )
 
     save_path = kwargs.pop('save_xvg')
     if save_path:
         try:
             write_spreading_data(save_path, df)
-        except Exception:
-            print("[ERROR] Could not save data to '%s'" % save_path)
+        except Exception as err:
+            print(err)
 
     if (kwargs.get('show', True) or kwargs.get('save_fig', None) != None
             and len(data) > 0):
@@ -50,10 +62,14 @@ def view(files, **kwargs):
     return None
 
 
-def combine_spreading_data(data, sync_radius=None):
+def combine_spreading_data(data, sync_radius=None, tau=1., R=1.):
     """Return a DataFrame of combined data.
 
-    Optionally synchronises the data at an input common spreading radius.
+    Optionally synchronises the data at an input common spreading radius
+    and scales time and radius data by factors.
+
+    See `scale_spreading_data` for information on scaling factors.
+    Scaling is performed before the optional radius synchronisation.
 
     Input:
         data (pd.Series): List of pandas Series objects to combine.
@@ -61,15 +77,23 @@ def combine_spreading_data(data, sync_radius=None):
         sync_radius (float, optional): Spreading radius to synchronise
             times at.
 
+        tau (float, optional): Time scaling factors.
+
+        R (float, optional): Radius scaling factors.
+
     Returns:
         pd.DataFrame: Combined DataFrame.
 
     """
 
+    data = scale_spreading_data(data, tau, R)
+
     if sync_radius != None:
         data = sync_time_at_radius(data, sync_radius)
 
-    return pd.DataFrame(data).T
+    df = pd.DataFrame(data).T
+
+    return df
 
 
 def sync_time_at_radius(data, radius):
@@ -95,6 +119,52 @@ def sync_time_at_radius(data, radius):
     sync_time = np.min([calc_closest_time(s, radius) for s in data])
     return [get_adjusted_series(s, radius, sync_time) for s in data]
 
+
+def scale_spreading_data(data, tau=1., R=1.):
+    """Scale spreading times and radii.
+
+    The data is scaled by dividing with the input factors, ie. t* = t/tau
+    where t is the non-scaled times, tau the scaling factor and t* the
+    scaled times of the returned data.
+
+    Input scaling factors are broadcasted to the data. This means that
+    the input factors must be either a single factor scaling all data,
+    or a list with separate factors for the entire data set.
+
+    Args:
+        data (pd.Series): List of data to scale.
+
+        tau (float): Time scaling factors.
+
+        R (float): Radius scaling factors.
+
+    Returns:
+        pd.Series: List of scaled data.
+
+    Raises:
+        TypeError: If scaling factors can not be broadcast to data.
+
+    """
+
+    def scale_series(view, tau, R):
+        new = view().copy()
+        new.index /= tau
+        new /= R
+
+        return new
+
+    # Create list of views to broadcast against the list and not its data
+    # Either numpy or pandas is trying to be too smart otherwise
+    view = [d.view for d in data]
+
+    try:
+        bc = np.broadcast(view, tau, R)
+    except ValueError:
+        raise TypeError("Could not broadcast scaling factors to data.")
+    else:
+        scaled_data = [scale_series(v, t, r) for v, t, r in bc]
+
+    return scaled_data
 
 def read_spreading_data(*files):
     """Return spreading data read from input files.
@@ -185,4 +255,4 @@ def plot_spreading_data(df, **kwargs):
 
     """
 
-    df.plot(legend=False, grid=False)
+    df.plot()

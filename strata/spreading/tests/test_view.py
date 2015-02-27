@@ -79,3 +79,67 @@ def test_write_xvg():
             ind_nan = df[control][df[control].isnull()].index
             ind_0 = new_data[i][new_data[i] == 0.].index
             assert np.array_equal(ind_0, ind_nan)
+
+def test_scale_timeaxis_onetau():
+    tau = 2.
+    data = read_spreading_data(fndata2)
+
+    control = data[0].index/tau
+
+    scaled_data = scale_spreading_data(data, tau=tau)
+    assert (np.array_equal(scaled_data[0].index, control))
+
+def test_scale_timeaxis_twotau():
+    tau = [2., 3.]
+    data = read_spreading_data(fndata1)
+
+    control = [d.index/tau[i] for i, d in enumerate(data)]
+
+    scaled_data = scale_spreading_data(data, tau=tau)
+    assert (np.array_equal(scaled_data[0].index, control[0]))
+    assert (np.array_equal(scaled_data[1].index, control[1]))
+
+def test_scale_radius_one():
+    R = 3.
+    data = read_spreading_data(fndata2)
+
+    control = data[0].values/R
+
+    scaled_data = scale_spreading_data(data, R=R)
+    assert (np.array_equal(scaled_data[0].values, control))
+
+def test_scale_radius_and_times():
+    R = 2.
+    tau = [2, 3]
+    data = read_spreading_data(fndata1)
+
+    control_radii = [d.values/R for d in data]
+    control_times = [d.index/tau[i] for i, d in enumerate(data)]
+
+    scaled_data = scale_spreading_data(data, tau=tau, R=R)
+    for i, sd in enumerate(scaled_data):
+        assert (np.array_equal(sd.values, control_radii[i]))
+        assert (np.array_equal(sd.index, control_times[i]))
+
+def test_scale_timeaxis_error():
+    factor = [2., 3, 4]
+    data = read_spreading_data(fndata1)
+
+    with pytest.raises(TypeError):
+        scale_spreading_data(data, tau=factor)
+
+    with pytest.raises(TypeError):
+        scale_spreading_data(data, R=factor)
+
+def test_combined_scaling():
+    # Time and radius scaling to set r(t=2.) = 2. for all sets
+    scale_time = 2.
+    scale_radius = 2.
+    sync_radius = 2.
+
+    data = read_spreading_data(fndata1, fndata2)
+    df = combine_spreading_data(data, sync_radius,
+            R=scale_radius, tau=scale_time)
+
+    for d in df:
+        assert (df[d][10] == 2.)
