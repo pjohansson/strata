@@ -166,7 +166,11 @@ def spreading_collect_cli(base, floor, **kwargs):
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph (True).')
 @add_option('--loglog', is_flag=True,
-        help='Scale graph axes logarithmically (False).')
+        help='Scale graph axes logarithmically.')
+@add_option('--xlim', type=float, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the x axis.')
+@add_option('--ylim', type=float, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the y axis.')
 def spreading_view_cli(files, **kwargs):
     """View spreading data of input FILES.
 

@@ -23,11 +23,11 @@ def view(files, **kwargs):
     Keyword Args:
         sync_radius (float): Synchronise times at this radius.
 
+        loglog (bool, default=False): Set graph axes to logarithmic scale.
+
         save_fig (path): Save figure to path.
 
         save_xvg (path): Save combined data to path in .xvg format.
-
-        loglog (bool, default=False): Set graph axes to logarithmic scale.
 
     See `strata.utils.decorate_graph` for more figure drawing options.
 
