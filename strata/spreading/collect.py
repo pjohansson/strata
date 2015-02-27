@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import progressbar as pbar
 
 from droplets.flow import FlowData
 from droplets.droplet import get_interface
@@ -55,6 +56,8 @@ def collect(base, **kwargs):
 
         ext (str, default='.dat'): File extension.
 
+        quiet (bool, default=False): Do not print progress.
+
     Returns:
         ndarray: 2D array with time and radius as elements.
 
@@ -87,6 +90,8 @@ def collect(base, **kwargs):
     if output != None:
         output = prepare_output(output, kwargs.copy(), fopts)
 
+    quiet = kwargs.pop('quiet', False)
+
     time = 0
     dt = kwargs.pop('dt', 1)
     include_radius = kwargs.pop('include_radius', 1)
@@ -95,6 +100,13 @@ def collect(base, **kwargs):
     radii = []
 
     files = list(find_datamap_files(base, **fopts))
+
+    if not quiet:
+        widgets = ['Reading files: ',
+                pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
+        progress = pbar.ProgressBar(widgets=widgets, maxval=len(files))
+        progress.start()
+
     for i, (data, _, meta) in enumerate(read_from_files(*files)):
         flow = FlowData(data)
         left, right = get_spreading_edges(flow, 'M', include_radius, **kwargs)
@@ -115,6 +127,12 @@ def collect(base, **kwargs):
                 write_spreading(output, time, radius, cur_path)
 
             time += dt
+
+        if not quiet:
+            progress.update(i+1)
+
+    if not quiet:
+        progress.finish()
 
     return get_spreading_ndarray(times, radii)
 
