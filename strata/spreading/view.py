@@ -43,7 +43,8 @@ def view(files, **kwargs):
         except Exception:
             print("[ERROR] Could not save data to '%s'" % save_path)
 
-    if kwargs.get('show', True) or kwargs.get('save_fig', None) != None:
+    if (kwargs.get('show', True) or kwargs.get('save_fig', None) != None
+            and len(data) > 0):
         plot_spreading_data(df, **kwargs)
 
     return None
