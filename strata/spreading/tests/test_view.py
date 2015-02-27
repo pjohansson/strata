@@ -3,7 +3,7 @@ import os
 import pytest
 import tempfile as tmp
 
-from strata.view import *
+from strata.spreading.view import *
 
 fndir = os.path.dirname(os.path.realpath(__file__))
 fndata1 = os.path.join(fndir, 'spread-01.xvg')

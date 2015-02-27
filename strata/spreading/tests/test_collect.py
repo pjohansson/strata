@@ -5,7 +5,7 @@ import tempfile as tmp
 
 from droplets.flow import FlowData
 from strata.dataformats.write import write
-from strata.collect import spreading_collect, get_spreading_edges
+from strata.spreading.collect import collect, get_spreading_edges
 from strata.utils import gen_filenames
 
 datasize = 11
@@ -143,7 +143,7 @@ def test_spreading():
 
         # Collect spreading from files
         output = os.path.join(tmpdir, 'spread.xvg')
-        spreading_data = spreading_collect(base, output=output, dt=dt,
+        spreading_data = collect(base, output=output, dt=dt,
                 floor=1.5, include_radius=1)
         assert (np.allclose(spreading_data['r'], control_array['r']))
         assert (np.allclose(spreading_data['t'], control_array['t']))

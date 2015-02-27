@@ -6,8 +6,8 @@ import numpy as np
 
 from strata.average import average
 from strata.convert import convert
-from strata.collect import spreading_collect
-from strata.view import spreading_view
+from strata.spreading.collect import collect
+from strata.spreading.view import view
 
 """Command line utility to invoke the functionality of strata."""
 
@@ -19,8 +19,32 @@ def strata():
     pass
 
 
+# Description of commands
+cmd_average = {
+        'name': 'average',
+        'desc': 'Sample average data files.'
+        }
+cmd_convert = {
+        'name':'convert',
+        'desc': 'Convert data files to another format.'
+        }
+
+cmd_spreading = {
+        'name': 'spreading',
+        'desc': 'View or collect spreading data.'
+        }
+cmd_collect = {
+        'name': 'collect',
+        'desc': 'Collect the spreading radius per time for a droplet.'
+        }
+cmd_view = {
+        'name': 'view',
+        'desc': 'View data of spreading files.'
+        }
+
+
 # Average wrapper
-@strata.command(name='average', short_help='Sample average data files.')
+@strata.command(name=cmd_average['name'], short_help=cmd_average['desc'])
 @add_argument('base', type=str)
 @add_argument('output', type=str)
 @add_argument('group', type=click.IntRange(1, None))
@@ -44,7 +68,7 @@ def average_cli(base, output, group, **kwargs):
 
 
 # Convert wrapper
-@strata.command(name='convert', short_help='Convert data files to another format.')
+@strata.command(name=cmd_convert['name'], short_help=cmd_convert['desc'])
 @add_argument('base', type=str)
 @add_argument('output', type=str)
 @add_option('--ftype',
@@ -69,9 +93,15 @@ def convert_cli(base, output, **kwargs):
     convert(base, output, **kwargs)
 
 
+# Combined spreading tools for collection and plotting
+@strata.group()
+def spreading(name=cmd_spreading['name'], short_help=cmd_spreading['desc']):
+    """View or collect spreading data of droplets."""
+    pass
+
+
 # Spreading wrapper
-@strata.command(name='collect',
-        short_help='Collect the spreading radius per time for a droplet.')
+@spreading.command(name=cmd_collect['name'], short_help=cmd_collect['desc'])
 @add_argument('base', type=str)
 @add_argument('floor', type=float)
 @add_option('-o', '--output', type=click.Path(), default=None,
@@ -93,7 +123,7 @@ def convert_cli(base, output, **kwargs):
 @add_option('-v', '--verbose', default=False, is_flag=True,
         help='Verbose output: Print spreading to stdout.')
 def spreading_collect_cli(base, floor, **kwargs):
-    """Collect the spreading radius r(t) at height FLOOR for input files at BASE.
+    """Collect spreading radius r(t) at height FLOOR for input files at BASE.
 
     The radius is calculated by finding the outermost bins fulfilling set
     criteria to be considered parts of the droplet. For each considered bin
@@ -116,7 +146,7 @@ def spreading_collect_cli(base, floor, **kwargs):
 
     set_none_to_inf(kwargs)
     kwargs['floor'] = floor
-    data = spreading_collect(base, **kwargs)
+    data = collect(base, **kwargs)
 
     if verbose:
         print("Time (ps) Radius (nm)")
@@ -125,7 +155,7 @@ def spreading_collect_cli(base, floor, **kwargs):
 
 
 # Plotting wrapper
-@strata.command(name='view', short_help='View data of spreading files.')
+@spreading.command(name=cmd_view['name'], short_help=cmd_view['desc'])
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
 @add_option('-rs', '--sync_radius', type=float, default=None,
         help='Synchronise data at this radius (None).')
@@ -149,7 +179,7 @@ def spreading_view_cli(files, **kwargs):
 
     """
 
-    spreading_view(files, **kwargs)
+    view(files, **kwargs)
 
 
 def set_none_to_inf(kwargs, label='end'):

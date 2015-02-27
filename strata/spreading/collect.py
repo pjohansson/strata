@@ -14,7 +14,7 @@ function of time.
 """
 
 
-def spreading_collect(base, **kwargs):
+def collect(base, **kwargs):
     """Return the spreading radius of a droplet as a function of time.
 
     Droplets are contained in data map files at input base. The spreading
