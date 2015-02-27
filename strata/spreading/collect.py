@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import warnings
 
 from droplets.flow import FlowData
 from droplets.droplet import get_interface
@@ -15,7 +14,7 @@ function of time.
 """
 
 
-def spreading(base, **kwargs):
+def collect(base, **kwargs):
     """Return the spreading radius of a droplet as a function of time.
 
     Droplets are contained in data map files at input base. The spreading

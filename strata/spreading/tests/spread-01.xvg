@@ -1,0 +1,22 @@
+# Spreading radius of a droplet impacting a substrate
+#
+# Creation date: Mon Feb 23 10:17:54 2015
+# Using module version: 0.1
+#
+# Inputs:
+#   File base path: '/home/petter/Data/2015/02/atomistic-lj-pme-eps1.77/maps/flow_'
+#   Begin, end: 1, inf
+#   Floor: 2.15
+#   Delta-t: 10.0
+#   Mass cut-off: 25.0
+#   Radius cut-off: 1.0
+#   Required # of bins: 1
+#
+# Droplet impact at t = 0.000
+#                file = 'flow_00142.dat'
+#
+# Time (ps) Radius (nm)
+0.000 1.000 2.000
+10.000 2.000 3.000
+20.000 3.000 4.000
+30.000 4.000 5.000

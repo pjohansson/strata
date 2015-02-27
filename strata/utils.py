@@ -244,6 +244,69 @@ def prepare_path(func):
     return prepare_path_wrapper
 
 
+def decorate_graph(func):
+    """Wrapper for decorating a figure.
+
+    Creates a new figure window and sets options described below.
+
+    Keyword Args:
+        title (str, default=''): Title of graph.
+
+        xlabel, ylabel (str, default=''): Axis labels.
+
+        xlim, ylim (2-tuples, default=None): Limits of axes.
+
+        loglog (bool, default=False): Set both axes to logarithmic scale.
+
+        save_fig (path, default=None): Save figure to path.
+
+        show (bool, default=True): Show the graph.
+
+    """
+
+    import matplotlib.pyplot as plt
+
+    def graph_wrapper(*args, **kwargs):
+        def pop_figure_kwargs(kwargs):
+            key_defaults = (
+                    (['title', 'xlabel', 'ylabel'], ''),
+                    (['xlim', 'ylim', 'save_fig'], None),
+                    (['show'], True),
+                    (['loglog'], False)
+            )
+
+            fargs = {}
+            for keys, default in key_defaults:
+                for k in keys:
+                    fargs[k] = kwargs.pop(k, default)
+
+            return fargs
+
+        fargs = pop_figure_kwargs(kwargs)
+        func(*args, **kwargs)
+
+        plt.title(fargs['title'])
+        plt.xlabel(fargs['xlabel'])
+        plt.ylabel(fargs['ylabel'])
+
+        plt.xlim(fargs['xlim'])
+        plt.ylim(fargs['ylim'])
+
+        if fargs['loglog']:
+            plt.xscale('log')
+            plt.yscale('log')
+
+        if fargs['save_fig'] != None:
+            plt.savefig(fargs['save_fig'])
+
+        if fargs['show']:
+            plt.show()
+
+        return func(*args, **kwargs)
+
+    return graph_wrapper
+
+
 def static_variable(variable, value):
     """Add a static variable to a function."""
 
