@@ -11,9 +11,19 @@ from strata.spreading.view import view
 
 """Command line utility to invoke the functionality of strata."""
 
+def print_version(ctx, param, value):
+    import pkg_resources
+    version_str = pkg_resources.require("flowfield")[0].version
+    
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo('Version %s' % version_str)
+    ctx.exit()
 
 # Main functionality
 @create_group()
+@click.option('--version', is_flag=True, callback=print_version,
+              expose_value=False, is_eager=True)
 def strata():
     """Tools for reading and analysing files of flow data."""
     pass
