@@ -2,6 +2,7 @@ import numpy as np
 
 from droplets.droplet import get_interface
 
+
 def get_contact_line_cells(flow, label, size=(0., 0.), radius=1., **kwargs):
     """Return cells from the left and right contact line of FlowData map.
 
@@ -17,6 +18,8 @@ def get_contact_line_cells(flow, label, size=(0., 0.), radius=1., **kwargs):
 
         radius (float, default=1.): See `droplets.droplet.get_interface`.
 
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
+
     Returns:
         (ndarray, ndarray): Numpy record arrays of left and right contact
             line cells.
@@ -27,8 +30,6 @@ def get_contact_line_cells(flow, label, size=(0., 0.), radius=1., **kwargs):
 
     def get_interface_of_height(height):
         """Return interface of input height with axes swapped."""
-
-        y = lambda index: flow.data[index]['Y']
 
         interface = []
         interface_iter = get_interface(flow, label, radius, **kwargs)
@@ -53,11 +54,8 @@ def get_contact_line_cells(flow, label, size=(0., 0.), radius=1., **kwargs):
     def get_cells_in_direction(inds, dir_mod):
         """Get all the cells for the edge inds in the inwards direction."""
 
-        x = lambda index: flow.data[index]['X']
-        y = lambda index: flow.data[index]['Y']
-
-        xs = flow.data['X']
-        ys = flow.data['Y']
+        xs = flow.data[xlabel]
+        ys = flow.data[ylabel]
 
         try:
             xinner = x(inds[0]) + size[0]*dir_mod
@@ -71,8 +69,63 @@ def get_contact_line_cells(flow, label, size=(0., 0.), radius=1., **kwargs):
 
         return flow.data[icells].copy()
 
+    xlabel, ylabel = kwargs.get('coord_labels', ('X', 'Y'))
+    x = lambda index: flow.data[index][xlabel]
+    y = lambda index: flow.data[index][ylabel]
+
     interface = get_interface_of_height(size[1])
     left, right = [get_cells_in_direction(inds, dir_mod)
             for inds, dir_mod in zip(interface, (1, -1))]
 
     return left, right
+
+
+def adjust_cell_coordinates(cells, direction, coord_labels=('X', 'Y')):
+    """Adjust cell coordinates to origin based on input direction.
+
+    The input direction is either 'left' or 'right' to adjust the cells
+    to that direction around the origin.
+
+    Args:
+        cells (ndarray): Record object to adjust coordinates for.
+
+        direction ('left' or 'right'): Adjustment of cells around origin.
+
+    Keyword Args:
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
+
+    Returns:
+        (float, ndarray): A 2-tuple of the adjustment vector and the
+            adjusted cells.
+
+    """
+
+    def get_x0(cells, direction, xlabel):
+        xs = np.unique(cells[xlabel])
+
+        if direction == 'right':
+            x0 = xs.min()
+        elif direction == 'left':
+            x0 = xs.max()
+        else:
+            raise KeyError("Input direction must be 'left' or 'right'.")
+
+        return x0
+
+    def adjust_cells(cells, adj, xlabel, ylabel):
+        adj_cells = cells.copy()
+        adj_cells[xlabel] -= adj[0]
+        adj_cells[ylabel] -= adj[1]
+
+        return adj_cells
+
+    try:
+        xlabel, ylabel = coord_labels
+        x0 = get_x0(cells, direction, xlabel)
+        y0 = cells[ylabel].min()
+    except ValueError:
+        adj = (0, 0)
+    else:
+        adj = (x0, y0)
+
+    return adj, adjust_cells(cells, adj, xlabel, ylabel)
