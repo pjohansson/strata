@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from droplets.average import *
+from droplets.flow import FlowData
 
 size = 101
 x = np.linspace(0, 10, size)
@@ -125,9 +126,9 @@ def test_average_nodata():
 def test_average_weights():
     dtype = [(l, 'float') for l in ('X', 'Y', 'U', 'M')]
 
-    d1 = np.zeros(2, dtype=dtype)
-    d1['X'] = np.array([0, 1])
-    d1['Y'] = np.array([0, 1])
+    d1 = np.zeros(4, dtype=dtype)
+    d1['X'] = np.array([0, 1, 2, 3])
+    d1['Y'] = np.array([0, 1, 2, 3])
     d1['M'] += 1
     d1['U'] += 1
 
@@ -170,3 +171,101 @@ def test_average_weights_zeroes():
 
     avg_data = average_data([d1], weights=[('U', 'M')])
     assert (avg_data['U'][1] == 0.)
+
+def test_average_flowdata():
+    dtype = [(l, 'float') for l in ('X', 'Y', 'U', 'M')]
+    gen_data = lambda data: [(l, data[l]) for l, _ in dtype]
+
+    d1 = np.zeros(4, dtype=dtype)
+    d1['X'] = np.array([0, 1, 2, 3])
+    d1['Y'] = np.array([0, 0, 0, 0])
+    d1['M'] += 1
+    d1['U'] += 1
+
+    d2 = d1.copy()
+    d2['M'] += 4
+    d2['U'] += 2
+
+    control = d1.copy()
+    control['M'] = (d1['M'] + d2['M'])/2
+    control['U'] = (d1['U'] + d2['U'])/2
+
+    flow1, flow2 = [FlowData(*gen_data(d), info={'bin_size': (1,1)})
+            for d in (d1, d2)]
+    avg_flow = average_flow_data([flow1, flow2])
+
+    assert (avg_flow.shape == (4, 1))
+    assert (avg_flow.bin_size == (1, 1))
+    assert (avg_flow.size == ((0,3),(0,0)))
+    assert (avg_flow.num_bins == len(d1))
+
+    assert (np.array_equal(avg_flow.data, control))
+
+def test_average_flowdata_otherbinsize():
+    dtype = [(l, 'float') for l in ('X', 'Y', 'U', 'M')]
+    gen_data = lambda data: [(l, data[l]) for l, _ in dtype]
+
+    d1 = np.zeros(4, dtype=dtype)
+    d1['X'] = np.array([0, 1, 2, 3])
+    d1['Y'] = np.array([0, 0, 0, 0])
+    d1['M'] += 1
+    d1['U'] += 1
+
+    d2 = d1.copy()
+    d2['X'] *= 2
+    d2['M'] += 4
+    d2['U'] += 2
+    flow1, flow2 = [FlowData(*gen_data(d), info={'bin_size': (1,1)})
+            for d in (d1, d2)]
+    flow2.bin_size = (2, 1)
+
+    with pytest.raises(ValueError):
+        average_flow_data([flow1, flow2])
+
+def test_average_flowdata_nobinsize():
+    dtype = [(l, 'float') for l in ('X', 'Y', 'U', 'M')]
+    gen_data = lambda data: [(l, data[l]) for l, _ in dtype]
+
+    data = np.zeros(4, dtype=dtype)
+    data['X'] = np.array([0, 1, 2, 3])
+    data['Y'] = np.array([0, 0, 0, 0])
+    data['M'] += 1
+    data['U'] += 1
+
+    flow1 = FlowData(*gen_data(data))
+
+    with pytest.raises(ValueError) as err:
+        average_flow_data([flow1])
+
+def test_average_flowdata_noinput():
+    with pytest.raises(ValueError) as err:
+        average_flow_data([])
+
+def test_average_flowdata_badweights():
+    dtype = [(l, 'float') for l in ('X', 'Y', 'U', 'M')]
+    gen_data = lambda data: [(l, data[l]) for l, _ in dtype]
+
+    data = np.zeros(4, dtype=dtype)
+    data['X'] = np.array([0, 1, 2, 3])
+    data['Y'] = np.array([0, 0, 0, 0])
+
+    flow = FlowData(*gen_data(data), info={'bin_size': (1,1)})
+
+    with pytest.raises(KeyError) as err:
+        average_flow_data([flow, flow], weights=[('f0', 'M')])
+
+    with pytest.raises(KeyError) as err:
+        average_flow_data([flow, flow], weights=[('U', 'f0')])
+
+def test_average_flowdata_othercoordlabels():
+    dtype = [(l, 'float') for l in ('c0', 'c1', 'U', 'M')]
+    gen_data = lambda data: [(l, data[l]) for l, _ in dtype]
+
+    data = np.zeros(4, dtype=dtype)
+    data['c0'] = np.array([0, 1, 2, 3])
+    data['c1'] = np.array([0, 0, 0, 0])
+    data['M'] += 1
+    data['U'] += 1
+
+    flow = FlowData(*gen_data(data), info={'bin_size': (1,1)})
+    average_flow_data([flow, flow], coord_labels=('c0', 'c1'))

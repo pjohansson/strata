@@ -1,9 +1,82 @@
 import numpy as np
+from droplets.flow import FlowData
+
 
 """Module for averaging FlowData objects."""
 
 
-def average_data(data_records, weights=[]):
+def average_flow_data(input_flow_maps, weights=[], coord_labels=('X', 'Y')):
+    """Average input FlowData objects.
+
+    The input data is projected onto a common coordinate grid before
+    being averaged. All input data hence must have bin_size's set
+    and identical.
+
+    By default the data is averaged using an arithmetic mean. By inputting
+    a list of (label, weight) tuples some data can be averaged instead
+    using a weighted arithmetic mean. Here 'weight' refers to the data label
+    to use for these weights.
+
+    The coordinate vectors of all input data must be identical.
+
+    Args:
+        flow_data (FlowData): List of objects to average.
+
+    Keyword Args:
+        weights (label, weight): A list of 2-tuples with labels of data
+            and weights to calculate a weighted mean for.
+
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
+
+    Returns:
+        FlowData: Averaged data.
+
+    Raises:
+        ValueError: If data with non-matching coordinates are input.
+
+        KeyError: If non-existant labels are input.
+
+    """
+
+    def get_bin_size(flow_maps):
+        try:
+            for flow in flow_maps[1:]:
+                assert (flow.bin_size == flow_maps[0].bin_size)
+        except AssertionError:
+            raise ValueError("Input grids of data not identical.")
+
+        return flow_maps[0].bin_size
+
+    def get_flowdata(data, grid, bin_size):
+        info = {
+                'shape': tuple(len(np.unique(grid[l])) for l in (xl, yl)),
+                'num_bins': grid.size,
+                'size': [[grid[l][i] for i in (0, -1)] for l in (xl, yl)],
+                'bin_size': bin_size
+                }
+
+        return FlowData(*[(l, data[l]) for l in data.dtype.names], info=info)
+
+    try:
+        bin_size = get_bin_size(input_flow_maps)
+        assert bin_size != (None, None)
+    except IndexError:
+        raise ValueError("No FlowData input.")
+    except AssertionError:
+        raise ValueError("No bin sizes set in FlowData input.")
+
+    xl, yl = coord_labels
+    data_list = [flow.data for flow in input_flow_maps]
+
+    grid = get_combined_grid(data_list, bin_size, coord_labels)
+    data_on_grid = [transfer_data(grid, data, coord_labels)
+            for data in data_list]
+    avg_data = average_data(data_on_grid, weights, coord_labels)
+
+    return get_flowdata(avg_data, grid, bin_size)
+
+
+def average_data(data_records, weights=[], coord_labels=('X', 'Y')):
     """Return average of input data records.
 
     By default the data is averaged using an arithmetic mean. By inputting
@@ -21,6 +94,8 @@ def average_data(data_records, weights=[]):
         weights (label, weight): A list of 2-tuples with labels of data
             and weights to calculate a weighted mean for.
 
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
+
     Returns:
         ndarray: Averaged data, empty if no data is input.
 
@@ -34,8 +109,8 @@ def average_data(data_records, weights=[]):
     def assert_grids_equal(data_records):
         control = data_records[0]
         for data in data_records[1:]:
-            assert np.array_equal(data['X'], control['X'])
-            assert np.array_equal(data['Y'], control['Y'])
+            assert np.array_equal(data[xl], control[xl])
+            assert np.array_equal(data[yl], control[yl])
 
     def calc_arithmetic_mean(label, data_records):
         data = get_container(label)
@@ -57,6 +132,8 @@ def average_data(data_records, weights=[]):
 
         return np.nan_to_num(data.sum(axis=0)/(total_weight))
 
+    xl, yl = coord_labels
+
     try:
         assert_grids_equal(data_records)
     except AssertionError:
@@ -66,7 +143,7 @@ def average_data(data_records, weights=[]):
         data_labels = set()
     else:
         avg_data = data_records[0].copy()
-        data_labels = set(avg_data.dtype.names).difference(set(['X', 'Y']))
+        data_labels = set(avg_data.dtype.names).difference(set([xl, yl]))
 
     weighted_labels = [l for l, _ in weights]
     data_labels.difference_update(weighted_labels)
@@ -82,7 +159,7 @@ def average_data(data_records, weights=[]):
     return avg_data
 
 
-def transfer_data(grid, data):
+def transfer_data(grid, data, coord_labels=('X', 'Y')):
     """Return a projection of data onto an input grid.
 
     The input grid must be a superset of the input data for the projection
@@ -94,6 +171,8 @@ def transfer_data(grid, data):
 
         data (ndarray): Data record to project onto new grid.
 
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
+
     Returns:
         ndarray: Data record with projected data.
 
@@ -103,13 +182,14 @@ def transfer_data(grid, data):
     """
 
     full_data = grid.copy()
+    xl, yl = coord_labels
 
     for d in data:
-        x, y = np.array([d[l] for l in ('X', 'Y')])
-        ind = np.isclose(full_data['X'], x) & np.isclose(full_data['Y'], y)
+        x, y = np.array([d[l] for l in (xl, yl)])
+        ind = np.isclose(full_data[xl], x) & np.isclose(full_data[yl], y)
 
         try:
-            ind_input = (data['X'] == x) & (data['Y'] == y)
+            ind_input = (data[xl] == x) & (data[yl] == y)
             assert (len(data[ind_input]) == 1)
             assert (len(full_data[ind]) == 1)
         except AssertionError:
@@ -121,13 +201,15 @@ def transfer_data(grid, data):
     return full_data
 
 
-def get_combined_grid(data, bin_size):
+def get_combined_grid(data, bin_size, coord_labels=('X', 'Y')):
     """Return a grid with input bin size that contains all input data.
 
     Args:
         data (ndarray): List of numpy records with coordinate labels.
 
         bin_size (int's): 2-tuple with bin sizes along the coordinate axes.
+
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
     Returns:
         ndarray: A container of the same dtype as input data.
@@ -137,8 +219,10 @@ def get_combined_grid(data, bin_size):
     if data == []:
         raise ValueError("No data to get a combined grid from.")
 
-    xmin, xmax = (f([f(d['X']) for d in data]) for f in (np.min, np.max))
-    ymin, ymax = (f([f(d['Y']) for d in data]) for f in (np.min, np.max))
+    xl, yl = coord_labels
+
+    xmin, xmax = (f([f(d[xl]) for d in data]) for f in (np.min, np.max))
+    ymin, ymax = (f([f(d[yl]) for d in data]) for f in (np.min, np.max))
     dx, dy = bin_size
 
     xs = np.arange(xmin, xmax+dx, dx)
@@ -147,7 +231,7 @@ def get_combined_grid(data, bin_size):
     x, y = np.meshgrid(xs, ys)
 
     combined_grid = np.zeros(x.size, dtype=data[-1].dtype)
-    combined_grid['X'] = x.ravel()
-    combined_grid['Y'] = y.ravel()
+    combined_grid[xl] = x.ravel()
+    combined_grid[yl] = y.ravel()
 
     return combined_grid
