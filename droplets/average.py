@@ -3,6 +3,85 @@ import numpy as np
 """Module for averaging FlowData objects."""
 
 
+def average_data(data_records, weights=[]):
+    """Return average of input data records.
+
+    By default the data is averaged using an arithmetic mean. By inputting
+    a list of (label, weight) tuples some data can be averaged instead
+    using a weighted arithmetic mean. Here 'weight' refers to the data label
+    to use for these weights.
+
+    The coordinate vectors of all input data must be identical.
+
+    Args:
+        data_records (ndarray): List of data records with coordinates
+            and values.
+
+    Keyword Args:
+        weights (label, weight): A list of 2-tuples with labels of data
+            and weights to calculate a weighted mean for.
+
+    Returns:
+        ndarray: Averaged data, empty if no data is input.
+
+    Raises:
+        ValueError: If data with non-matching coordinates are input.
+
+        KeyError: If non-existant labels are input.
+
+    """
+
+    def assert_grids_equal(data_records):
+        control = data_records[0]
+        for data in data_records[1:]:
+            assert np.array_equal(data['X'], control['X'])
+            assert np.array_equal(data['Y'], control['Y'])
+
+    def calc_arithmetic_mean(label, data_records):
+        data = get_container(label)
+        for i, d in enumerate(data_records):
+            data[i,:] = d[label]
+
+        return data.mean(axis=0)
+
+    def calc_weighted_mean(label, weight, avg_data, data_records):
+        try:
+            data = get_container(label)
+            for i, d in enumerate(data_records):
+                data[i,:] = d[label]*d[weight]
+        except ValueError:
+            raise KeyError("Input labels of 'weights' not in data: %r %r"
+                    % (label, weight))
+        else:
+            total_weight = len(data_records)*avg_data[weight]
+
+        return np.nan_to_num(data.sum(axis=0)/(total_weight))
+
+    try:
+        assert_grids_equal(data_records)
+    except AssertionError:
+        raise ValueError("Input grids of data not identical.")
+    except IndexError:
+        avg_data = np.array([])
+        data_labels = set()
+    else:
+        avg_data = data_records[0].copy()
+        data_labels = set(avg_data.dtype.names).difference(set(['X', 'Y']))
+
+    weighted_labels = [l for l, _ in weights]
+    data_labels.difference_update(weighted_labels)
+    get_container = lambda l: np.empty((len(data_records), avg_data.size),
+            dtype=avg_data[l].dtype)
+
+    for l in data_labels:
+        avg_data[l] = calc_arithmetic_mean(l, data_records)
+
+    for l, w in weights:
+        avg_data[l] = calc_weighted_mean(l, w, avg_data, data_records)
+
+    return avg_data
+
+
 def transfer_data(grid, data):
     """Return a projection of data onto an input grid.
 
