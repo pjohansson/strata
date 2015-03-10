@@ -83,6 +83,7 @@ def read_data_file(filename):
 
     module = guess_read_module(filename)
     data, info = module.read_data(filename)
+    info['size'] = tuple(info['size'][l] for l in ('X', 'Y'))
 
     metadata = {'path': filename, 'module': module}
 
