@@ -31,6 +31,7 @@ def write_data(path, data, binary=True):
 
     btype = 'float32'
     try:
+        data.sort(order='X')
         save_data = np.array([data[l] for l in fields_ordered], dtype=btype).T
     except KeyError:
         raise KeyError("Can not write desired file format: Missing keys %r."

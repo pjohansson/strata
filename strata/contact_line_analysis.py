@@ -1,7 +1,7 @@
 import progressbar as pbar
 
 from droplets.average import average_flow_data
-from droplets.contact_line import get_contact_line_cells
+from droplets.contact_line import *
 from droplets.flow import FlowData
 from strata.dataformats.read import read_from_files
 from strata.dataformats.write import write
@@ -62,19 +62,24 @@ def extract_contact_line_bins(base, output, **kwargs):
         progress.start()
 
     for i, (fn_group, fn_out) in enumerate(groups_singles):
-        group_data = []
+        left, right = [], []
 
         for data, info, meta in read_from_files(*fn_group):
-            flow = FlowData(data, info=info)
-            contact_line_bins = get_contact_line_cells(flow, 'M',
-                    size=extract_area, radius=include_radius)
-            group_data.append(bins_to_flowdata(contact_line_bins, info))
+            left_cells, right_cells = get_contact_line_cells(
+                    FlowData(data), 'M',
+                    size=extract_area, radius=include_radius, cutoff=kwargs['cutoff'], num_bins=kwargs['num_bins']
+                    )
 
-        avg_flow = average_flow_data(group_data, weights=weights)
-        print('je')
-        avg_flow.data.sort(order='X')
-        write(fn_out, avg_flow.data)
-        print('je')
+            left.append(add_adjusted_flow(left_cells, 'left', info))
+            right.append(add_adjusted_flow(right_cells, 'right', info))
+
+        avg_flow = []
+        for data_list in (left, right):
+            xadjs, flow_data = np.array(data_list).T.tolist()
+            avg_flow.append(average_flow_data(flow_data, weights=weights))
+            avg_flow[-1].data['X'] += np.mean(xadjs)
+
+        write(fn_out, combine_flow_data(avg_flow, info).data)
 
         if not quiet:
             progress.update(i+1)
@@ -83,9 +88,23 @@ def extract_contact_line_bins(base, output, **kwargs):
         progress.finish()
 
 
-def bins_to_flowdata(bins, info):
-    """Return a FlowData object from input cell data."""
+def combine_flow_data(avg_flow, info):
+    """Return a combined FlowData object of the left and right edges."""
 
-    data = [(l, bins[0][l]) for l in bins[0].dtype.names]
+    get_list = lambda flow, l: flow.data[l].tolist()
+    get_data = lambda l: get_list(left, l) + get_list(right, l)
+
+    left, right = avg_flow
+    data = [(l, get_data(l)) for l in left.data.dtype.names]
 
     return FlowData(*data, info=info)
+
+
+def add_adjusted_flow(cells, direction, info):
+    """Return adjusted FlowData object."""
+
+    xadj, data = adjust_cell_coordinates(cells, direction)
+    adj_data = [(l, data[l]) for l in cells.dtype.names]
+    flow = FlowData(*adj_data, info=info)
+
+    return xadj, flow

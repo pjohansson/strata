@@ -41,9 +41,9 @@ def average_flow_data(input_flow_maps, weights=[], coord_labels=('X', 'Y')):
     def get_bin_size(flow_maps):
         try:
             for flow in flow_maps[1:]:
-                assert (flow.bin_size == flow_maps[0].bin_size)
+                assert (np.isclose(flow.bin_size, flow_maps[0].bin_size).all())
         except AssertionError:
-            raise ValueError("Input grids of data not identical.")
+            raise ValueError("Input bin sizes of FlowData objects not identical.")
 
         return flow_maps[0].bin_size
 
@@ -109,8 +109,8 @@ def average_data(data_records, weights=[], coord_labels=('X', 'Y')):
     def assert_grids_equal(data_records):
         control = data_records[0]
         for data in data_records[1:]:
-            assert np.array_equal(data[xl], control[xl])
-            assert np.array_equal(data[yl], control[yl])
+            assert np.allclose(data[xl], control[xl], atol=1e-4)
+            assert np.allclose(data[yl], control[yl], atol=1e-4)
 
     def calc_arithmetic_mean(label, data_records):
         data = get_container(label)
@@ -181,18 +181,20 @@ def transfer_data(grid, data, coord_labels=('X', 'Y')):
 
     """
 
-    full_data = grid.copy()
     xl, yl = coord_labels
+    full_data = grid.copy()
 
     for d in data:
         x, y = np.array([d[l] for l in (xl, yl)])
-        ind = np.isclose(full_data[xl], x) & np.isclose(full_data[yl], y)
+        ind = np.isclose(full_data[xl], x, atol=1e-4) & np.isclose(full_data[yl], y, atol=1e-4)
 
         try:
             ind_input = (data[xl] == x) & (data[yl] == y)
             assert (len(data[ind_input]) == 1)
             assert (len(full_data[ind]) == 1)
         except AssertionError:
+            print(full_data[xl], full_data[yl])
+            print(x, y)
             raise ValueError("Input data or grid has duplicate coordinates: "
                     "Input %r, grid %r" % (data[ind_input], full_data[ind]))
 
