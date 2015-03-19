@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import pandas as pd
+import progressbar as pbar
 
 from droplets.flow import FlowData
 from droplets.interface import get_interface
@@ -34,6 +35,7 @@ def collect_interfaces(base, average=1, save_xvg='', **kwargs):
 
     """
 
+    # Set some default options
     kwargs.setdefault('adjust_com', True)
     kwargs.setdefault('cutoff', None)
     kwargs.setdefault('cutoff_radius', None)
@@ -43,22 +45,34 @@ def collect_interfaces(base, average=1, save_xvg='', **kwargs):
     fopts = pop_fileopts(kwargs)
 
     label = 'M'
+    quiet = kwargs.pop('quiet', False)
 
     files = list(find_singles_to_singles(base, save_xvg, **fopts))
-
     xs, ys = [], []
 
-    for fn, fnout in files:
+    if not quiet:
+        widgets = ['Collecting from files: ',
+                pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
+        progress = pbar.ProgressBar(widgets=widgets, maxval=len(files))
+        progress.start()
+
+    for i, (fn, fnout) in enumerate(files):
         data, _, _ = read_data_file(fn)
         flow = FlowData(data)
         x, y = get_interface_coordinates(flow, label, **kwargs)
         interface = pd.Series(x, index=y)
 
         if save_xvg != '':
-            write_interface_data(fn_out, interface, fn_group, kwargs)
+            write_interface_data(fnout, interface, [fnout], kwargs)
 
         xs.append(interface.values)
         ys.append(interface.index)
+
+        if not quiet:
+            progress.update(i+1)
+
+    if not quiet:
+        progress.finish()
 
     return xs, ys
 

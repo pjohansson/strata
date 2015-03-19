@@ -227,7 +227,7 @@ def spreading_view_cli(files, **kwargs):
 # Combined interface tools for collectiong and plotting
 @strata.group()
 def interface(name=cmd_interface['name'], short_help=cmd_interface['desc']):
-    """View, average and collect interface data of droplets."""
+    """Work with interface data of droplets."""
     pass
 
 

@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import progressbar as pbar
 
 from strata.interface.collect import write_interface_data
 from strata.utils import gen_filenames, pop_fileopts, find_groups_to_singles, decorate_graph
@@ -51,6 +52,7 @@ def view_interfaces(base, average=1, save_xvg='', **kwargs):
 
     kwargs.setdefault('ext', '.xvg')
     fopts = pop_fileopts(kwargs)
+    quiet = kwargs.pop('quiet', False)
 
     # Figure options
     kwargs.setdefault('axis', 'scaled')
@@ -63,7 +65,13 @@ def view_interfaces(base, average=1, save_xvg='', **kwargs):
 
     xs, ys = [], []
 
-    for fngroup, fnout in groups_singles:
+    if not quiet:
+        widgets = ['Reading files: ',
+                pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
+        progress = pbar.ProgressBar(widgets=widgets, maxval=len(groups_singles))
+        progress.start()
+
+    for i, (fngroup, fnout) in enumerate(groups_singles):
         interface_list = read_interface_files(fngroup)
         interface = average_interfaces(interface_list)
 
@@ -78,6 +86,12 @@ def view_interfaces(base, average=1, save_xvg='', **kwargs):
 
         xs.append(np.array(interface))
         ys.append(np.array(interface.index))
+
+        if not quiet:
+            progress.update(i+1)
+
+    if not quiet:
+        progress.finish()
 
     return xs, ys
 
