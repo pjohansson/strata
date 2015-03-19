@@ -41,6 +41,22 @@ def write(path, data, *args, **kwargs):
 
     ftype = kwargs.pop('ftype', 'default')
     try:
-        write_simple(ftype)
-    except KeyError:
+        assert (ftype in modules.keys())
+    except AssertionError:
         raise KeyError("specified 'ftype' not existing for writing.")
+        
+    write_simple(ftype)
+
+
+def flowdata_to_dict(flow):
+    """Convert a FlowData object to write-compatible dictionary.
+
+    Args:
+        flow (FlowData): Object to convert.
+
+    Returns:
+        dict: Data to write.
+
+    """
+
+    return {key: flow.data[key] for key in flow.data.dtype.names}

@@ -27,11 +27,14 @@ def write_data(path, data, binary=True):
         np.savetxt(path, save_data, fmt='%6f', delimiter=' ',
                 header=header, comments='')
 
-
     fields_ordered = ['X', 'Y', 'N', 'T', 'M', 'U', 'V']
 
     btype = 'float32'
-    save_data = np.array([data[l] for l in fields_ordered], dtype=btype).T
+    try:
+        save_data = np.array([data[l] for l in fields_ordered], dtype=btype).T
+    except KeyError:
+        raise KeyError("Can not write desired file format: Missing keys %r."
+                % set(fields_ordered).difference(data.keys()))
 
     if binary:
         write_binsimple()

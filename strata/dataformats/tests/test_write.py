@@ -2,9 +2,11 @@ import os
 import numpy as np
 import pytest
 import tempfile as tmp
+
+from droplets.flow import FlowData
 import strata.dataformats as formats
 from strata.dataformats.read import guess_read_module
-from strata.dataformats.write import write
+from strata.dataformats.write import write, flowdata_to_dict
 from strata.dataformats.simple.read import read_plainsimple, read_binsimple
 
 datasize = 4
@@ -46,3 +48,8 @@ def test_bad_ftype():
         path = os.path.join(tmpdir, tmpfn)
         with pytest.raises(KeyError):
             write(path, save_data, ftype=ftype)
+
+def test_convert_flowdata():
+    flow = FlowData(save_data)
+    for key, array in flowdata_to_dict(flow).items():
+        assert np.array_equal(array, save_data[key])
