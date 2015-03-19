@@ -4,7 +4,7 @@ import tempfile as tmp
 
 from droplets.flow import FlowData
 from droplets.interface import get_interface
-from strata.interface import *
+from strata.interface.collect import *
 from strata.dataformats.write import write, flowdata_to_dict
 from strata.utils import gen_filenames, find_datamap_files
 
@@ -90,7 +90,7 @@ def test_read_interface():
         path = next(gen_filenames(fnbase))
         write(path, flowdata_to_dict(flow))
 
-        xs_list, ys_list = read_interfaces(fnbase)
+        xs_list, ys_list = collect_interfaces(fnbase)
         assert (np.array_equal(xs_list[0], x))
         assert (np.array_equal(ys_list[0], y))
 
@@ -120,14 +120,14 @@ def test_read_average_interfaces():
         write(path1, flowdata_to_dict(flow1))
         write(path2, flowdata_to_dict(flow2))
 
-        xs_list, ys_list = read_interfaces(fnbase, average=2, save_xvg=outbase)
+        xs_list, ys_list = collect_interfaces(fnbase, average=2, save_xvg=outbase)
         assert (np.array_equal(xs_list[0], xavg))
         assert (np.array_equal(ys_list[0], yavg))
 
         # Check output
         out = list(find_datamap_files(outbase, ext='.xvg'))
         assert (len(out) == 1)
-        
-        y_read, x_read = np.genfromtxt(out[0], comments='#', unpack=True)
+
+        x_read, y_read = np.genfromtxt(out[0], comments='#', unpack=True)
         assert (np.array_equal(x_read, xavg))
         assert (np.array_equal(y_read, yavg))

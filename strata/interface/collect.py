@@ -8,7 +8,7 @@ from strata.dataformats.read import read_from_files
 from strata.utils import find_groups_to_singles, pop_fileopts, prepare_path
 
 
-def read_interfaces(base, average=1, save_xvg='', **kwargs):
+def collect_interfaces(base, average=1, save_xvg='', **kwargs):
     """Get the interfaces from files at input base.
 
     Args:
@@ -38,6 +38,9 @@ def read_interfaces(base, average=1, save_xvg='', **kwargs):
     """
 
     kwargs.setdefault('adjust_com', True)
+    kwargs.setdefault('cutoff', None)
+    kwargs.setdefault('cutoff_radius', None)
+    kwargs.setdefault('cutoff_bins', 1)
     kwargs.setdefault('outext', '.xvg')
     fopts = pop_fileopts(kwargs)
 

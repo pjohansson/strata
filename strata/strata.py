@@ -6,7 +6,7 @@ import numpy as np
 
 from strata.average import average
 from strata.convert import convert
-from strata.interface import read_interfaces
+from strata.interface.collect import collect_interfaces
 from strata.spreading.collect import collect
 from strata.spreading.view import view
 
@@ -235,16 +235,16 @@ def spreading_view_cli(files, **kwargs):
 @add_option('--ext', default='.dat',
         help='Read using this file extension. (.dat)')
 def interface_cli(base, **kwargs):
-    """Collect spreading radius r(t) at height FLOOR for input files at BASE.
+    """Collect the interface boundaries for input files at BASE.
 
-    The radius is calculated by finding the outermost bins fulfilling set
-    criteria to be considered parts of the droplet. For each considered bin
-    in the bottom-most layer which has more mass than a set cut-off, a
-    search is made for similarly filled bins within a set radius. If the
-    number of filled bins within this radius surpasses the final requirement,
-    the bin is considered to be connected to the main droplet. The left- and
-    rightmost of these bins in the selected layer are taken as the droplet
-    spreading edges from which the radius is calculated.
+    The interface is calculated at each height by finding the outermost bins
+    fulfilling set criteria to be considered parts of the droplet. For each
+    considered bin in the bottom-most layer which has more mass than a set
+    cut-off, a search is made for similarly filled bins within a set radius.
+    If the number of filled bins within this radius surpasses the final
+    requirement, the bin is considered to be connected to the main droplet.
+    The left- and rightmost of these bins in the selected layer are taken
+    as its boundary cells.
 
     Read data files must have data fields corresponding to coordinates
     and mass.
@@ -255,7 +255,7 @@ def interface_cli(base, **kwargs):
     """
 
     set_none_to_inf(kwargs)
-    xs, ys = read_interfaces(base, **kwargs)
+    xs, ys = collect_interfaces(base, **kwargs)
 
 
 def set_none_to_inf(kwargs, label='end'):
