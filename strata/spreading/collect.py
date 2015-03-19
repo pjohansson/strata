@@ -1,9 +1,6 @@
 import os
 import numpy as np
-<<<<<<< HEAD:strata/spreading/collect.py
 import progressbar as pbar
-=======
->>>>>>> Move `get_interface` functions to `interface` module:strata/spreading.py
 
 from droplets.flow import FlowData
 from droplets.interface import get_interface
