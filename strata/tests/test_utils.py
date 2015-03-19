@@ -126,6 +126,25 @@ def test_groups_to_singles_filenames():
             for _, to_fn in gen:
                 assert (to_fn == next(out_gen))
 
+
+def test_groups_to_singles_otherext():
+    num_files = 10
+    group = 5
+    with tmp.TemporaryDirectory() as tmpdir:
+        base = os.path.join(tmpdir, fnbase)
+        outbase = os.path.join(tmpdir, 'out_')
+        outext = '.xvg'
+        files = []
+        for filename in gen_filenames(base, num_files):
+            files.append(filename)
+            open(filename, 'w')
+
+        # Assert that groups and singles are correct
+        out_gen = gen_filenames(outbase, ext=outext)
+        gen = find_groups_to_singles(base, outbase, group, outext=outext)
+        for from_fns, to_fn in gen:
+            assert (to_fn == next(out_gen))
+
 def test_find_singles_to_singles():
     num_files = 10
 
@@ -167,7 +186,7 @@ def test_catch_fileattr():
     kwargs = {'begin': 2, 'end': 4, 'ext': '.tmp', 'extra': [1,2,3]}
     attr = pop_fileopts(kwargs)
     assert (kwargs == {'extra': [1,2,3]})
-    assert (attr == {'begin': 2, 'end': 4, 'ext': '.tmp'})
+    assert (attr == {'begin': 2, 'end': 4, 'ext': '.tmp', 'outext': '.tmp'})
     for i, _ in enumerate(gen_filenames('test_', **attr)):
         pass
     assert (i == 2)

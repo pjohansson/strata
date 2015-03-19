@@ -148,7 +148,9 @@ def find_groups_to_singles(base, output, group=1, **kwargs):
         group (int, default=1): Group input files in bundles of this length.
             Can be input as the third positional argument.
 
-        ext (str, default='.dat'): File extension.
+        ext (str, default='.dat'): Input file extension.
+
+        outext (str, default=ext): Output file extension, defaults to input.
 
     Yields:
         (str's, str): 2-tuple with a list of input paths and their
@@ -159,7 +161,7 @@ def find_groups_to_singles(base, output, group=1, **kwargs):
     opts = pop_fileopts(kwargs)
     begin_out_num = np.ceil(opts['begin']/group)
 
-    output_gen = gen_filenames(output, begin=begin_out_num, ext=opts['ext'])
+    output_gen = gen_filenames(output, begin=begin_out_num, ext=opts['outext'])
     input_gen = find_datamap_files(base, group=group, **opts)
     for input_group in input_gen:
         yield input_group, next(output_gen)
@@ -178,6 +180,8 @@ def pop_fileopts(kwargs):
 
         ext (str, default='.dat'): File extension.
 
+        outext (str, default=ext): Output file extension, defaults to input.
+
     Return:
         dict: Input options with set or default values.
 
@@ -188,6 +192,8 @@ def pop_fileopts(kwargs):
             'end': kwargs.pop('end', np.inf),
             'ext': kwargs.pop('ext', '.dat')
             }
+
+    fopts['outext'] = kwargs.get('outext', fopts['ext'])
 
     return fopts
 
