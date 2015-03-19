@@ -4,8 +4,8 @@ import pandas as pd
 
 from droplets.flow import FlowData
 from droplets.interface import get_interface
-from strata.dataformats.read import read_from_files
-from strata.utils import find_groups_to_singles, pop_fileopts, prepare_path
+from strata.dataformats.read import read_data_file
+from strata.utils import find_singles_to_singles, pop_fileopts, prepare_path
 
 
 def collect_interfaces(base, average=1, save_xvg='', **kwargs):
@@ -17,9 +17,6 @@ def collect_interfaces(base, average=1, save_xvg='', **kwargs):
     Keyword Args:
         adjust_com (bool, default=True): Center spreading coordinates around
             the center of mass.
-
-        average (int, default=1): Group and average interfaces from files
-            of this bundle size.
 
         save_xvg (str, optional): Output interface coordinates to files
             at this base path.
@@ -42,24 +39,20 @@ def collect_interfaces(base, average=1, save_xvg='', **kwargs):
     kwargs.setdefault('cutoff_radius', None)
     kwargs.setdefault('cutoff_bins', 1)
     kwargs.setdefault('outext', '.xvg')
+
     fopts = pop_fileopts(kwargs)
 
-    groups_singles = list(find_groups_to_singles(base, save_xvg, average,
-            **fopts))
-    xs, ys = [], []
     label = 'M'
 
-    for i, (fn_group, fn_out) in enumerate(groups_singles):
-        xs_group, ys_group = [], []
-        for j, (data, _, _) in enumerate(read_from_files(*fn_group)):
-            flow = FlowData(data)
+    files = list(find_singles_to_singles(base, save_xvg, **fopts))
 
-            x, y = get_interface_coordinates(flow, label, **kwargs)
-            xs_group.append(x)
-            ys_group.append(y)
+    xs, ys = [], []
 
-        left, right = combine_interfaces(xs_group, ys_group)
-        interface = stitch_edge_series(left.mean(axis=1), right.mean(axis=1))
+    for fn, fnout in files:
+        data, _, _ = read_data_file(fn)
+        flow = FlowData(data)
+        x, y = get_interface_coordinates(flow, label, **kwargs)
+        interface = pd.Series(x, index=y)
 
         if save_xvg != '':
             write_interface_data(fn_out, interface, fn_group, kwargs)
@@ -110,16 +103,23 @@ def write_interface_data(path, interface, fngroup, kwargs):
             inputs += "#   '%s'\n" % name
         inputs += "# \n"
 
-        inputs += (
-                "# Input options:\n"
-                "#   Adjust COM: %r\n"
-                "#   Mass cut-off: %r\n"
-                "#   Radius cut-off: %r\n"
-                "#   Required # of bins: %r\n"
-                "# \n"
-                "# x (nm) y (nm)"
-                ) % (kwargs['adjust_com'], kwargs['cutoff'],
-                        kwargs['cutoff_radius'], kwargs['cutoff_bins'])
+        try:
+            inputs += (
+                    "# Input options:\n"
+                    "#   Adjust COM: %r\n"
+                    "#   Mass cut-off: %r\n"
+                    "#   Radius cut-off: %r\n"
+                    "#   Required # of bins: %r\n"
+                    "# \n"
+                    ) % (kwargs['adjust_com'], kwargs['cutoff'],
+                            kwargs['cutoff_radius'], kwargs['cutoff_bins'])
+        except KeyError:
+            inputs += (
+                    "# Input options: See original files.\n"
+                    "# \n"
+                    )
+
+        inputs += "# x (nm) y (nm)"
 
         return header + inputs
 
@@ -161,59 +161,3 @@ def get_interface_coordinates(flow, label, adjust_com=False, **kwargs):
         xs -= np.average(flow.data[xl], weights=flow.data[label])
 
     return xs, ys
-
-
-def combine_interfaces(xs, ys):
-    """Return DataFrame objects of collected left and right interfaces.
-
-    Args:
-        xs, ys (ndarrays): Lists of input coordinate arrays.
-
-    Returns:
-        DataFrames: 2-tuple of left and right edges.
-
-    """
-
-    left, right = [pd.DataFrame(edge_coords).T
-            for edge_coords in all_coords_to_edges(xs, ys)]
-
-    return left, right
-
-
-def all_coords_to_edges(xs, ys):
-    """Return lists of coordinates as Series objects for both interface edges.
-
-    Input lists of several interfaces to return as edges. Returned Series's
-    will have y as indices and x as values.
-
-    Args:
-        xs, ys (ndarrays): Lists of input coordinate arrays.
-
-    Returns:
-        pd.Series, pd.Series: 2-tuple for left and right interface boundaries,
-            with list of Pandas Series's objects for each edge.
-
-    """
-
-    split_at = lambda a: int(len(a)/2)
-
-    left = [pd.Series(x[:split_at(x)], index=y[:split_at(x)])
-            for x, y in zip(xs, ys)]
-    right = [pd.Series(x[split_at(x):], index=y[split_at(x):])
-            for x, y in zip(xs, ys)]
-
-    return left, right
-
-
-def stitch_edge_series(left, right):
-    """Return coordinates from input left and right edges as single arrays.
-
-    Args:
-        left, right (Series): Pandas Series objects of edges.
-
-    Returns:
-        Series: Pandas Series of combined edges.
-
-    """
-
-    return left.append(right)

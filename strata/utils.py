@@ -262,6 +262,8 @@ def decorate_graph(func):
 
         xlim, ylim (2-tuples, default=None): Limits of axes.
 
+        axis (str, default=None): Set axis scaling.
+
         loglog (bool, default=False): Set both axes to logarithmic scale.
 
         save_fig (path, default=None): Save figure to path.
@@ -276,9 +278,10 @@ def decorate_graph(func):
         def pop_figure_kwargs(kwargs):
             key_defaults = (
                     (['title', 'xlabel', 'ylabel'], ''),
-                    (['xlim', 'ylim', 'save_fig'], None),
+                    (['xlim', 'ylim', 'save_fig', 'axis'], None),
                     (['show'], True),
-                    (['loglog'], False)
+                    (['loglog'], False),
+                    (['axis'], 'equal')
             )
 
             fargs = {}
@@ -301,6 +304,9 @@ def decorate_graph(func):
         if fargs['loglog']:
             plt.xscale('log')
             plt.yscale('log')
+
+        if fargs['axis']:
+            plt.axis(fargs['axis'])
 
         if fargs['save_fig'] != None:
             plt.savefig(fargs['save_fig'])
