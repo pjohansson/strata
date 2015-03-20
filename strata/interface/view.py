@@ -146,7 +146,7 @@ def average_interfaces(interfaces):
     def average_edge(edges_list, side):
         side_list = [interface[side] for interface in edges_list]
         df = pd.DataFrame(side_list).T
-        
+
         return df.mean(axis=1, skipna=False).dropna()
 
     edges_list = [get_boundary_sides(xs, ys) for xs, ys in interfaces]
@@ -208,4 +208,4 @@ def stitch_edge_series(left, right):
 
     """
 
-    return left.append(right[::-1])
+    return left.append(right.sort_index(ascending=False))
