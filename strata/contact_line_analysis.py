@@ -1,3 +1,4 @@
+import os
 import progressbar as pbar
 
 from droplets.average import average_flow_data
@@ -44,6 +45,11 @@ def extract_contact_line_bins(base, output, **kwargs):
 
     """
 
+    def get_closest_adjusting_coord(xs, dx):
+        """Find the adjusting coordinate on input grid with size dx."""
+
+        return np.floor(np.mean(xs)/dx)*dx
+
     fopts = pop_fileopts(kwargs)
     quiet = kwargs.pop('quiet', False)
 
@@ -51,6 +57,7 @@ def extract_contact_line_bins(base, output, **kwargs):
     extract_area = kwargs.pop('extract_area', (0., 0.))
     include_radius = kwargs.pop('include_radius', 1.)
 
+    label = 'M'
     weights = [('U', 'M'), ('V', 'M'), ('T', 'N')]
     groups_singles = list(find_groups_to_singles(base, output, average,
             **fopts))
@@ -64,22 +71,31 @@ def extract_contact_line_bins(base, output, **kwargs):
     for i, (fn_group, fn_out) in enumerate(groups_singles):
         left, right = [], []
 
+        dxs = []
+
         for data, info, meta in read_from_files(*fn_group):
             left_cells, right_cells = get_contact_line_cells(
-                    FlowData(data), 'M',
-                    size=extract_area, radius=include_radius, cutoff=kwargs['cutoff'], num_bins=kwargs['num_bins']
+                    FlowData(data), label,
+                    size=extract_area, radius=include_radius,
+                    cutoff=kwargs['cutoff'], num_bins=kwargs['num_bins']
                     )
+
+            dxs.append(info['bin_size'][0])
 
             left.append(add_adjusted_flow(left_cells, 'left', info))
             right.append(add_adjusted_flow(right_cells, 'right', info))
 
         avg_flow = []
-        for data_list in (left, right):
+        dx = np.mean(dxs)
+
+        for data_list in [left, right]:
             xadjs, flow_data = np.array(data_list).T.tolist()
             avg_flow.append(average_flow_data(flow_data, weights=weights))
-            avg_flow[-1].data['X'] += np.mean(xadjs)
 
-        write(fn_out, combine_flow_data(avg_flow, info).data)
+            xadj = get_closest_adjusting_coord(xadjs, dx)
+            avg_flow[-1].data['X'] += xadj
+
+        write(fn_out, combine_flow_data(avg_flow, info).data, ftype='simple_plain')
 
         if not quiet:
             progress.update(i+1)
@@ -91,11 +107,29 @@ def extract_contact_line_bins(base, output, **kwargs):
 def combine_flow_data(avg_flow, info):
     """Return a combined FlowData object of the left and right edges."""
 
-    get_list = lambda flow, l: flow.data[l].tolist()
-    get_data = lambda l: get_list(left, l) + get_list(right, l)
+    def merge_data(grid, left, right):
+        """Merge the data from averaged edges onto a grid."""
 
-    left, right = avg_flow
-    data = [(l, get_data(l)) for l in left.data.dtype.names]
+        coord_labels = ('X', 'Y')
+        value_labels = set(grid.dtype.names).difference(coord_labels)
+
+        data = np.empty_like(grid)
+
+        for d, l, r in zip(data, left, right):
+            for k in coord_labels:
+                d[k] = l[k]
+            for k in value_labels:
+                d[k] = l[k] + r[k]
+
+        return [(k, data[k]) for k in data.dtype.names]
+
+    from droplets.average import get_combined_grid, transfer_data
+
+    flowdata = [flow.data for flow in avg_flow]
+    grid = get_combined_grid(flowdata, info['bin_size'])
+    left, right = (transfer_data(grid, flow.data) for flow in avg_flow)
+
+    data = merge_data(grid, left, right)
 
     return FlowData(*data, info=info)
 

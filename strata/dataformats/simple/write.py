@@ -30,8 +30,10 @@ def write_data(path, data, binary=True):
     fields_ordered = ['X', 'Y', 'N', 'T', 'M', 'U', 'V']
 
     btype = 'float32'
+    if type(data) == np.ndarray:
+        data.sort(order=['X', 'Y'])
+
     try:
-        data.sort(order='X')
         save_data = np.array([data[l] for l in fields_ordered], dtype=btype).T
     except KeyError:
         raise KeyError("Can not write desired file format: Missing keys %r."

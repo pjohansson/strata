@@ -1,5 +1,6 @@
 import numpy as np
 from droplets.flow import FlowData
+from strata.dataformats.write import write
 
 
 """Module for averaging FlowData objects."""
@@ -71,6 +72,7 @@ def average_flow_data(input_flow_maps, weights=[], coord_labels=('X', 'Y')):
     grid = get_combined_grid(data_list, bin_size, coord_labels)
     data_on_grid = [transfer_data(grid, data, coord_labels)
             for data in data_list]
+
     avg_data = average_data(data_on_grid, weights, coord_labels)
 
     return get_flowdata(avg_data, grid, bin_size)
@@ -193,8 +195,6 @@ def transfer_data(grid, data, coord_labels=('X', 'Y')):
             assert (len(data[ind_input]) == 1)
             assert (len(full_data[ind]) == 1)
         except AssertionError:
-            print(full_data[xl], full_data[yl])
-            print(x, y)
             raise ValueError("Input data or grid has duplicate coordinates: "
                     "Input %r, grid %r" % (data[ind_input], full_data[ind]))
 
