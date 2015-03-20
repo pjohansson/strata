@@ -1,7 +1,7 @@
 import os
 import progressbar as pbar
 
-from droplets.average import average_flow_data
+from droplets.average import average_flow_data, get_combined_grid, transfer_data
 from droplets.contact_line import *
 from droplets.flow import FlowData
 from strata.dataformats.read import read_from_files
@@ -63,12 +63,14 @@ def extract_contact_line_bins(base, output, **kwargs):
             **fopts))
 
     if not quiet:
+        length = len(groups_singles)*average
         widgets = ['Extracting contact line: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
-        progress = pbar.ProgressBar(widgets=widgets, maxval=len(groups_singles))
+        progress = pbar.ProgressBar(widgets=widgets, maxval=length)
         progress.start()
 
-    for i, (fn_group, fn_out) in enumerate(groups_singles):
+    i = 0
+    for fn_group, fn_out in groups_singles:
         left, right = [], []
 
         dxs = []
@@ -85,6 +87,10 @@ def extract_contact_line_bins(base, output, **kwargs):
             left.append(add_adjusted_flow(left_cells, 'left', info))
             right.append(add_adjusted_flow(right_cells, 'right', info))
 
+            if not quiet:
+                progress.update(i+1)
+                i += 1
+
         avg_flow = []
         dx = np.mean(dxs)
 
@@ -95,10 +101,7 @@ def extract_contact_line_bins(base, output, **kwargs):
             xadj = get_closest_adjusting_coord(xadjs, dx)
             avg_flow[-1].data['X'] += xadj
 
-        write(fn_out, combine_flow_data(avg_flow, info).data, ftype='simple_plain')
-
-        if not quiet:
-            progress.update(i+1)
+        write(fn_out, combine_flow_data(avg_flow, info).data)
 
     if not quiet:
         progress.finish()
@@ -122,8 +125,6 @@ def combine_flow_data(avg_flow, info):
                 d[k] = l[k] + r[k]
 
         return [(k, data[k]) for k in data.dtype.names]
-
-    from droplets.average import get_combined_grid, transfer_data
 
     flowdata = [flow.data for flow in avg_flow]
     grid = get_combined_grid(flowdata, info['bin_size'])
