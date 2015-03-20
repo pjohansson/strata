@@ -1,5 +1,5 @@
-import os
 import numpy as np
+import os
 import pandas as pd
 import progressbar as pbar
 
@@ -106,6 +106,7 @@ def plot_interface_data(interface, **kwargs):
 
     import matplotlib.pyplot as plt
 
+    plt.clf()
     plt.plot(interface, interface.index, **kwargs)
 
 
@@ -144,7 +145,9 @@ def average_interfaces(interfaces):
 
     def average_edge(edges_list, side):
         side_list = [interface[side] for interface in edges_list]
-        return pd.DataFrame(side_list).T.mean(axis=1)
+        df = pd.DataFrame(side_list).T
+        
+        return df.mean(axis=1, skipna=False).dropna()
 
     edges_list = [get_boundary_sides(xs, ys) for xs, ys in interfaces]
     left, right = (average_edge(edges_list, side) for side in (0, 1))
@@ -205,4 +208,4 @@ def stitch_edge_series(left, right):
 
     """
 
-    return left.append(right)
+    return left.append(right[::-1])
