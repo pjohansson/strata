@@ -234,10 +234,9 @@ def interface(name=cmd_interface['name'], short_help=cmd_interface['desc']):
 # Interface collect wrapper
 @interface.command(name=cmd_intcollect['name'], short_help=cmd_intcollect['desc'])
 @add_argument('base', type=str)
+@add_argument('output', type=str)
 @add_option('-com', '--adjust_com', default=True,
         help='Center interface coordinates around the center of mass. (True)')
-@add_option('-x', '--save_xvg', type=click.Path(), default='',
-        help='Save collected data to disk at base as .xvg file.')
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Boundary bins require this much mass. (0)')
 @add_option('-cr', '--cutoff_radius', default=1.,
@@ -250,8 +249,8 @@ def interface(name=cmd_interface['name'], short_help=cmd_interface['desc']):
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read using this file extension. (.dat)')
-def interface_collect_cli(base, **kwargs):
-    """Collect the interface boundaries for input files at BASE.
+def interface_collect_cli(base, output, **kwargs):
+    """Collect the interface boundaries for input files at BASE to OUTPUT.
 
     The interface is calculated at each height by finding the outermost bins
     fulfilling set criteria to be considered parts of the droplet. For each
@@ -271,7 +270,7 @@ def interface_collect_cli(base, **kwargs):
     """
 
     set_none_to_inf(kwargs)
-    xs, ys = collect_interfaces(base, **kwargs)
+    xs, ys = collect_interfaces(base, output, **kwargs)
 
 
 # Interface viewing wrapper

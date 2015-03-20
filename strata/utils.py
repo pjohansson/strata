@@ -95,7 +95,7 @@ def find_datamap_files(base, **kwargs):
         yield from yield_groups(base, *args)
 
 
-def find_singles_to_singles(base, output, **kwargs):
+def find_singles_to_singles(base, output, **fopts):
     """Find input file names and generates with output file names.
 
     Used to easily read from and write to file groups.
@@ -112,13 +112,17 @@ def find_singles_to_singles(base, output, **kwargs):
 
         ext (str, default='.dat'): File extension.
 
+        outext (str, default=ext): Output file extension.
+
     Yields:
         str, str: 2-tuple with input and corresponding output paths.
 
     """
 
-    fopts = pop_fileopts(kwargs)
-    out = gen_filenames(output, **fopts)
+    out_fopts = fopts.copy()
+    out_fopts['ext'] = fopts['outext']
+    
+    out = gen_filenames(output, **out_fopts)
     for path in find_datamap_files(base, **fopts):
         yield path, next(out)
 

@@ -9,24 +9,25 @@ from strata.dataformats.read import read_data_file
 from strata.utils import find_singles_to_singles, pop_fileopts, prepare_path
 
 
-def collect_interfaces(base, average=1, save_xvg='', **kwargs):
-    """Get the interfaces from files at input base.
+def collect_interfaces(base, output, average=1, **kwargs):
+    """Get the interfaces from files at input base and save to output.
 
     Args:
         base (str): Base path to input files.
 
+        output (str): Base path to output interface files.
+
     Keyword Args:
         adjust_com (bool, default=True): Center spreading coordinates around
             the center of mass.
-
-        save_xvg (str, optional): Output interface coordinates to files
-            at this base path.
 
         begin (int, default=1): First data map number.
 
         end (int, default=inf): Final data map number.
 
         ext (str, default='.dat'): File extension.
+
+        outext (str, default='.xvg.'): Output file extension.
 
     Returns:
         xs, ys: 2-tuple with lists of all interface coordinates along x and y.
@@ -47,7 +48,7 @@ def collect_interfaces(base, average=1, save_xvg='', **kwargs):
     label = 'M'
     quiet = kwargs.pop('quiet', False)
 
-    files = list(find_singles_to_singles(base, save_xvg, **fopts))
+    files = list(find_singles_to_singles(base, output, **fopts))
     xs, ys = [], []
 
     if not quiet:
@@ -62,8 +63,7 @@ def collect_interfaces(base, average=1, save_xvg='', **kwargs):
         x, y = get_interface_coordinates(flow, label, **kwargs)
         interface = pd.Series(x, index=y)
 
-        if save_xvg != '':
-            write_interface_data(fnout, interface, [fnout], kwargs)
+        write_interface_data(fnout, interface, [fnout], kwargs)
 
         xs.append(interface.values)
         ys.append(interface.index)
