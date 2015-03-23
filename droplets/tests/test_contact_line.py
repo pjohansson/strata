@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from droplets.flow import FlowData
-from droplets.droplet import get_interface
+from droplets.interface import get_interface
 from droplets.contact_line import *
 
 def get_data(size, base, height):
@@ -28,7 +28,7 @@ def test_extract_cells():
     data = get_data(10, 2, 3)
     flow = FlowData(*data)
 
-    interface = list(get_interface(flow, 'C', 1, num_bins=0))
+    interface = list(get_interface(flow, 'C', cutoff_radius=1, num_bins=0))
     il, ir = interface[0]
 
     # Match top interface layer for several extractions

@@ -1,9 +1,9 @@
 import numpy as np
 
-from droplets.droplet import get_interface
+from droplets.interface import get_interface
 
 
-def get_contact_line_cells(flow, label, size=(0., 0.), radius=1., **kwargs):
+def get_contact_line_cells(flow, label, size=(0., 0.), **kwargs):
     """Return cells from the left and right contact line of FlowData map.
 
     Args:
@@ -16,15 +16,13 @@ def get_contact_line_cells(flow, label, size=(0., 0.), radius=1., **kwargs):
         size (float, default=0.): 2-tuple with size of area to include from
             the contact line edge.
 
-        radius (float, default=1.): See `droplets.droplet.get_interface`.
-
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
     Returns:
         (ndarray, ndarray): Numpy record arrays of left and right contact
             line cells.
 
-    For additional keyword arguments see `droplets.droplet.get_interface`.
+    For additional keyword arguments see `droplets.interface.get_interface`.
 
     """
 
@@ -32,7 +30,7 @@ def get_contact_line_cells(flow, label, size=(0., 0.), radius=1., **kwargs):
         """Return interface of input height with axes swapped."""
 
         interface = []
-        interface_iter = get_interface(flow, label, radius, **kwargs)
+        interface_iter = get_interface(flow, label, **kwargs)
         try:
             interface.append(next(interface_iter))
         except StopIteration:

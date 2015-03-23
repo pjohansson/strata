@@ -20,7 +20,7 @@ def collect(base, **kwargs):
 
     Droplets are contained in data map files at input base. The spreading
     radius is found as the outermost filled bins of the
-    bottom interface layer as found by 'droplets.droplet.get_interface'.
+    bottom interface layer as found by 'droplets.interface.get_interface'.
     The accumulated mass inside bins is used as the parameter determining
     whether a system bin is full or not.
 

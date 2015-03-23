@@ -120,8 +120,11 @@ def find_singles_to_singles(base, output, **fopts):
     """
 
     out_fopts = fopts.copy()
-    out_fopts['ext'] = fopts['outext']
-    
+    try:
+        out_fopts['ext'] = fopts['outext']
+    except KeyError:
+        out_fopts['ext'] = fopts.get('ext', '.dat')
+
     out = gen_filenames(output, **out_fopts)
     for path in find_datamap_files(base, **fopts):
         yield path, next(out)
