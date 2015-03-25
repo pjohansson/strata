@@ -57,7 +57,7 @@ def view(files, **kwargs):
 
     if (kwargs.get('show', True) or kwargs.get('save_fig', None) != None
             and len(data) > 0):
-        kwargs['axis'] = 'auto'
+        kwargs['axis'] = 'tight'
         plot_spreading_data(df, **kwargs)
 
     return None
