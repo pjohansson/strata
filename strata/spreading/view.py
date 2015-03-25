@@ -57,6 +57,7 @@ def view(files, **kwargs):
 
     if (kwargs.get('show', True) or kwargs.get('save_fig', None) != None
             and len(data) > 0):
+        kwargs['axis'] = 'auto'
         plot_spreading_data(df, **kwargs)
 
     return None
@@ -178,7 +179,13 @@ def read_spreading_data(*files):
     """
 
     def read_file(filename):
-        data = np.loadtxt(filename, unpack=True)
+        """Read Grace formatted file, comments starting with # or @."""
+
+        try:
+            data = np.loadtxt(filename, unpack=True, comments='#')
+        except ValueError:
+            data = np.loadtxt(filename, unpack=True, comments='@')
+
         times = data[0]
 
         return [pd.Series(rs, index=times, name='%s.%d' % (filename, i+1))
@@ -190,7 +197,6 @@ def read_spreading_data(*files):
             data.extend(read_file(filename))
         except Exception:
             print("[WARNING] Could not read file at '%s'." % filename)
-            raise SyntaxError
 
     return data
 

@@ -287,8 +287,7 @@ def decorate_graph(func):
                     (['title', 'xlabel', 'ylabel'], ''),
                     (['xlim', 'ylim', 'save_fig', 'axis'], None),
                     (['show'], True),
-                    (['loglog'], False),
-                    (['axis'], 'equal')
+                    (['loglog'], False)
             )
 
             fargs = {}
