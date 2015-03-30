@@ -30,7 +30,7 @@ def extract_contact_line_bins(base, output, **kwargs):
         cutoff (float): Which mass value to cut the boundary at.
             Defaults to the midpoint mass of each data map.
 
-        include_radius (float, default=1): Radius to include bins within.
+        cutoff_radius (float, default=1): Radius to include bins within.
 
         num_bins (int, default=1): Number of bins inside the set radius
             which must pass the cut-off criteria.
@@ -55,7 +55,7 @@ def extract_contact_line_bins(base, output, **kwargs):
 
     average = kwargs.pop('average', 1)
     extract_area = kwargs.pop('extract_area', (0., 0.))
-    include_radius = kwargs.pop('include_radius', 1.)
+    include_radius = kwargs.pop('cutoff_radius', 1.)
 
     label = 'M'
     weights = [('U', 'M'), ('V', 'M'), ('T', 'N')]
@@ -78,7 +78,7 @@ def extract_contact_line_bins(base, output, **kwargs):
         for data, info, meta in read_from_files(*fn_group):
             left_cells, right_cells = get_contact_line_cells(
                     FlowData(data), label,
-                    size=extract_area, radius=include_radius,
+                    size=extract_area, cutoff_radius=include_radius,
                     cutoff=kwargs['cutoff'], num_bins=kwargs['num_bins']
                     )
 
