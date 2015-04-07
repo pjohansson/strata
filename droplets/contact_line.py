@@ -3,7 +3,7 @@ import numpy as np
 from droplets.interface import get_interface
 
 
-def get_contact_line_cells(flow, label, size=(0., 0.), **kwargs):
+def get_contact_line_cells(flow, label, extract_area=(0., 0.), **kwargs):
     """Return cells from the left and right contact line of FlowData map.
 
     Args:
@@ -13,8 +13,8 @@ def get_contact_line_cells(flow, label, size=(0., 0.), **kwargs):
         label (str): Record label used as a base for the interface height map.
 
     Keyword Args:
-        size (float, default=0.): 2-tuple with size of area to include from
-            the contact line edge.
+        extract_area (float, default=0.): 2-tuple with size of area to
+            extract from the contact line edge.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
@@ -56,7 +56,7 @@ def get_contact_line_cells(flow, label, size=(0., 0.), **kwargs):
         ys = flow.data[ylabel]
 
         try:
-            xinner = x(inds[0]) + size[0]*dir_mod
+            xinner = x(inds[0]) + extract_area[0]*dir_mod
         except IndexError:
             icells = []
         else:
@@ -71,7 +71,7 @@ def get_contact_line_cells(flow, label, size=(0., 0.), **kwargs):
     x = lambda index: flow.data[index][xlabel]
     y = lambda index: flow.data[index][ylabel]
 
-    interface = get_interface_of_height(size[1])
+    interface = get_interface_of_height(extract_area[1])
     left, right = [get_cells_in_direction(inds, dir_mod)
             for inds, dir_mod in zip(interface, (1, -1))]
 
