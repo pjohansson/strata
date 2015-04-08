@@ -80,9 +80,11 @@ cmd_view = {
 @add_argument('base', type=str)
 @add_argument('output', type=str)
 @add_argument('group', type=click.IntRange(1, None))
-@add_option('-b', '--begin', default=1, type=click.IntRange(0, None),
+@add_option('-b', '--begin', default=1,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
-@add_option('-e', '--end', default=None, type=click.IntRange(0, None),
+@add_option('-e', '--end', default=None,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read and write using this file extension. (.dat)')
@@ -106,9 +108,11 @@ def average_cli(base, output, group, **kwargs):
 @add_option('--ftype',
         type=click.Choice(['simple', 'simple_plain']), default='simple',
         help='Format to convert files into. (simple)')
-@add_option('-b', '--begin', default=1, type=click.IntRange(0, None),
+@add_option('-b', '--begin', default=1,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
-@add_option('-e', '--end', default=None, type=click.IntRange(0, None),
+@add_option('-e', '--end', default=None,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read and write using this file extension. (.dat)')
@@ -146,9 +150,11 @@ def spreading(name=cmd_spreading['name'], short_help=cmd_spreading['desc']):
         help='Boundary bins search for neighbours within this radius. (1 nm)')
 @add_option('-cb', '--cutoff_bins', default=1,
         help='Boundary bins require this many neighbours.')
-@add_option('-b', '--begin', default=1, type=click.IntRange(0, None),
+@add_option('-b', '--begin', default=1,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
-@add_option('-e', '--end', default=None, type=click.IntRange(0, None),
+@add_option('-e', '--end', default=None,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read using this file extension. (.dat)')
@@ -248,9 +254,11 @@ def interface(name=cmd_interface['name'], short_help=cmd_interface['desc']):
         help='Boundary bins search for neighbours within this radius. (1 nm)')
 @add_option('-cb', '--cutoff_bins', default=1,
         help='Boundary bins require this many neighbours.')
-@add_option('-b', '--begin', default=1, type=click.IntRange(0, None),
+@add_option('-b', '--begin', default=1,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
-@add_option('-e', '--end', default=None, type=click.IntRange(0, None),
+@add_option('-e', '--end', default=None,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read using this file extension. (.dat)')
@@ -281,7 +289,8 @@ def interface_collect_cli(base, output, **kwargs):
 # Interface viewing wrapper
 @interface.command(name=cmd_intview['name'], short_help=cmd_intview['desc'])
 @add_argument('base', type=str)
-@add_option('-av', '--average', type=click.IntRange(1, None), default=1,
+@add_option('-av', '--average', default=1,
+        type=click.IntRange(1, None), metavar='INTEGER',
         help='Average interface data in bundles of this size. (1)')
 @add_option('-o', '--save_fig', type=str, default=None,
         help='Save figures to base path..')
@@ -299,9 +308,11 @@ def interface_collect_cli(base, output, **kwargs):
         help='Label of x axis.')
 @add_option('--ylabel', default='y (nm)',
         help='Label of y axis.')
-@add_option('-b', '--begin', default=1, type=click.IntRange(0, None),
+@add_option('-b', '--begin', default=1,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
-@add_option('-e', '--end', default=None, type=click.IntRange(0, None),
+@add_option('-e', '--end', default=None,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.xvg',
         help='Read using this file extension. (.xvg)')
@@ -326,10 +337,13 @@ def interface_view_cli(base, **kwargs):
         short_help=cmd_contactline['desc'])
 @add_argument('base', type=str)
 @add_argument('output', type=str)
-@add_option('-av', '--average', type=click.IntRange(1, None), default=1,
-        help='Sample average the extracted data of these many files.')
-@add_option('--rolling', is_flag=True, default=False,
-        help='Perform a rolling average over the data.')
+@add_option('-av', '--average', default=1,
+        type=click.IntRange(1, None), metavar='INTEGER',
+        help='Sample average the extracted data of this many files.')
+@add_option('--rolling/--norolling', default=False,
+        help='Perform a rolling average over the data. (False)')
+@add_option('--recenter/--norecenter', default=True,
+        help='Recenter the extracted edges around zero. (True)')
 @add_option('-ea', '--extract_area', type=float, default=(0., 0.), nargs=2,
         help='Extract area of this size. (1 nm, 1 nm)')
 @add_option('-co', '--cutoff', type=float, default=None,
@@ -338,9 +352,11 @@ def interface_view_cli(base, **kwargs):
         help='Boundary bins search for neighbours within this radius. (1 nm)')
 @add_option('-cb', '--cutoff_bins', default=1,
         help='Boundary bins require this many neighbours (1).')
-@add_option('-b', '--begin', default=1, type=click.IntRange(0, None),
+@add_option('-b', '--begin', default=1,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
-@add_option('-e', '--end', default=None, type=click.IntRange(0, None),
+@add_option('-e', '--end', default=None,
+        type=click.IntRange(0, None), metavar='INTEGER',
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read and write using this file extension. (.dat)')

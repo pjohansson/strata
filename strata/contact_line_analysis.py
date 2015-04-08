@@ -9,7 +9,8 @@ from strata.dataformats.write import write
 from strata.utils import gen_filenames, find_datamap_files, pop_fileopts
 
 
-def extract_contact_line_bins(base, output, average=1, rolling=False, **kwargs):
+def extract_contact_line_bins(base, output, average=1, rolling=False,
+        recenter=False, **kwargs):
     """Extract bins from the contact line of a wetting system.
 
     Can average the extracted data by supplying a positive number of
@@ -25,6 +26,8 @@ def extract_contact_line_bins(base, output, average=1, rolling=False, **kwargs):
         average (int, optional): Number of files to average data over.
 
         rolling (bool, optional): Perform a rolling average over the data.
+
+        recenter (bool, optional): Recenter the contact line edges around zero.
 
         extract_area (float, default=1.): 2-tuple of area around contact
             line to extract.
@@ -46,6 +49,19 @@ def extract_contact_line_bins(base, output, average=1, rolling=False, **kwargs):
         quiet (bool, default=False): Do not print progress.
 
     """
+
+    def adjust_coordinates(avg_flow, xadj, recenter):
+        """Adjust the extracted cell coordinates."""
+
+        if recenter:
+            xdiff = 0.5*(xadj[1] - xadj[0])
+            xadj[0] = -xdiff
+            xadj[1] = xdiff
+
+        avg_flow[0].data['X'] += xadj[0]
+        avg_flow[1].data['X'] += xadj[1]
+
+        return avg_flow
 
     def get_closest_adjusting_coord(xs, dx):
         """Find the adjusting coordinate on input grid with size dx."""
@@ -76,14 +92,15 @@ def extract_contact_line_bins(base, output, average=1, rolling=False, **kwargs):
     i = 0
     for bin_size, left, right in grouped_data:
         avg_flow = []
+        xadj = []
 
         for data_list in [left, right]:
             xadjs, flow_data = np.array(data_list).T.tolist()
             avg_flow.append(average_flow_data(flow_data, weights=weights))
 
-            xadj = get_closest_adjusting_coord(xadjs, bin_size[0])
-            avg_flow[-1].data['X'] += xadj
+            xadj.append(get_closest_adjusting_coord(xadjs, bin_size[0]))
 
+        avg_flow = adjust_coordinates(avg_flow, xadj, recenter)
         write(next(fnout), combine_flow_data(avg_flow, bin_size).data)
 
         if not quiet:
