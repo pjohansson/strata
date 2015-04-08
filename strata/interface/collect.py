@@ -9,7 +9,7 @@ from strata.dataformats.read import read_data_file
 from strata.utils import find_singles_to_singles, pop_fileopts, prepare_path
 
 
-def collect_interfaces(base, output, average=1, **kwargs):
+def collect_interfaces(base, output, adjust_com=True, **kwargs):
     """Get the interfaces from files at input base and save to output.
 
     Args:
@@ -32,12 +32,11 @@ def collect_interfaces(base, output, average=1, **kwargs):
     Returns:
         xs, ys: 2-tuple with lists of all interface coordinates along x and y.
 
-    See `get_interface` for more keyword arguments.
+    See `droplets.interface.get_interface` for more keyword arguments.
 
     """
 
     # Set some default options
-    kwargs.setdefault('adjust_com', True)
     kwargs.setdefault('cutoff', None)
     kwargs.setdefault('cutoff_radius', None)
     kwargs.setdefault('cutoff_bins', 1)
@@ -60,7 +59,7 @@ def collect_interfaces(base, output, average=1, **kwargs):
     for i, (fn, fnout) in enumerate(files):
         data, _, _ = read_data_file(fn)
         flow = FlowData(data)
-        x, y = get_interface_coordinates(flow, label, **kwargs)
+        x, y = get_interface_coordinates(flow, label, adjust_com, **kwargs)
         interface = pd.Series(x, index=y)
 
         write_interface_data(fnout, interface, [fnout], kwargs)
