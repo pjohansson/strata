@@ -29,17 +29,6 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
 
         recenter (bool, optional): Recenter the contact line edges around zero.
 
-        extract_area (float, default=1.): 2-tuple of area around contact
-            line to extract.
-
-        cutoff (float): Which mass value to cut the boundary at.
-            Defaults to the midpoint mass of each data map.
-
-        cutoff_radius (float, default=1): Radius to include bins within.
-
-        cutoff_bins (int, default=1): Number of bins inside the set radius
-            which must pass the cut-off criteria.
-
         begin (int, default=1): First data map number.
 
         end (int, default=inf): Final data map number.
@@ -47,6 +36,8 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
         ext (str, default='.dat'): File extension.
 
         quiet (bool, default=False): Do not print progress.
+
+    See `droplets.contact_line` for additional keyword arguments.
 
     """
 
@@ -96,9 +87,8 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
 
         for data_list in [left, right]:
             xadjs, flow_data = np.array(data_list).T.tolist()
-            avg_flow.append(average_flow_data(flow_data, weights=weights))
-
             xadj.append(get_closest_adjusting_coord(xadjs, bin_size[0]))
+            avg_flow.append(average_flow_data(flow_data, weights=weights))
 
         avg_flow = adjust_coordinates(avg_flow, xadj, recenter)
         write(next(fnout), combine_flow_data(avg_flow, bin_size).data)
