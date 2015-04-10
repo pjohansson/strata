@@ -169,11 +169,11 @@ def get_interface(flow, label, **kwargs):
 
         return radius
 
-    def traverse_layer(sorted_layer):
+    def traverse_layer(sorted_layer, data):
         for cell in sorted_layer:
-            index = np.where(flow.data == cell)[0][0]
+            index = np.where(data == cell)[0][0]
 
-            if _cell_is_droplet(index, flow.data, label,
+            if _cell_is_droplet(index, data, label,
                     cutoff_radius, cutoff, **kwargs):
                 return index
         else:
@@ -191,18 +191,23 @@ def get_interface(flow, label, **kwargs):
     ylims = kwargs.pop('ylims', (None, None))
 
     xlabel, ylabel = kwargs.get('coord_labels', ('X', 'Y'))
-    Y = flow.data[ylabel]
+
+    # Work with non-zero part of dataset
+    indices = np.where(flow.data[label] >= cutoff)[0]
+    data = flow.data[indices]
+
+    Y = data[ylabel]
     ys = get_yvalues(Y, *ylims)
 
     for i, y in enumerate(ys):
-        layer = flow.data[Y == y]
+        layer = data[Y == y]
         sorted_layer = np.sort(layer, order=xlabel)
 
-        left = traverse_layer(sorted_layer)
-        right = traverse_layer(reversed(sorted_layer))
+        left = traverse_layer(sorted_layer, data)
 
-        if left != None and right != None:
-            yield left, right
+        if left != None:
+            right = traverse_layer(reversed(sorted_layer), data)
+            yield [indices[edge] for edge in (left, right)]
 
 
 def _cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
@@ -268,10 +273,13 @@ def _get_indices_in_radius(cell, system, radius, **kwargs):
     """
 
     coord_labels = kwargs.pop('coord_labels', ('X', 'Y'))
+    radius_sq = radius**2
 
     x, y = (system[cell][coord_labels[i]] for i in (0, 1))
     xs, ys = (system[coord_labels[i]] for i in (0, 1))
 
-    indices = np.where((np.sqrt((xs - x)**2 + (ys - y)**2) <= radius))[0]
+    # Extract part of dataset before radius search
+    ixs = np.where((xs - x)**2 <= radius_sq)[0]
+    indices = ixs[np.where((xs[ixs] - x)**2 + (ys[ixs] - y)**2 <= radius_sq)[0]]
 
     return indices[indices != cell]

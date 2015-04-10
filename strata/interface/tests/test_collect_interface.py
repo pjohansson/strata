@@ -48,6 +48,6 @@ def test_read_interface():
         path = next(gen_filenames(fnbase))
         write(path, flowdata_to_dict(flow))
 
-        xs_list, ys_list = collect_interfaces(fnbase)
+        xs_list, ys_list = collect_interfaces(fnbase, '')
         assert (np.array_equal(xs_list[0], x))
         assert (np.array_equal(ys_list[0], y))

@@ -36,10 +36,6 @@ def test_read_files():
     assert (np.array_equal(data[2].index, data2['t']))
     assert (np.array_equal(data[2], data2['d1']))
 
-def test_catch_badfile():
-    with pytest.raises(SyntaxError):
-        read_spreading_data(tmp.NamedTemporaryFile())
-
 def test_combine_data():
     data = read_spreading_data(fndata1, fndata2)
     df = combine_spreading_data(data)
