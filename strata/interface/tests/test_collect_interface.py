@@ -26,7 +26,7 @@ def test_get_interface_coords():
 
 def test_adjust_interface_to_com():
     com = np.average(flow.data['X'], weights=flow.data['C'])
-    x, y = get_interface_coordinates(flow, 'C', adjust_com=True)
+    x, y = get_interface_coordinates(flow, 'C', recenter='com')
 
     assert np.isclose(com, 5.)
     assert np.array_equiv(x[:len(coords)], 1.-com)
@@ -48,6 +48,6 @@ def test_read_interface():
         path = next(gen_filenames(fnbase))
         write(path, flowdata_to_dict(flow))
 
-        xs_list, ys_list = collect_interfaces(fnbase, '')
+        xs_list, ys_list = collect_interfaces(fnbase, os.path.join(tmpdir,''))
         assert (np.array_equal(xs_list[0], x))
         assert (np.array_equal(ys_list[0], y))

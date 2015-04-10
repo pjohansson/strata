@@ -18,7 +18,7 @@ data = {'X': xs, 'Y': ys, 'C': cs}
 flow = FlowData(data)
 
 def test_get_series():
-    x, y = get_interface_coordinates(flow, 'C', adjust_com=True)
+    x, y = get_interface_coordinates(flow, 'C')
     xs = [x, x + 1]
     ys = [y, y + 2]
 

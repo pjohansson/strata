@@ -246,8 +246,9 @@ def interface(name=cmd_interface['name'], short_help=cmd_interface['desc']):
 @interface.command(name=cmd_intcollect['name'], short_help=cmd_intcollect['desc'])
 @add_argument('base', type=str)
 @add_argument('output', type=str)
-@add_option('-com', '--adjust_com', default=True,
-        help='Center interface coordinates around the center of mass. (True)')
+@add_option('--recenter',
+        default='zero', type=click.Choice(['off', 'com', 'zero']),
+        help='Center the interface around zero or the center of mass. (zero)')
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Boundary bins require this much mass. (0)')
 @add_option('-cr', '--cutoff_radius', default=1.,
@@ -283,6 +284,7 @@ def interface_collect_cli(base, output, **kwargs):
     """
 
     set_none_to_inf(kwargs)
+    if kwargs['recenter'] == 'off': kwargs['recenter'] = None
     xs, ys = collect_interfaces(base, output, **kwargs)
 
 

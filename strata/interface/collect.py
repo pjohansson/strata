@@ -9,7 +9,7 @@ from strata.dataformats.read import read_data_file
 from strata.utils import find_singles_to_singles, pop_fileopts, prepare_path
 
 
-def collect_interfaces(base, output, adjust_com=True, **kwargs):
+def collect_interfaces(base, output, recenter=None, **kwargs):
     """Get the interfaces from files at input base and save to output.
 
     Args:
@@ -18,8 +18,8 @@ def collect_interfaces(base, output, adjust_com=True, **kwargs):
         output (str): Base path to output interface files.
 
     Keyword Args:
-        adjust_com (bool, default=True): Center spreading coordinates around
-            the center of mass.
+        recenter (str, optional): Recenter the interface around 'zero',
+            the center of mass 'com'.
 
         begin (int, default=1): First data map number.
 
@@ -59,10 +59,10 @@ def collect_interfaces(base, output, adjust_com=True, **kwargs):
     for i, (fn, fnout) in enumerate(files):
         data, _, _ = read_data_file(fn)
         flow = FlowData(data)
-        x, y = get_interface_coordinates(flow, label, adjust_com, **kwargs)
+        x, y = get_interface_coordinates(flow, label, recenter, **kwargs)
         interface = pd.Series(x, index=y)
 
-        write_interface_data(fnout, interface, [fnout], kwargs)
+        write_interface_data(fnout, interface, [fnout], kwargs, recenter)
 
         xs.append(interface.values)
         ys.append(interface.index)
@@ -77,7 +77,7 @@ def collect_interfaces(base, output, adjust_com=True, **kwargs):
 
 
 @prepare_path
-def write_interface_data(path, interface, fngroup, kwargs):
+def write_interface_data(path, interface, fngroup, kwargs, recenter=None):
     """Write spreading data to file at path.
 
     Data is output in whitespace separated xmgrace format. NaN values
@@ -119,14 +119,15 @@ def write_interface_data(path, interface, fngroup, kwargs):
         try:
             inputs += (
                     "# Input options:\n"
-                    "#   Adjust COM: %r\n"
+                    "#   Recenter: %r\n"
                     "#   Mass cut-off: %r\n"
                     "#   Radius cut-off: %r\n"
                     "#   Required # of bins: %r\n"
                     "# \n"
-                    ) % (kwargs['adjust_com'], kwargs['cutoff'],
+                    ) % (recenter, kwargs['cutoff'],
                             kwargs['cutoff_radius'], kwargs['cutoff_bins'])
         except KeyError:
+            print(kwargs)
             inputs += (
                     "# Input options: See original files.\n"
                     "# \n"
@@ -142,7 +143,7 @@ def write_interface_data(path, interface, fngroup, kwargs):
             header=header, comments='')
 
 
-def get_interface_coordinates(flow, label, adjust_com=False, **kwargs):
+def get_interface_coordinates(flow, label, recenter=None, **kwargs):
     """Get the interface from a FlowData object using input label.
 
     Args:
@@ -152,8 +153,8 @@ def get_interface_coordinates(flow, label, adjust_com=False, **kwargs):
         label (str): Record label used as base for the interface height map.
 
     Keyword Args:
-        adjust_com (bool, default=False): Center spreading coordinates around
-            the center of mass.
+        recenter (str, optional): Recenter the interface around 'zero' or
+            the center of mass 'com'.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
@@ -170,7 +171,11 @@ def get_interface_coordinates(flow, label, adjust_com=False, **kwargs):
     inds = np.array(left.tolist() + right[::-1].tolist())
 
     xs, ys = (flow.data[l][inds] for l in (xl, yl))
-    if adjust_com == True:
+    ys -= ys[0]
+
+    if recenter == 'zero':
+        xs -= np.mean([xs[0], xs[-1]])
+    elif recenter == 'com':
         xs -= np.average(flow.data[xl], weights=flow.data[label])
 
     return xs, ys

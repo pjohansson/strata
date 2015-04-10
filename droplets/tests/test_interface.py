@@ -161,6 +161,7 @@ def test_find_interface_bottom():
 
 def test_find_interface():
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
+    control = flow.data.copy()
 
     label = 'C'
     radius = 1.5
@@ -183,6 +184,7 @@ def test_find_interface():
             cutoff=cutoff)):
         interface.append(flow.data[[ileft, iright]])
     assert (len(interface) == 0)
+    assert (np.array_equal(control.data, flow.data))
 
 def test_find_interface_ylims():
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
