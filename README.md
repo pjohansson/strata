@@ -44,7 +44,7 @@ All functionality is called from the installed command line utility `strata`.
 - [x] Calculating the spreading radius per time of a droplet wetting
     experiment.
 - [x] Implementing a command line utility for interacting with data.
-- [ ] Calculating the dynamic contact angle of a droplet per time.
+- [x] Calculating the dynamic contact angle of a droplet per time.
 - [ ] Drawing flow fields of input data as streamlines or quiver graphs.
 - [x] Drawing an interface contour of a droplet.
 - [x] Analysing the flow around a droplet's wetting contact line.
