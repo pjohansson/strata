@@ -27,12 +27,16 @@ All functionality is called from the installed command line utility `strata`.
       Tools for reading and analysing files of flow data.
 
     Options:
-      --help  Show this message and exit.
+      --version
+      --help     Show this message and exit.
 
     Commands:
-      average    Sample average data files.
-      convert    Convert data files to another format.
-      spreading  Find the spreading radius per time for a droplet.
+      average       Sample average data files.
+      contact_line  Analyse data around the contact line.
+      convert       Convert data files to another format.
+      interface     Work with interface data of droplets.
+      spreading     View or collect spreading data of droplets.
+      view          Visualise the data of binned map files.
 
 ## Planned features
 
@@ -42,8 +46,8 @@ All functionality is called from the installed command line utility `strata`.
 - [x] Implementing a command line utility for interacting with data.
 - [ ] Calculating the dynamic contact angle of a droplet per time.
 - [ ] Drawing flow fields of input data as streamlines or quiver graphs.
-- [ ] Drawing an interface contour of a droplet.
-- [ ] Analysing the flow around a droplet's wetting contact line.
+- [x] Drawing an interface contour of a droplet.
+- [x] Analysing the flow around a droplet's wetting contact line.
 
 ## To-do
 

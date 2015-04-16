@@ -2,14 +2,19 @@ import numpy as np
 
 """Read data from simple, naive file formats."""
 
-def read_data(filename):
+def read_data(filename, decimals=3):
     """Read field data from a file name.
 
     Determines which of the simple formats in this module to use and
     returns data read using the proper function.
 
+    Coordinates are rounded to input number of decimals.
+
     Args:
         filename (str): A file to read data from.
+
+    Keyword Args:
+        decimals (int): Number of decimals for coordinates.
 
     Returns:
         (dict, dict): 2-tuple of dict's with data and information. See
@@ -35,6 +40,9 @@ def read_data(filename):
 
     read_function = guess_read_function(filename)
     data = read_function(filename)
+    for coord in ['X', 'Y']:
+        data[coord] = data[coord].round(decimals)
+
     info = calc_information(data['X'], data['Y'])
 
     return data, info

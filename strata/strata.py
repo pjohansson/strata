@@ -11,6 +11,47 @@ from strata.interface.view import view_interfaces
 from strata.contact_line_analysis import extract_contact_line_bins
 from strata.spreading.collect import collect
 from strata.spreading.view import view
+from strata.view_flowmap import *
+
+class OptFloatParamType(click.ParamType):
+    """Either a float number or None."""
+
+    name = 'float/none'
+
+    def convert(self, value, param, ctx):
+        try:
+            return float(value)
+        except ValueError:
+            if value.lower() == 'none':
+                return None
+
+        self.fail("%r is not a float number or 'None'" % value)
+
+class ListFloatValsParamType(click.ParamType):
+    """A string of float values."""
+
+    name = '"float ..."'
+
+    def convert(self, value, param, ctx):
+        try:
+            return [float(v) for v in value.split()]
+        except Exception:
+            self.fail("%r is not a valid string of float numbers" % value)
+
+class ListStrsParamType(click.ParamType):
+    """A string of strings."""
+
+    name = '"text ..."'
+
+    def convert(self, value, param, ctx):
+        try:
+            return [v for v in value.split()]
+        except Exception:
+            self.fail("%r is not a valid string of float numbers" % value)
+
+OPT_FLOAT = OptFloatParamType()
+STR_FLOATS = ListFloatValsParamType()
+STR_LIST = ListStrsParamType()
 
 """Command line utility to invoke the functionality of strata."""
 
@@ -46,6 +87,7 @@ cmd_contactline = {
         'desc': 'Analyse data around the contact line.'
         }
 
+
 cmd_interface = {
         'name': 'interface',
         'desc': 'View, average or collect interface data.'
@@ -60,7 +102,6 @@ cmd_intview = {
 }
 
 
-
 cmd_spreading = {
         'name': 'spreading',
         'desc': 'View or collect spreading data.'
@@ -73,6 +114,24 @@ cmd_view = {
         'name': 'view',
         'desc': 'View data of spreading files.'
         }
+
+
+cmd_flowview = {
+        'name': 'view',
+        'desc': 'View flow field data.'
+}
+cmd_heightmap = {
+        'name': 'height',
+        'desc': 'View height map data.'
+}
+cmd_contourmap = {
+        'name': 'contour',
+        'desc': 'Draw a contour map.'
+}
+cmd_flowfields = {
+        'name': 'flow',
+        'desc': 'Visualise flow fields.'
+}
 
 
 # Average wrapper
@@ -390,6 +449,92 @@ def cl_average_cli(base, output, **kwargs):
 
     set_none_to_inf(kwargs)
     extract_contact_line_bins(base, output, **kwargs)
+
+
+@strata.group()
+def view(name=cmd_flowview['name'], short_help=cmd_flowview['desc']):
+    """Visualise the data of binned map files."""
+    pass
+
+
+@view.command(name=cmd_contourmap['name'], short_help=cmd_contourmap['desc'])
+@add_argument('files', type=click.Path(exists=True), nargs=-1)
+@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V']),
+        default='M', help='Label of data to use as height map. (M)')
+@add_option('-n', '--num_contours', type=int, default=10,
+        help='Number of levels to draw. (10)')
+@add_option('-lv', '--levels', 'contour_levels', default=None, type=STR_FLOATS,
+        help='Explicit levels to draw contours at.')
+@add_option('-c', '--colours', 'contour_colours', default=None, type=STR_LIST,
+        help='List of colours to cycle through for drawn contours.')
+@add_option('--vlim', nargs=2, default=(None, None), type=OPT_FLOAT,
+        metavar='MIN MAX', help='Set limits for the contour values.')
+@add_option('--colourbar/--nocolourbar', 'colorbar', default=False,
+        help='Whether or not to draw a colour bar. (False)')
+@add_option('-cmap', '--colourmap', 'colormap', default=None, type=str,
+        help='Set a colour map. (None)')
+@add_option('--show/--noshow', default=True,
+        help='Whether or not to draw graph. (True)')
+@add_option('--xlim', type=float, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the x axis.')
+@add_option('--ylim', type=float, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the y axis.')
+@add_option('--title', default='Droplet contours',
+        help='Figure title.')
+@add_option('--xlabel', default='x (nm)',
+        help='Label of x axis.')
+@add_option('--ylabel', default='y (nm)',
+        help='Label of y axis.')
+def view_contour_cli(files, **kwargs):
+    """Draw contour maps of the data in FILES.
+
+    The contour levels are by default chosen automatically, but can be
+    controlled by setting the number of lines to draw or by supplying limits
+    for curves to be drawn within. Additionally the curve levels can be
+    supplied explicitly. Note that this option overrides both the input
+    limits and number of curves to draw!
+
+    """
+
+    view_flowmap_2d(*files, type='contour', **kwargs)
+
+
+@view.command(name=cmd_heightmap['name'], short_help=cmd_heightmap['desc'])
+@add_argument('files', type=click.Path(exists=True), nargs=-1)
+@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V']),
+        default='M', help='Label of data to use as height map. (M)')
+@add_option('--clim', nargs=2, default=(None, None), type=OPT_FLOAT,
+        metavar='MIN MAX', help='Set cut-offs for the binned values to include.')
+@add_option('--vlim', nargs=2, default=(None, None), type=OPT_FLOAT,
+        metavar='MIN MAX', help='Set limits for the shown colour values.')
+@add_option('--colourbar/--nocolourbar', 'colorbar', default=True,
+        help='Whether or not to draw a colour bar. (True)')
+@add_option('-cmap', '--colourmap', 'colormap', default=None, type=str,
+        help='Set a colour map. (None)')
+@add_option('--show/--noshow', default=True,
+        help='Whether or not to draw graph. (True)')
+@add_option('--xlim', type=float, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the x axis.')
+@add_option('--ylim', type=float, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the y axis.')
+@add_option('--title', default='Droplet height map',
+        help='Figure title.')
+@add_option('--xlabel', default='x (nm)',
+        help='Label of x axis.')
+@add_option('--ylabel', default='y (nm)',
+        help='Label of y axis.')
+def view_heightmap_cli(files, **kwargs):
+    """Draw 2D height maps of input FILES.
+
+    The height maps can be controlled by supplying limits of values. These
+    come in two shapes: One is a cut-off that does not show any bins with
+    values outside of the limits (--clim). The other sets limits o the
+    colour scale, replacing values outside of these limits with the colour
+    representing the corresponding limit (--vlim).
+
+    """
+
+    view_flowmap_2d(*files, type='height', **kwargs)
 
 
 def set_none_to_inf(kwargs, label='end'):

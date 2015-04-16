@@ -271,6 +271,10 @@ def decorate_graph(func):
 
         axis (str, default=None): Set axis scaling.
 
+        colorbar (bool, default=False): Draw a colour bar in the figure.
+
+        colormap (str, default=None): Set a colour map.
+
         loglog (bool, default=False): Set both axes to logarithmic scale.
 
         save_fig (path, default=None): Save figure to path.
@@ -285,9 +289,9 @@ def decorate_graph(func):
         def pop_figure_kwargs(kwargs):
             key_defaults = (
                     (['title', 'xlabel', 'ylabel'], ''),
-                    (['xlim', 'ylim', 'save_fig', 'axis'], None),
+                    (['xlim', 'ylim', 'save_fig', 'axis', 'colormap'], None),
                     (['show'], True),
-                    (['loglog'], False)
+                    (['loglog', 'colorbar'], False)
             )
 
             fargs = {}
@@ -304,15 +308,24 @@ def decorate_graph(func):
         plt.xlabel(fargs['xlabel'])
         plt.ylabel(fargs['ylabel'])
 
-        plt.xlim(fargs['xlim'])
-        plt.ylim(fargs['ylim'])
-
         if fargs['loglog']:
             plt.xscale('log')
             plt.yscale('log')
 
         if fargs['axis']:
             plt.axis(fargs['axis'])
+
+        plt.xlim(fargs['xlim'])
+        plt.ylim(fargs['ylim'])
+
+        if fargs['colormap'] != None:
+            try:
+                plt.set_cmap(fargs['colormap'])
+            except ValueError as err:
+                print(err)
+
+        if fargs['colorbar']:
+            plt.colorbar()
 
         if fargs['save_fig'] != None:
             plt.savefig(fargs['save_fig'])
