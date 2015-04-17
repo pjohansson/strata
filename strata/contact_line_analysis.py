@@ -69,18 +69,20 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
     fns = list(find_datamap_files(base, **fopts))
     fnout = gen_filenames(output, **fopts)
 
-    grouped_data = get_grouped_data(fns, average, rolling, **kwargs)
-
     if not quiet:
         if rolling: length = len(fns) - average + 1
         else: length = int(len(fns)/average)
+        length = len(fns)
 
         widgets = ['Extracting contact line: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
         progress = pbar.ProgressBar(widgets=widgets, maxval=length)
         progress.start()
 
-    i = 0
+    # Get a generator which reads data to average over
+    grouped_data = get_grouped_data(fns, average, rolling,
+            progress, quiet, **kwargs)
+
     for bin_size, left, right in grouped_data:
         avg_flow = []
         xadj = []
@@ -88,32 +90,33 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
         for data_list in [left, right]:
             xadjs, flow_data = np.array(data_list).T.tolist()
             xadj.append(get_closest_adjusting_coord(xadjs, bin_size[0]))
-            avg_flow.append(average_flow_data(flow_data, weights=weights))
+            avg_flow.append(average_flow_data(flow_data,
+                    weights=weights, exclude_empty_sets=True))
 
         avg_flow = adjust_coordinates(avg_flow, xadj, recenter)
         write(next(fnout), combine_flow_data(avg_flow, bin_size).data)
-
-        if not quiet:
-            progress.update(i+1)
-            i += 1
 
     if not quiet:
         progress.finish()
 
 
-def get_grouped_data(fns, average, rolling, **kwargs):
+def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
     """Generate contact line data from list of input files."""
 
     label = kwargs.pop('cutoff_label')
     left, right = [], []
 
-    for fn in fns:
+    for i, fn in enumerate(fns):
         data, info, _ = read_data_file(fn)
         left_cells, right_cells = get_contact_line_cells(
                 FlowData(data), label, **kwargs)
 
         left.append(add_adjusted_flow(left_cells, 'left', info))
         right.append(add_adjusted_flow(right_cells, 'right', info))
+
+        if not quiet:
+            progress.update(i+1)
+            i += 1
 
         if len(left) == average:
             yield info['bin_size'], left, right

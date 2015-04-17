@@ -6,7 +6,8 @@ from strata.dataformats.write import write
 """Module for averaging FlowData objects."""
 
 
-def average_flow_data(input_flow_maps, weights=[], coord_labels=('X', 'Y')):
+def average_flow_data(input_flow_maps, weights=[], exclude_empty_sets=False,
+        coord_labels=('X', 'Y')):
     """Average input FlowData objects.
 
     The input data is projected onto a common coordinate grid before
@@ -18,6 +19,10 @@ def average_flow_data(input_flow_maps, weights=[], coord_labels=('X', 'Y')):
     using a weighted arithmetic mean. Here 'weight' refers to the data label
     to use for these weights.
 
+    Empty data sets are handled either by including the data as empty bins
+    or by excluding the entire set from the averaging. This is controlled
+    by the `exclude_empty_sets` flag.
+
     The coordinate vectors of all input data must be identical.
 
     Args:
@@ -26,6 +31,9 @@ def average_flow_data(input_flow_maps, weights=[], coord_labels=('X', 'Y')):
     Keyword Args:
         weights (label, weight): A list of 2-tuples with labels of data
             and weights to calculate a weighted mean for.
+
+        exclude_empty_sets (bool, optional): Whether or not to exclude empty
+            data sets from the averaging process.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
@@ -67,7 +75,8 @@ def average_flow_data(input_flow_maps, weights=[], coord_labels=('X', 'Y')):
         raise ValueError("No bin sizes set in FlowData input.")
 
     xl, yl = coord_labels
-    data_list = [flow.data for flow in input_flow_maps]
+    data_list = [flow.data for flow in input_flow_maps
+            if (exclude_empty_sets == False or flow.data.size > 0)]
 
     grid = get_combined_grid(data_list, bin_size, coord_labels)
     data_on_grid = [transfer_data(grid, data, coord_labels)
@@ -218,13 +227,25 @@ def get_combined_grid(data, bin_size, coord_labels=('X', 'Y')):
 
     """
 
+    def get_min_and_max(data_sets, label):
+        """Return minimum and maximum value of all input data sets."""
+
+        min_of_each = [np.min(d[label]) for d in data_sets]
+        max_of_each = [np.max(d[label]) for d in data_sets]
+
+        return np.min(min_of_each), np.max(max_of_each)
+
+
     if data == []:
         raise ValueError("No data to get a combined grid from.")
 
     xl, yl = coord_labels
 
-    xmin, xmax = (f([f(d[xl]) for d in data]) for f in (np.min, np.max))
-    ymin, ymax = (f([f(d[yl]) for d in data]) for f in (np.min, np.max))
+    # Handle empty sets
+    nonempty_data = [d for d in data if d.size > 0]
+
+    xmin, xmax = get_min_and_max(nonempty_data, xl)
+    ymin, ymax = get_min_and_max(nonempty_data, yl)
     dx, dy = bin_size
 
     xs = np.arange(xmin, xmax+dx, dx)
