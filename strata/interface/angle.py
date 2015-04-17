@@ -2,11 +2,10 @@ import numpy as np
 import os
 import progressbar as pbar
 
-from strata.utils import find_datamap_files, pop_fileopts, prepare_path
+from strata.utils import find_datamap_files, pop_fileopts, prepare_path, decorate_graph
 
 
-def interface_contact_angle(base, height, delta_t=1.,
-            save_fig=None, save_xvg=None, **kwargs):
+def interface_contact_angle(base, height, delta_t=1., save_xvg=None, **kwargs):
     """Calculate the mean contact angles of interface files with input base.
 
     Input files are plaintext files of Grace format, with two columns
@@ -22,8 +21,6 @@ def interface_contact_angle(base, height, delta_t=1.,
     Keyword args:
         delta_t (float, optional)): Time difference between interface files.
 
-        save_fig (path, optional): Save drawn interfaces to base path.
-
         save_xvg (path, optional): Save interfaces to base path.
 
         begin (int, default=1): First interface file number.
@@ -32,6 +29,9 @@ def interface_contact_angle(base, height, delta_t=1.,
 
         ext (str, default='.dat'): File extension.
 
+    Returns:
+        times, angles: Tuple with lists of times and contact angles.
+
     See `strata.utils.decorate_graph` for more figure drawing options.
 
     """
@@ -39,10 +39,6 @@ def interface_contact_angle(base, height, delta_t=1.,
     kwargs.setdefault('ext', '.xvg')
     fopts = pop_fileopts(kwargs)
     quiet = kwargs.pop('quiet', False)
-
-    # Figure options
-    kwargs.setdefault('axis', 'tight')
-    save_fig = kwargs.pop('save_fig', None)
 
     filenames = list(find_datamap_files(base, **fopts))
 
@@ -70,11 +66,30 @@ def interface_contact_angle(base, height, delta_t=1.,
         write_angle_data(save_xvg, base, height, times, contact_angles,
             begin=fopts['begin'], end=fopts['end'])
 
-    if save_fig != None:
-        pass
+    if kwargs.get('show', True) or kwargs.get('save_fig', None):
+        kwargs.setdefault('axis', 'tight')
+        draw_figure(times, contact_angles, **kwargs)
 
     if not quiet:
         progress.finish()
+
+    return times, contact_angles
+
+
+@decorate_graph
+def draw_figure(times, angles, **kwargs):
+    """Draw a figure with the contact angles as a function of time.
+
+    Args:
+        times, angles (floats): Time and measured contact angles to draw.
+
+    See `matplotlib.pyplot.plot` for more keyword arguments.
+
+    """
+
+    import matplotlib.pyplot as plt
+
+    plt.plot(times, angles, **kwargs)
 
 
 @prepare_path

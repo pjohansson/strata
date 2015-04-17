@@ -314,7 +314,7 @@ def interface(name=cmd_interface['name'], short_help=cmd_interface['desc']):
         default='zero', type=click.Choice(['off', 'com', 'zero']),
         help='Center the interface around zero or the center of mass. (zero)')
 @add_option('-co', '--cutoff', type=float, default=None,
-        help='Boundary bins require this much mass. (0)')
+        help='Boundary bins require this much mass. (None)')
 @add_option('-cr', '--cutoff_radius', default=1.,
         help='Boundary bins search for neighbours within this radius. (1 nm)')
 @add_option('-cb', '--cutoff_bins', default=1,
@@ -404,22 +404,22 @@ def interface_view_cli(base, **kwargs):
 @add_argument('height', type=float)
 @add_option('-dt', '--delta_t', type=float, default=1.,
         help='Time difference between interface files.')
-#@add_option('-o', '--save_fig', type=str, default=None,
-#        help='Save collected figure to path.')
+@add_option('-o', '--save_fig', type=str, default=None,
+        help='Save figure to path.')
 @add_option('-x', '--save_xvg', type=click.Path(), default=None,
         help='Save collected data to path as an .xvg file.')
-#@add_option('--show/--noshow', default=True,
-#        help='Whether or not to draw graph. (True)')
-#@add_option('--xlim', type=float, nargs=2, default=(None, None),
-#        metavar='MIN MAX', help='Set limits on the x axis.')
-#@add_option('--ylim', type=float, nargs=2, default=(None, None),
-#        metavar='MIN MAX', help='Set limits on the y axis.')
-#@add_option('--title', default='Droplet interface',
-#        help='Figure title.')
-#@add_option('--xlabel', default='x (nm)',
-#        help='Label of x axis.')
-#@add_option('--ylabel', default='y (nm)',
-#        help='Label of y axis.')
+@add_option('--show/--noshow', default=True,
+        help='Whether or not to draw graph. (True)')
+@add_option('--xlim', type=float, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the x axis.')
+@add_option('--ylim', type=float, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the y axis.')
+@add_option('--title', default='Contact angles',
+        help='Figure title.')
+@add_option('--xlabel', default='t (ps)',
+        help='Label of x axis.')
+@add_option('--ylabel', default='angle (deg.)',
+        help='Label of y axis.')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')

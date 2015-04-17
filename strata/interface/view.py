@@ -106,7 +106,6 @@ def plot_interface_data(interface, **kwargs):
 
     import matplotlib.pyplot as plt
 
-    plt.clf()
     plt.plot(interface, interface.index, **kwargs)
 
 
