@@ -333,7 +333,7 @@ def decorate_graph(func):
         if fargs['show']:
             plt.show()
 
-        return func(*args, **kwargs)
+        return None
 
     return graph_wrapper
 
