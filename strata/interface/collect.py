@@ -127,7 +127,6 @@ def write_interface_data(path, interface, fngroup, kwargs, recenter=None):
                     ) % (recenter, kwargs['cutoff'],
                             kwargs['cutoff_radius'], kwargs['cutoff_bins'])
         except KeyError:
-            print(kwargs)
             inputs += (
                     "# Input options: See original files.\n"
                     "# \n"

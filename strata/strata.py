@@ -319,6 +319,8 @@ def interface(name=cmd_interface['name'], short_help=cmd_interface['desc']):
         help='Boundary bins search for neighbours within this radius. (1 nm)')
 @add_option('-cb', '--cutoff_bins', default=1,
         help='Boundary bins require this many neighbours.')
+@add_option('--ylim', 'ylims', type=OPT_FLOAT, nargs=2, default=(None, None),
+        help='Set limits on the y axis.')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
@@ -526,9 +528,9 @@ def view(name=cmd_flowview['name'], short_help=cmd_flowview['desc']):
         help='Set a colour map. (None)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
-@add_option('--xlim', type=float, nargs=2, default=(None, None),
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
-@add_option('--ylim', type=float, nargs=2, default=(None, None),
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the y axis.')
 @add_option('--title', default='Droplet contours',
         help='Figure title.')
@@ -564,9 +566,9 @@ def view_contour_cli(files, **kwargs):
         help='Set a colour map. (None)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
-@add_option('--xlim', type=float, nargs=2, default=(None, None),
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
-@add_option('--ylim', type=float, nargs=2, default=(None, None),
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the y axis.')
 @add_option('--title', default='Droplet height map',
         help='Figure title.')
