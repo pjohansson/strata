@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
+import warnings
 
 from strata.utils import decorate_graph, prepare_path
 
@@ -180,15 +181,79 @@ def read_spreading_data(*files):
     def read_file(filename):
         """Read Grace formatted file, comments starting with # or @."""
 
-        try:
+        def read_plain_file(filename):
+            """Read a simple file, comments starting with '#'."""
+
             data = np.loadtxt(filename, unpack=True, comments='#')
-        except ValueError:
-            data = np.loadtxt(filename, unpack=True, comments='@')
+            times = data[0]
+            all_series = [get_series(radii, times, filename, i+1)
+                    for i, radii in enumerate(data[1:])]
 
-        times = data[0]
+            return all_series
 
-        return [pd.Series(rs, index=times, name='%s.%d' % (filename, i+1))
-                for i, rs in enumerate(data[1:])]
+        def read_xvg_file(filename):
+            """Read a Grace formatted file properly."""
+
+            def split_graph_data(data):
+                split_data = data.split('@target ')
+                header = split_data[0]
+                graphs = [g.splitlines()[1:] for g in split_data[1:]]
+
+                return header, graphs
+
+            def get_series_data(graph_data):
+                """Parse individual graph line sets for data."""
+
+                def get_values(line):
+                    """Get the values from a single line."""
+
+                    try:
+                        vals = [float(v) for v in line.split()]
+                    except Exception:
+                        raise ValueError("Could not parse line %r" % line)
+
+                    return vals
+
+                num_graph = 0
+                all_series = []
+                for graph in graph_data:
+                    set_data = np.array([get_values(line) for line in graph
+                            if (not line.startswith('@') and line != '&')])
+
+                    times = set_data[:,0]
+
+                    # Might get multiple values per time, these are separate series
+                    num_sets = set_data.shape[1] - 1
+                    for i in range(num_sets):
+                        s = get_series(set_data[:,i+1], times, filename, num_graph+1)
+                        all_series.append(s)
+                        num_graph += 1
+
+                return all_series
+
+            with open(filename) as fp:
+                read_data = fp.read()
+
+            # Header might be used later to read comments and legends?
+            header, graph_series = split_graph_data(read_data)
+            series_data = get_series_data(graph_series)
+
+            return series_data
+
+        def get_series(radii, times, filename, num):
+            """Return a pd.Series object of input data."""
+
+            get_name = lambda filename, num: '%s.%d' % (filename, num)
+            s = pd.Series(radii, index=times, name=get_name(filename, num))
+
+            return s.dropna()
+
+        try:
+            series = read_plain_file(filename)
+        except Exception:
+            series = read_xvg_file(filename)
+
+        return series
 
     data = []
     for filename in files:
@@ -247,6 +312,7 @@ def write_spreading_data(path, all_series, files):
 
             fp.write(header + inputs)
 
+
     def write_data(path, all_series):
         """Output spreading data to file."""
 
@@ -259,11 +325,10 @@ def write_spreading_data(path, all_series, files):
                 fp.write("@target G0.S%d\n" % i)
                 fp.write("@type xy\n")
                 fp.write(s.to_string())
+                fp.write('\n')
 
                 if i + 1 < len(all_series):
                     fp.write("&\n")
-
-            fp.write('\n')
 
     write_header(path, all_series)
     write_data(path, all_series)
