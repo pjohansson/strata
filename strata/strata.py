@@ -273,9 +273,9 @@ def spreading_collect_cli(base, floor, **kwargs):
         help='Whether or not to draw graph. (True)')
 @add_option('--loglog', is_flag=True,
         help='Scale graph axes logarithmically.')
-@add_option('--xlim', type=float, nargs=2, default=(None, None),
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
-@add_option('--ylim', type=float, nargs=2, default=(None, None),
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the y axis.')
 @add_option('--title', default='Droplet spreading',
         help='Figure title.')
@@ -364,9 +364,9 @@ def interface_collect_cli(base, output, **kwargs):
         help='Save collected data to disk at base as .xvg file.')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
-@add_option('--xlim', type=float, nargs=2, default=(None, None),
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
-@add_option('--ylim', type=float, nargs=2, default=(None, None),
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the y axis.')
 @add_option('--title', default='Droplet interface',
         help='Figure title.')
@@ -410,9 +410,9 @@ def interface_view_cli(base, **kwargs):
         help='Save collected data to path as an .xvg file.')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
-@add_option('--xlim', type=float, nargs=2, default=(None, None),
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
-@add_option('--ylim', type=float, nargs=2, default=(None, None),
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the y axis.')
 @add_option('--title', default='Contact angles',
         help='Figure title.')
