@@ -11,8 +11,8 @@ from strata.interface.collect import collect_interfaces
 from strata.interface.view import view_interfaces
 from strata.contact_line_analysis import extract_contact_line_bins
 from strata.spreading.collect import collect
-from strata.spreading.view import view
-from strata.view_flowmap import *
+from strata.spreading.view import view_spreading
+from strata.view_flowmap import view_flowmap_2d
 
 class OptFloatParamType(click.ParamType):
     """Either a float number or None."""
@@ -283,8 +283,6 @@ def spreading_collect_cli(base, floor, **kwargs):
         help='Label of x axis.')
 @add_option('--ylabel', default='Radius (nm)',
         help='Label of y axis.')
-@add_option('--grid/--nogrid', default=False,
-        help='Draw background grid in figure.')
 def spreading_view_cli(files, **kwargs):
     """View spreading data of input FILES.
 
@@ -297,7 +295,7 @@ def spreading_view_cli(files, **kwargs):
 
     """
 
-    view(files, **kwargs)
+    view_spreading(files, **kwargs)
 
 # Combined interface tools for collectiong and plotting
 @strata.group()

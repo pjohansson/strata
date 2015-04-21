@@ -7,7 +7,7 @@ from strata.utils import decorate_graph, prepare_path
 """Module for plotting the spreading of droplets."""
 
 
-def view(files, **kwargs):
+def view_spreading(files, **kwargs):
     """Plot the spreading curves of input files.
 
     Input files are plaintext files of Grace format, which has the
