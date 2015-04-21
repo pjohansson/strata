@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
@@ -43,7 +44,7 @@ def view_spreading(files, **kwargs):
     """
 
     data = read_spreading_data(*files)
-    df = combine_spreading_data(data,
+    synced_data = combine_spreading_data(data,
             sync_radius=kwargs.pop('sync_radius', None),
             tau=kwargs.pop('tau', 1.), R=kwargs.pop('R', 1.)
             )
@@ -51,14 +52,14 @@ def view_spreading(files, **kwargs):
     save_path = kwargs.pop('save_xvg')
     if save_path:
         try:
-            write_spreading_data(save_path, df)
+            write_spreading_data(save_path, synced_data, files)
         except Exception as err:
             print(err)
 
     if (kwargs.get('show', True) or kwargs.get('save_fig', None) != None
             and len(data) > 0):
         kwargs['axis'] = 'tight'
-        plot_spreading_data(df, **kwargs)
+        plot_spreading_data(synced_data, **kwargs)
 
     return None
 
@@ -83,7 +84,7 @@ def combine_spreading_data(data, sync_radius=None, tau=1., R=1.):
         R (float, optional): Radius scaling factors.
 
     Returns:
-        pd.DataFrame: Combined DataFrame.
+        pd.Series: List of pandas Series with synchronised data.
 
     """
 
@@ -92,9 +93,7 @@ def combine_spreading_data(data, sync_radius=None, tau=1., R=1.):
     if sync_radius != None:
         data = sync_time_at_radius(data, sync_radius)
 
-    df = pd.DataFrame(data).T
-
-    return df
+    return data
 
 
 def sync_time_at_radius(data, radius):
@@ -202,7 +201,7 @@ def read_spreading_data(*files):
 
 
 @prepare_path
-def write_spreading_data(path, df):
+def write_spreading_data(path, all_series, files):
     """Write spreading data to file at path.
 
     Data is output in whitespace separated xmgrace format. NaN values
@@ -211,11 +210,11 @@ def write_spreading_data(path, df):
     Args:
         path (str): Path to output file.
 
-        df (pd.DataFrame): Spreading data.
+        all_series (pd.Series): List of spreading data as pandas Series.
 
     """
 
-    def write_header(path, df):
+    def write_header(path, all_series):
         import pkg_resources
         import time
 
@@ -237,9 +236,9 @@ def write_spreading_data(path, df):
                     "# Input files:\n"
                     ) % os.path.abspath(os.curdir)
 
-            names = [k.rsplit('.', 1)[0] for k in df.keys()]
-            for name in names:
-                inputs += "#   '%s'\n" % name
+            files = [s.name for s in all_series]
+            for filename in files:
+                inputs += "#   '%s'\n" % filename
 
             inputs += (
                     "# \n"
@@ -248,17 +247,39 @@ def write_spreading_data(path, df):
 
             fp.write(header + inputs)
 
-    write_header(path, df)
-    df.to_csv(path, sep=' ', mode='a', na_rep=0., header=False,
-        float_format='%.3f')
+    def write_data(path, all_series):
+        """Output spreading data to file."""
+
+        with open(path, 'a') as fp:
+            fp.write("@with g0\n")
+            for i, filename in enumerate(s.name for s in all_series):
+                fp.write("@    s%d comment \"%s\"\n" % (i, filename))
+
+            for i, s in enumerate(all_series):
+                fp.write("@target G0.S%d\n" % i)
+                fp.write("@type xy\n")
+                fp.write(s.to_string())
+
+                if i + 1 < len(all_series):
+                    fp.write("&\n")
+
+            fp.write('\n')
+
+    write_header(path, all_series)
+    write_data(path, all_series)
 
 
 @decorate_graph
-def plot_spreading_data(df, **kwargs):
+def plot_spreading_data(all_series, **kwargs):
     """Plot input spreading data.
+
+    Args:
+        all_series (list): List of pd.Series with spreading data.
 
     See `strata.utils.decorate_graph` for input options.
 
     """
 
-    df.plot(legend=False, **kwargs)
+    plt.hold(True)
+    for s in all_series:
+        plt.plot(s.index, s.values, **kwargs)
