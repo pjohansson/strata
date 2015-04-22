@@ -10,6 +10,7 @@ from strata.interface.angle import interface_contact_angle
 from strata.interface.collect import collect_interfaces
 from strata.interface.view import view_interfaces
 from strata.contact_line_analysis import extract_contact_line_bins
+from strata.spreading.fit import fit_spreading_data
 from strata.spreading.collect import collect
 from strata.spreading.view import view_spreading
 from strata.view_flowmap import view_flowmap_2d
@@ -119,6 +120,10 @@ cmd_view = {
         'name': 'view',
         'desc': 'View data of spreading files.'
         }
+cmd_sprfit = {
+        'name': 'fit',
+        'desc': 'Fit spreading data.'
+}
 
 
 cmd_flowview = {
@@ -291,11 +296,62 @@ def spreading_view_cli(files, **kwargs):
     radii.
 
     The combined data can be saved to disk in an XmGrace compatible format.
-    For data output non-existing data at any time point is set to 0.
 
     """
 
     view_spreading(files, **kwargs)
+
+# Spreading fit wrapper
+@spreading.command(name=cmd_sprfit['name'], short_help=cmd_sprfit['desc'])
+@add_argument('files', type=click.Path(exists=True), nargs=-1)
+@add_option('--lims', type=OPT_FLOAT, nargs=2, default=(None, None),
+        help='Fit data based on this time interval. (None)')
+@add_option('--out_lims', type=OPT_FLOAT, nargs=2, default=(None, None),
+        help='Show fitted data over this time interval. (None)')
+@add_option('-o', '--save_fig', type=click.Path(), default=None,
+        help='Save figure to path. (None)')
+@add_option('-x', '--save_xvg', type=click.Path(), default=None,
+        help='Save read data to path. (None)')
+@add_option('--print/--noprint', default=True,
+        help='Print fitting parameters.')
+@add_option('--show/--noshow', default=True,
+        help='Whether or not to draw graph. (True)')
+@add_option('--loglog', is_flag=True,
+        help='Scale graph axes logarithmically.')
+@add_option('--legend/--nolegend', default=True,
+        help='Show a legend.')
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the x axis.')
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the y axis.')
+@add_option('--title', default='Droplet spreading with fit',
+        help='Figure title.')
+@add_option('--xlabel', default='Time (ps)',
+        help='Label of x axis.')
+@add_option('--ylabel', default='Radius (nm)',
+        help='Label of y axis.')
+def spreading_fit_cli(files, **kwargs):
+    """Fit spreading data of input FILES as power law data.
+
+    Input files must be in whitespace separated format, the first column
+    designating time with all following being their corresponding spreading
+    radii.
+
+    The combined data can be saved to disk in an XmGrace compatible format.
+
+    """
+
+    do_print = kwargs.pop('print')
+
+    fit_params = fit_spreading_data(files, **kwargs)
+
+    if do_print:
+        print('Found fitting parameters (a, k) for r = a*t^k:')
+        for a, k in fit_params:
+            print('%f %f' % (a, k))
+
+
+
 
 # Combined interface tools for collectiong and plotting
 @strata.group()

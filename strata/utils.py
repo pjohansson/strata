@@ -275,6 +275,8 @@ def decorate_graph(func):
 
         colormap (str, default=None): Set a colour map.
 
+        legend (bool, default=False): Show a legend.
+
         loglog (bool, default=False): Set both axes to logarithmic scale.
 
         save_fig (path, default=None): Save figure to path.
@@ -291,7 +293,7 @@ def decorate_graph(func):
                     (['title', 'xlabel', 'ylabel'], ''),
                     (['xlim', 'ylim', 'save_fig', 'axis', 'colormap'], None),
                     (['show'], True),
-                    (['loglog', 'colorbar'], False)
+                    (['loglog', 'colorbar', 'legend'], False)
             )
 
             fargs = {}
@@ -326,6 +328,9 @@ def decorate_graph(func):
 
         if fargs['colorbar']:
             plt.colorbar()
+
+        if fargs['legend']:
+            plt.legend()
 
         if fargs['save_fig'] != None:
             plt.savefig(fargs['save_fig'])
