@@ -13,7 +13,7 @@ from strata.contact_line_analysis import extract_contact_line_bins
 from strata.spreading.fit import fit_spreading_data
 from strata.spreading.collect import collect
 from strata.spreading.view import view_spreading
-from strata.view_flowmap import view_flowmap_2d
+from strata.view_flowmap import view_flowmap_2d, view_flowfields
 
 class OptFloatParamType(click.ParamType):
     """Either a float number or None."""
@@ -138,7 +138,7 @@ cmd_contourmap = {
         'name': 'contour',
         'desc': 'Draw a contour map.'
 }
-cmd_flowfields = {
+cmd_quiver = {
         'name': 'flow',
         'desc': 'Visualise flow fields.'
 }
@@ -642,6 +642,46 @@ def view_heightmap_cli(files, **kwargs):
     """
 
     view_flowmap_2d(*files, type='height', **kwargs)
+
+
+@view.command(name=cmd_quiver['name'], short_help=cmd_quiver['desc'])
+@add_argument('files', type=click.Path(exists=True), nargs=-1)
+@add_option('-co', '--cutoff', type=float, default=None,
+        help='Minimum mass of bins to draw fields for. (0)')
+@add_option('-cl', '--colour_label', 'colour',
+        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None']), default='T',
+        help='Colour the flow by values of this label.')
+@add_option('--scale', default=1., help='Scale for quiver arrows. (1)')
+@add_option('--width', default=0.0015, help='Width of quiver arrows. (0.0015)')
+@add_option('--vlim', nargs=2, default=(None, None), type=OPT_FLOAT,
+        metavar='MIN MAX', help='Set limits for the shown colour values.')
+@add_option('--colourbar/--nocolourbar', 'colorbar', default=False,
+        help='Whether or not to draw a colour bar. (True)')
+@add_option('-cmap', '--colourmap', 'colormap', default=None, type=str,
+        help='Set a colour map. (None)')
+@add_option('--show/--noshow', default=True,
+        help='Whether or not to draw graph. (True)')
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the x axis.')
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the y axis.')
+@add_option('--title', default='Droplet height map',
+        help='Figure title.')
+@add_option('--xlabel', default='x (nm)',
+        help='Label of x axis.')
+@add_option('--ylabel', default='y (nm)',
+        help='Label of y axis.')
+def view_quiver_cli(files, **kwargs):
+    """Draw flow fields of input FILES.
+
+    The flow fields can be shown only for certain bins by supplying
+    a mass cut-off value (--cutoff). They can be coloured by supplying
+    a data label (--colour_label), by default the temperature ('T') is
+    shown. 
+
+    """
+
+    view_flowfields(*files, cutoff_label='M', **kwargs)
 
 
 def set_none_to_inf(kwargs, label='end'):

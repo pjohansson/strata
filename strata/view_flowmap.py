@@ -1,8 +1,97 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 from droplets.flow import FlowData
 from strata.dataformats.read import read_from_files
 from strata.utils import decorate_graph
+
+
+def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
+        colour=None, vlim=(None, None), **kwargs):
+    """View flow fields of input files.
+
+    Args:
+        files (paths): List of files to view.
+
+    Keyword Args:
+        labels (2-tuple, optional): 2-tuple with labels of mass flow along
+            x and y.
+
+        cutoff (float, optional): Cutoff for data to show fields for.
+
+        cutoff_label (str, optional): Label for cutting data.
+
+        colour (str, optional): Colour flow fields with data from this label.
+
+        vlim (floats, optional): 2-tuple with limits for the colour map if
+            a label has been supplied.
+
+    See `strata.utils.decorate_graph` for more keyword arguments.
+
+    """
+
+    kwargs.setdefault('axis', 'scaled')
+
+    # Order the data labels
+    data_labels = kwargs.get('coord_labels', ['X', 'Y']) + list(labels)
+
+    # Get some limits on coordinates and an optional cut-off
+    xlim, ylim = [kwargs.get(lims, (None, None)) for lims in ('xlim', 'ylim')]
+    clim = (cutoff_label, cutoff)
+
+    for i, (data, _, _) in enumerate(read_from_files(*files)):
+        flow = FlowData(data)
+        xs, ys, us, vs, weights = get_quiver_data(flow.data, data_labels,
+                colour, clim, xlim, ylim)
+
+        plot_quiver(xs, ys, us, vs, weights, vlim, **kwargs)
+
+
+def get_quiver_data(data, labels, colour, clim, xlim, ylim):
+    """Return the flow data after cutting out empty cells."""
+
+    def cut_system(cs, lims):
+        """Get indices of system within coordinate limits."""
+        cmin, cmax = (float(v) if v != None else v for v in lims)
+        if cmin == None: cmin = np.min(cs)
+        if cmax == None: cmax = np.max(cs)
+
+        return (cs >= cmin) & (cs <= cmax)
+
+    xs, ys, us, vs = (data[l] for l in labels)
+
+    # Cut bins without flow
+    inds = (us != 0.) & (vs != 0.)
+
+    # Apply limits on coordinates
+    inds = inds & cut_system(xs, xlim) & cut_system(ys, ylim)
+
+    # If there is an additional cutoff, apply
+    clabel, cutoff = clim
+    if clabel != None:
+        inds = inds & cut_system(data[clabel], (cutoff, None))
+
+    # Weights are either from input label or unit
+    try:
+        assert(colour != None)
+        weights = data[colour]
+    except Exception:
+        weights = np.ones(data.size)
+
+    return (cs[inds] for cs in (xs, ys, us, vs, weights))
+
+
+@decorate_graph
+def plot_quiver(xs, ys, us, vs, weights, vlim, **kwargs):
+    """Draw a quiver plot of input data."""
+
+    scale = kwargs.get('scale', 1.)
+    width = kwargs.get('width', 0.0015)
+
+    fig = plt.quiver(xs, ys, us, vs, weights, clim=vlim,
+            scale=scale, width=width)
+
+    return fig
 
 
 def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
