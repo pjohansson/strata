@@ -646,6 +646,8 @@ def view_heightmap_cli(files, **kwargs):
 
 @view.command(name=cmd_quiver['name'], short_help=cmd_quiver['desc'])
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
+@add_option('-o', '--save_fig', type=click.Path(), default=None,
+        help='Save figure to path. (None)')
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Minimum mass of bins to draw fields for. (0)')
 @add_option('-cl', '--colour_label', 'colour',
@@ -677,7 +679,7 @@ def view_quiver_cli(files, **kwargs):
     The flow fields can be shown only for certain bins by supplying
     a mass cut-off value (--cutoff). They can be coloured by supplying
     a data label (--colour_label), by default the temperature ('T') is
-    shown. 
+    shown.
 
     """
 
