@@ -281,6 +281,8 @@ def decorate_graph(func):
 
         save_fig (path, default=None): Save figure to path.
 
+        dpi (int, default=150): Save figure with this dpi.
+
         show (bool, default=True): Show the graph.
 
     """
@@ -293,7 +295,8 @@ def decorate_graph(func):
                     (['title', 'xlabel', 'ylabel'], ''),
                     (['xlim', 'ylim', 'save_fig', 'axis', 'colormap'], None),
                     (['show'], True),
-                    (['loglog', 'colorbar', 'legend'], False)
+                    (['loglog', 'colorbar', 'legend'], False),
+                    (['dpi'], 150)
             )
 
             fargs = {}
@@ -333,7 +336,7 @@ def decorate_graph(func):
             plt.legend()
 
         if fargs['save_fig'] != None:
-            plt.savefig(fargs['save_fig'])
+            plt.savefig(fargs['save_fig'], dpi=fargs['dpi'])
 
         if fargs['show']:
             plt.show()
