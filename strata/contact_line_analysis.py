@@ -134,6 +134,18 @@ def combine_flow_data(avg_flow, bin_size):
     def merge_data(grid, left, right):
         """Merge the data from averaged edges onto a grid."""
 
+        def average_value(left, right, label):
+            """Average the value based on type."""
+
+            if label in ('U', 'V'):
+                weight = 'M'
+            elif label == 'T':
+                weight = 'N'
+            else:
+                return 0.5*(left[label] + right[label])
+
+            return (left[label]*left[weight] + right[label]*right[weight])/(left[weight] + right[weight])
+
         coord_labels = ('X', 'Y')
         value_labels = set(grid.dtype.names).difference(coord_labels)
 
@@ -143,7 +155,12 @@ def combine_flow_data(avg_flow, bin_size):
             for k in coord_labels:
                 d[k] = l[k]
             for k in value_labels:
-                d[k] = l[k] + r[k]
+                # Choose either set if the other is empty else average
+                # the value properly
+                if l[k] == 0. or r[k] == 0.:
+                    d[k] = l[k] + r[k]
+                else:
+                    d[k] = average_value(l, r, k)
 
         return [(k, data[k]) for k in data.dtype.names]
 
