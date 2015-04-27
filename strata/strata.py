@@ -514,7 +514,7 @@ def interface_angle_cli(base, height, **kwargs):
         help='Recenter the extracted edges around zero. (True)')
 @add_option('-ea', '--extract_area', type=float, default=(0., 0.), nargs=2,
         help='Extract area of this size. (1 nm, 1 nm)')
-@add_option('-eh', '--extract_height', type=float, default=1.,
+@add_option('-eh', '--extract_height', type=float, default=0.,
         help='Synchronise extraction box position at this interface height. (0 nm)')
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Boundary bins require this much mass. (0)')

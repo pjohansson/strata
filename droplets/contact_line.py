@@ -89,7 +89,8 @@ def get_contact_line_cells(flow, label, extract_area=(0., 0.),
         except IndexError:
             icells = []
         else:
-            xmin, xmax = (f([f(x(inds)), xinner]) for f in (np.min, np.max))
+            xmin = np.min([x(inds).min(), xinner])
+            xmax = np.max([x(inds).max(), xinner])
             ymin, ymax = (y(inds)[i] for i in (0, -1))
 
             icells = (xs >= xmin) & (xs <= xmax) & (ys >= ymin) & (ys <= ymax)

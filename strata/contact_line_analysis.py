@@ -41,23 +41,25 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
 
     """
 
-    def adjust_coordinates(avg_flow, xadj, recenter):
+    def adjust_coordinates(avg_flow, xadj_per_edge, dx, yadj, recenter):
         """Adjust the extracted cell coordinates."""
 
         if recenter:
-            xdiff = 0.5*(xadj[1] - xadj[0])
-            xadj[0] = -xdiff
-            xadj[1] = xdiff
+            xdiff = 0.5*(xadj_per_edge[1] - xadj_per_edge[0])
+            xadj_per_edge[0] = -xdiff
+            xadj_per_edge[1] = xdiff
 
-        avg_flow[0].data['X'] += xadj[0]
-        avg_flow[1].data['X'] += xadj[1]
+        for i, xadj in enumerate(xadj_per_edge):
+            xadj_on_grid = get_coord_on_grid(xadj, dx)
+            avg_flow[i].data['X'] += xadj_on_grid
+            avg_flow[i].data['Y'] += yadj
 
         return avg_flow
 
-    def get_closest_adjusting_coord(xs, dx):
-        """Find the adjusting coordinate on input grid with size dx."""
+    def get_coord_on_grid(x, dx):
+        """Return input coordinate x on grid of difference dx."""
 
-        return np.floor(np.mean(xs)/dx)*dx
+        return (np.floor(x/dx) + 0.5)*dx
 
     fopts = pop_fileopts(kwargs)
     quiet = kwargs.pop('quiet', False)
@@ -84,17 +86,23 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
             progress, quiet, **kwargs)
 
     for bin_size, left, right in grouped_data:
-        avg_flow = []
-        xadj = []
+        avg_flow_per_edge = []
+        xadj_per_edge = []
 
         for data_list in [left, right]:
-            xadjs, flow_data = np.array(data_list).T.tolist()
-            xadj.append(get_closest_adjusting_coord(xadjs, bin_size[0]))
-            avg_flow.append(average_flow_data(flow_data,
+            coord_adjs, flow_data = np.array(data_list).T.tolist()
+
+            # Get mean adjusting x coordinate of edge
+            xadj_mean = np.mean(coord_adjs, axis=0)[0]
+            xadj_per_edge.append(xadj_mean)
+
+            avg_flow_per_edge.append(average_flow_data(flow_data,
                     weights=weights, exclude_empty_sets=True))
 
-        avg_flow = adjust_coordinates(avg_flow, xadj, recenter)
-        write(next(fnout), combine_flow_data(avg_flow, bin_size).data)
+        yadj = get_coord_on_grid(0, bin_size[1])
+        avg_flow_per_edge = adjust_coordinates(avg_flow_per_edge,
+                xadj_per_edge, bin_size[0], yadj, recenter)
+        write(next(fnout), combine_flow_data(avg_flow_per_edge, bin_size).data)
 
     if not quiet:
         progress.finish()
