@@ -89,7 +89,7 @@ def plot_quiver(xs, ys, us, vs, weights, vlim, **kwargs):
     width = kwargs.get('width', 0.0015)
 
     fig = plt.quiver(xs, ys, us, vs, weights, clim=vlim,
-            scale=scale, width=width)
+            scale=scale, width=width, pivot='middle')
 
     return fig
 
