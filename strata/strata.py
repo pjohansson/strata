@@ -438,6 +438,8 @@ def interface_collect_cli(base, output, **kwargs):
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.xvg',
         help='Read using this file extension. (.xvg)')
+@add_option('--extfig', default='.png',
+        help='Save figures using this file extension. (.png)')
 def interface_view_cli(base, **kwargs):
     """View the interface boundaries for input files at BASE.
 
