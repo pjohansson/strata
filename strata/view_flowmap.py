@@ -44,7 +44,12 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
         xs, ys, us, vs, weights = get_quiver_data(flow.data, data_labels,
                 colour, clim, xlim, ylim)
 
-        plot_quiver(xs, ys, us, vs, weights, vlim, **kwargs)
+        try:
+            plot_quiver(xs, ys, us, vs, weights, vlim, **kwargs)
+        except Exception as err:
+            print("Could not draw/save figure: ", end='')
+            print(err)
+            break
 
 
 def get_quiver_data(data, labels, colour, clim, xlim, ylim):

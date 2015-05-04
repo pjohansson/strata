@@ -665,6 +665,8 @@ def view_heightmap_cli(files, **kwargs):
         help='Set a colour map. (None)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
+@add_option('--dpi', type=int, default=150,
+        help='Set a dpi value for figure output. (150)')
 @add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
 @add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
