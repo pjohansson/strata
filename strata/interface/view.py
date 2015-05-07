@@ -72,8 +72,13 @@ def view_interfaces(base, average=1, save_xvg='', **kwargs):
         progress.start()
 
     for i, (fngroup, fnout) in enumerate(groups_singles):
-        interface_list = read_interface_files(fngroup)
-        interface = average_interfaces(interface_list)
+        try:
+            interface_list = read_interface_files(fngroup)
+            interface = average_interfaces(interface_list)
+        except Exception as err:
+            print("Could not read interface files '%r': " % fngroup, end='')
+            print(err)
+            continue
 
         if save_xvg != '':
             write_interface_data(fnout, interface, fngroup, kwargs)
