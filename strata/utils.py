@@ -285,6 +285,8 @@ def decorate_graph(func):
 
         show (bool, default=True): Show the graph.
 
+        clf (bool, default=True): Clear figure when finished.
+
     """
 
     import matplotlib.pyplot as plt
@@ -294,7 +296,7 @@ def decorate_graph(func):
             key_defaults = (
                     (['title', 'xlabel', 'ylabel'], ''),
                     (['xlim', 'ylim', 'save_fig', 'axis', 'colormap'], None),
-                    (['show'], True),
+                    (['show', 'clf'], True),
                     (['loglog', 'colorbar', 'legend'], False),
                     (['dpi'], 150)
             )
@@ -340,6 +342,9 @@ def decorate_graph(func):
 
         if fargs['show']:
             plt.show()
+
+        if fargs['clf']:
+            plt.clf()
 
         return None
 
