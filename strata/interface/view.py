@@ -78,6 +78,7 @@ def view_interfaces(base, average=1, save_xvg='', **kwargs):
         except Exception as err:
             print("Could not read interface files '%r': " % fngroup, end='')
             print(err)
+            next(fnfig)
             continue
 
         if save_xvg != '':
