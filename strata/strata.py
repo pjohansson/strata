@@ -568,7 +568,7 @@ def view(name=cmd_flowview['name'], short_help=cmd_flowview['desc']):
 
 @view.command(name=cmd_contourmap['name'], short_help=cmd_contourmap['desc'])
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
-@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V']),
+@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V', 'flow']),
         default='M', help='Label of data to use as height map. (M)')
 @add_option('-n', '--num_contours', type=int, default=10,
         help='Number of levels to draw. (10)')
@@ -576,6 +576,8 @@ def view(name=cmd_flowview['name'], short_help=cmd_flowview['desc']):
         help='Explicit levels to draw contours at.')
 @add_option('-c', '--colours', 'contour_colours', default=None, type=STR_LIST,
         help='List of colours to cycle through for drawn contours.')
+@add_option('--filled', is_flag=True, default=False,
+        help='Fill contour levels.')
 @add_option('--vlim', nargs=2, default=(None, None), type=OPT_FLOAT,
         metavar='MIN MAX', help='Set limits for the contour values.')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=False,
@@ -610,7 +612,7 @@ def view_contour_cli(files, **kwargs):
 
 @view.command(name=cmd_heightmap['name'], short_help=cmd_heightmap['desc'])
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
-@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V']),
+@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V', 'flow']),
         default='M', help='Label of data to use as height map. (M)')
 @add_option('--clim', nargs=2, default=(None, None), type=OPT_FLOAT,
         metavar='MIN MAX', help='Set cut-offs for the binned values to include.')
@@ -653,7 +655,7 @@ def view_heightmap_cli(files, **kwargs):
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Minimum mass of bins to draw fields for. (0)')
 @add_option('-cl', '--colour_label', 'colour',
-        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None']), default='T',
+        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow']), default='T',
         help='Colour the flow by values of this label.')
 @add_option('--scale', default=1., help='Scale for quiver arrows. (1)')
 @add_option('--width', default=0.0015, help='Width of quiver arrows. (0.0015)')

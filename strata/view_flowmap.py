@@ -21,7 +21,8 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
 
         cutoff_label (str, optional): Label for cutting data.
 
-        colour (str, optional): Colour flow fields with data from this label.
+        colour (str, optional): Colour flow fields with data from this label,
+            or enter 'flow' to colour by flow magnitude.
 
         vlim (floats, optional): 2-tuple with limits for the colour map if
             a label has been supplied.
@@ -41,6 +42,10 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
 
     for i, (data, _, _) in enumerate(read_from_files(*files)):
         flow = FlowData(data)
+
+        if colour == 'flow':
+            flow.data = add_absolute_flow(flow.data)
+
         xs, ys, us, vs, weights = get_quiver_data(flow.data, data_labels,
                 colour, clim, xlim, ylim)
 
@@ -111,6 +116,8 @@ def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
         type (str, optional): Type of map to draw, can be 'height'
             or 'contour'.
 
+        filled (bool): Contour: Draw a filled contour. (False)
+
     See `strata.utils.decorate_graph` for more keyword arguments.
 
     """
@@ -130,6 +137,10 @@ def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
 
     for i, (data, info, _) in enumerate(read_from_files(*files)):
         flow = FlowData(data, info=info)
+
+        if label == 'flow':
+            flow.data = add_absolute_flow(flow.data)
+
         func(flow.data, info, label, **kwargs)
         plt.clf()
 
@@ -156,6 +167,7 @@ def contour(data, info, label, **kwargs):
     num_contours = kwargs.get('num_contours', 10)
     levels = kwargs.get('contour_levels', None)
     colors = kwargs.get('contour_colours', None)
+    filled = kwargs.get('filled', False)
 
     vmin, vmax = (float(v) if v != None else v for v in kwargs['vlim'])
     if (vmin != None or vmax != None) and levels == None:
@@ -165,6 +177,21 @@ def contour(data, info, label, **kwargs):
     xs, ys = (grid_data[l] for l in kwargs['coord_labels'])
     cs = grid_data[label]
 
-    fig = plt.contour(xs, ys, cs, num_contours, levels=levels, colors=colors)
+    if not filled:
+        func = plt.contour
+    else:
+        func = plt.contourf
+
+    fig = func(xs, ys, cs, num_contours, levels=levels, colors=colors)
 
     return fig
+
+
+def add_absolute_flow(data):
+    """Return a numpy array with absolute flow as a field named 'flow'."""
+
+    from numpy.lib.recfunctions import append_fields
+
+    absolute_flow = np.sqrt(data['U']**2 + data['V']**2)
+
+    return append_fields(data, 'flow', absolute_flow, dtypes='float')
