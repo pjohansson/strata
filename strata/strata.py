@@ -14,6 +14,8 @@ from strata.spreading.fit import fit_spreading_data
 from strata.spreading.collect import collect
 from strata.spreading.view import view_spreading
 from strata.view_flowmap import view_flowmap_2d, view_flowfields
+from strata.sample_average import sample_average_files
+
 
 class OptFloatParamType(click.ParamType):
     """Either a float number or None."""
@@ -88,6 +90,10 @@ cmd_contactline = {
         'name': 'contact_line',
         'desc': 'Analyse data around the contact line.'
         }
+cmd_sample = {
+        'name': 'sample',
+        'desc': 'Sample average data maps.'
+}
 
 
 cmd_interface = {
@@ -696,6 +702,34 @@ def view_quiver_cli(files, **kwargs):
     """
 
     view_flowfields(*files, cutoff_label='M', **kwargs)
+
+
+@strata.command(name=cmd_sample['name'], short_help=cmd_sample['desc'])
+@add_argument('base', type=str)
+@add_argument('label', type=str)
+@add_option('-o', '--output', type=click.Path(), default=None,
+        help='Write the collected data to disk.')
+@add_option('-dt', '--delta_t', 'dt', default=1.,
+        help='Time difference between data map files. (1)')
+@add_option('--sum/--nosum', default=False,
+        help='Whether or not to sample the summed quantity. (False)')
+@add_option('-co', '--cutoff', type=float, default=None,
+        help='Boundary bins require this much mass. (0)')
+@add_option('-cl', '--cutoff_label', type=str, default=None,
+        help='Label to use for cutoff. Defaults to input sample label. (None)')
+@add_option('-b', '--begin', default=1,
+        type=click.IntRange(0, None), metavar='INTEGER',
+        help='Begin reading from BASE at this number. (1)')
+@add_option('-e', '--end', default=None,
+        type=click.IntRange(0, None), metavar='INTEGER',
+        help='End reading from BASE at this number. (None)')
+@add_option('--ext', default='.dat',
+        help='Read using this file extension. (.dat)')
+def sample_average_cli(base, label, **kwargs):
+    """Sample average data of input label in files of input base."""
+
+    set_none_to_inf(kwargs)
+    sample_average_files(base, label, **kwargs)
 
 
 def set_none_to_inf(kwargs, label='end'):

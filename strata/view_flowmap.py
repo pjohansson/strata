@@ -134,6 +134,7 @@ def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
     except KeyError:
         raise TypeError("Can not draw type '%r'." % type)
 
+    print_avg_value = kwargs.get('average_value', False)
     kwargs.setdefault('axis', 'scaled')
     kwargs.setdefault('coord_labels', ('X', 'Y'))
 
@@ -142,6 +143,9 @@ def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
 
         if label == 'flow':
             flow.data = add_absolute_flow(flow.data)
+
+        if print_avg_value:
+            print_average_value(flow.data, label, kwargs)
 
         func(flow.data, info, label, **kwargs)
         plt.clf()

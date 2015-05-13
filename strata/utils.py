@@ -29,9 +29,14 @@ def gen_filenames(base, end=np.inf, **kwargs):
     num = kwargs.pop('begin', 1)
     ext = kwargs.pop('ext', '.dat')
 
-    while num <= end:
-        yield '%s%05d%s' % (base, num, ext)
-        num += 1
+    try:
+        while num <= end:
+            yield '%s%05d%s' % (base, num, ext)
+            num += 1
+    except TypeError:
+        err = ("TypeError: can not create filename from base %r, number %r, end %r, extension %r."
+            % (base, num, end, ext))
+        raise TypeError(err)
 
 
 def find_datamap_files(base, **kwargs):
@@ -89,10 +94,14 @@ def find_datamap_files(base, **kwargs):
             ]
     group = kwargs.pop('group', None)
 
-    if group == None:
-        yield from yield_singles(base, *args)
-    else:
-        yield from yield_groups(base, *args)
+    try:
+        if group == None:
+            yield from yield_singles(base, *args)
+        else:
+            yield from yield_groups(base, *args)
+    except TypeError as err:
+        print(err)
+        return None
 
 
 def find_singles_to_singles(base, output, **fopts):
