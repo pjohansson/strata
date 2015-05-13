@@ -568,6 +568,8 @@ def view(name=cmd_flowview['name'], short_help=cmd_flowview['desc']):
 
 @view.command(name=cmd_contourmap['name'], short_help=cmd_contourmap['desc'])
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
+@add_option('-o', '--save_fig', type=click.Path(), default=None,
+        help='Save figure to path. (None)')
 @add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V', 'flow']),
         default='M', help='Label of data to use as height map. (M)')
 @add_option('-n', '--num_contours', type=int, default=10,
@@ -612,6 +614,8 @@ def view_contour_cli(files, **kwargs):
 
 @view.command(name=cmd_heightmap['name'], short_help=cmd_heightmap['desc'])
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
+@add_option('-o', '--save_fig', type=click.Path(), default=None,
+        help='Save figure to path. (None)')
 @add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V', 'flow']),
         default='M', help='Label of data to use as height map. (M)')
 @add_option('--clim', nargs=2, default=(None, None), type=OPT_FLOAT,
@@ -659,6 +663,8 @@ def view_heightmap_cli(files, **kwargs):
         help='Colour the flow by values of this label.')
 @add_option('--scale', default=1., help='Scale for quiver arrows. (1)')
 @add_option('--width', default=0.0015, help='Width of quiver arrows. (0.0015)')
+@add_option('--pivot', default='middle', type=click.Choice(['tail', 'middle', 'tip']),
+        help='Pivot for flow arrows. (niddle)')
 @add_option('--vlim', nargs=2, default=(None, None), type=OPT_FLOAT,
         metavar='MIN MAX', help='Set limits for the shown colour values.')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=False,

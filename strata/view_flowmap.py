@@ -7,7 +7,7 @@ from strata.utils import decorate_graph
 
 
 def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
-        colour=None, vlim=(None, None), **kwargs):
+        colour=None, vlim=(None, None), pivot='middle', **kwargs):
     """View flow fields of input files.
 
     Args:
@@ -23,6 +23,8 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
 
         colour (str, optional): Colour flow fields with data from this label,
             or enter 'flow' to colour by flow magnitude.
+
+        pivot (str, optional): Pivot for flow field arrows.
 
         vlim (floats, optional): 2-tuple with limits for the colour map if
             a label has been supplied.
@@ -50,7 +52,7 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
                 colour, clim, xlim, ylim)
 
         try:
-            plot_quiver(xs, ys, us, vs, weights, vlim, **kwargs)
+            plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs)
         except Exception as err:
             print("Could not draw/save figure: ", end='')
             print(err)
@@ -92,14 +94,14 @@ def get_quiver_data(data, labels, colour, clim, xlim, ylim):
 
 
 @decorate_graph
-def plot_quiver(xs, ys, us, vs, weights, vlim, **kwargs):
+def plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs):
     """Draw a quiver plot of input data."""
 
     scale = kwargs.get('scale', 1.)
     width = kwargs.get('width', 0.0015)
 
     fig = plt.quiver(xs, ys, us, vs, weights, clim=vlim,
-            scale=scale, width=width, pivot='middle')
+            scale=scale, width=width, pivot=pivot)
 
     return fig
 
