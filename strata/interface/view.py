@@ -76,7 +76,7 @@ def view_interfaces(base, average=1, save_xvg='', **kwargs):
             interface_list = read_interface_files(fngroup)
             interface = average_interfaces(interface_list)
         except Exception as err:
-            print("Could not read interface files '%r': " % fngroup, end='')
+            print("Could not read interface file group '%r': " % fngroup, end='')
             print(err)
             next(fnfig)
             continue
@@ -126,7 +126,32 @@ def read_interface_files(files):
 
     """
 
-    return [np.genfromtxt(fn, unpack=True) for fn in files]
+    return [read_interface_file(file, False) for file in files]
+
+
+def read_interface_file(file, print_error=True):
+    """Return the interface coordinates read from a file.
+
+    Args:
+        file (path): File to read from.
+
+    Keyword Args:
+        print_error (optional): Print errors.
+
+    Returns:
+        xs, ys: 2-tuple with x and y coordinates.
+
+    """
+
+    try:
+        xs, ys = np.genfromtxt(file, unpack=True)
+    except Exception as err:
+        if print_error:
+            print("Could not read interface file %r: " % file, end='')
+            print(err)
+        raise
+    else:
+        return xs, ys
 
 
 def average_interfaces(interfaces):

@@ -3,7 +3,7 @@ import numpy as np
 import progressbar as pbar
 
 from strata.dataformats.read import read_from_files
-from strata.utils import find_datamap_files, pop_fileopts, prepare_path
+from strata.utils import find_datamap_files, pop_fileopts, prepare_path, write_module_header
 
 
 def sample_average_files(base, label, output=None, sum=False, dt=1.,
@@ -132,20 +132,10 @@ def sample_value(data, label, cutoff, cutoff_label, sum):
 def write_header(output_path, input_base, label, cutoff, cutoff_label, kwargs):
     """Verify that output path is writable and write header."""
 
-    import pkg_resources
-    import time
+    title = "Sample average of data from a simulation"
+    write_module_header(output_path, __name__, title)
 
-    with open(output_path, 'w') as fp:
-        time_str = time.strftime('%c', time.localtime())
-        version_str = pkg_resources.require("flowfield")[0].version
-        header = (
-                "# Sample average of data from a simulation\n"
-                "# \n"
-                "# Creation date: %s\n"
-                "# Using module version: %s\n"
-                "# \n"
-                % (time_str, version_str))
-
+    with open(output_path, 'a') as fp:
         inputs = (
                 "# Input:\n"
                 "#   Sample data label: %r\n"
@@ -162,4 +152,5 @@ def write_header(output_path, input_base, label, cutoff, cutoff_label, kwargs):
                     cutoff_label, label
                     ))
 
-        fp.write(header + inputs)
+        fp.write(inputs)
+        
