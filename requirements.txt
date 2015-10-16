@@ -3,3 +3,4 @@ numpy>=1.9.1
 pandas>=0.15.2
 progressbar2>=2.7
 scipy>=0.14.0
+click

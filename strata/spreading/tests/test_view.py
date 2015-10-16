@@ -38,9 +38,13 @@ def test_read_files():
 
 def test_combine_data():
     data = read_spreading_data(fndata1, fndata2)
+    combined_indices = np.union1d(data[0].index, data[2].index)
     df = combine_spreading_data(data)
 
-    assert (np.array_equal(df.index, np.union1d(data[0].index, data[2].index)))
+    for d in df:
+        print(d.index.values)
+        assert (np.array_equal(d.index.values, combined_indices))
+
     for d in data:
         assert (df[d.name].name == d.name)
         assert (np.array_equal(df[d.name].dropna(), d))
@@ -69,12 +73,7 @@ def test_write_xvg():
         new_data = read_spreading_data(fntmp)
 
         assert (len(new_data) == len(data))
-        assert all(len(d) == len(df) for d in new_data)
-
-        for i, control in enumerate(df):
-            ind_nan = df[control][df[control].isnull()].index
-            ind_0 = new_data[i][new_data[i] == 0.].index
-            assert np.array_equal(ind_0, ind_nan)
+        assert all(len(d) == len(df[i]) for i, d in enumerate(new_data))
 
 def test_scale_timeaxis_onetau():
     tau = 2.
@@ -137,5 +136,5 @@ def test_combined_scaling():
     df = combine_spreading_data(data, sync_radius,
             R=scale_radius, tau=scale_time)
 
-    for d in df:
-        assert (df[d][10] == 2.)
+    for i, d in enumerate(df):
+        assert (df[i][10] == 2.)

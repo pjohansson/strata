@@ -53,7 +53,7 @@ def view_spreading(files, **kwargs):
     save_path = kwargs.pop('save_xvg')
     if save_path:
         try:
-            write_spreading_data(save_path, synced_data, files)
+            write_spreading_data(save_path, synced_data)
         except Exception as err:
             print(err)
 
@@ -266,7 +266,7 @@ def read_spreading_data(*files):
 
 
 @prepare_path
-def write_spreading_data(path, all_series, files):
+def write_spreading_data(path, all_series):
     """Write spreading data to file at path.
 
     Data is output in whitespace separated xmgrace format. NaN values
