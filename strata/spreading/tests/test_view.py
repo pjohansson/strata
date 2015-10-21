@@ -38,16 +38,13 @@ def test_read_files():
 
 def test_combine_data():
     data = read_spreading_data(fndata1, fndata2)
-    combined_indices = np.union1d(data[0].index, data[2].index)
     df = combine_spreading_data(data)
 
-    for d in df:
-        print(d.index.values)
-        assert (np.array_equal(d.index.values, combined_indices))
-
-    for d in data:
-        assert (df[d.name].name == d.name)
-        assert (np.array_equal(df[d.name].dropna(), d))
+    # Assert transfer of data set names, indices and values
+    for i, d in enumerate(data):
+        assert (df[i].name == d.name)
+        assert (np.array_equal(df[i].index.values, d.index.values))
+        assert (np.array_equal(df[i], d))
 
 def test_sync_time_at_radius():
     radius = 4.
