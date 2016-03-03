@@ -41,7 +41,9 @@ def test_read_interface():
             }
 
     flow = FlowData(data)
-    x, y = get_interface_coordinates(flow, 'M', adjust_com=True)
+    test = get_interface_coordinates(flow, 'M', adjust_com=True)
+    print(test)
+    x, y = test
 
     with tmp.TemporaryDirectory() as tmpdir:
         fnbase = os.path.join(tmpdir, 'test_')

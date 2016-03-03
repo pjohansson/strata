@@ -245,7 +245,9 @@ def _cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
     try:
         assert (system[cell][label] >= cutoff)
         indices = _get_indices_in_radius(cell, system, radius, **kwargs)
-        assert (len(system[system[label][indices] >= cutoff]) >= cutoff_bins)
+
+        # Count number of bins of selected indices larger than the cutoff
+        assert (np.sum(system[label][indices] >= cutoff) >= cutoff_bins)
     except AssertionError:
         return False
     except IndexError:
