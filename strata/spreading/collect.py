@@ -92,9 +92,9 @@ def collect(base, **kwargs):
 
     quiet = kwargs.pop('quiet', False)
 
-    time = 0
-    dt = kwargs.pop('dt', 1)
-    cutoff_radius = kwargs.pop('cutoff_radius', 1)
+    dt = kwargs.pop('dt', 1.)
+    time = kwargs.pop('t0', 0.)
+    cutoff_radius = kwargs.pop('cutoff_radius', 1.)
 
     times = []
     radii = []

@@ -230,6 +230,8 @@ def spreading(name=cmd_spreading['name'], short_help=cmd_spreading['desc']):
         help='Boundary bins search for neighbours within this radius. (1 nm)')
 @add_option('-cb', '--cutoff_bins', default=1,
         help='Boundary bins require this many neighbours.')
+@add_option('-t0', '--time_init', 't0', type=float, default=0.,
+        help='Initial time of first spreading frame (ps)')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
