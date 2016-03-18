@@ -159,8 +159,8 @@ def read_interface_file(fn):
     left.sort(order='Y')
 
     right = base.copy()
-    right['X'] = xs[length:]
-    right['Y'] = ys[length:]
+    right['X'] = xs[-1:-(length+1):-1]
+    right['Y'] = ys[-1:-(length+1):-1]
     right.sort(order='Y')
 
     return left, right
