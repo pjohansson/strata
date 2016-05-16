@@ -236,7 +236,7 @@ def _cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
         bool: Whether or not the cell can be considered part of the liquid.
 
     Raises:
-        IndexError: If coordinate labels could not be found in data record.
+        KeyError: If coordinate labels could not be found in data record.
 
     """
 
@@ -250,8 +250,8 @@ def _cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
         assert (np.sum(system[label][indices] >= cutoff) >= cutoff_bins)
     except AssertionError:
         return False
-    except IndexError:
-        raise IndexError("could not find set labels in system")
+    except ValueError:
+        raise KeyError("could not find set labels in system")
     else:
         return True
 

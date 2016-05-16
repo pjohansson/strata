@@ -136,7 +136,7 @@ def test_cell_is_droplet_bad_names():
     radius = 1.5
     cutoff = 0.5
 
-    with pytest.raises(IndexError):
+    with pytest.raises(KeyError):
         intf._cell_is_droplet(0, system, label, radius, cutoff)
 
 def test_find_interface_bottom():
