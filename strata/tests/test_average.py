@@ -1,6 +1,8 @@
 import os
 import numpy as np
+import pytest
 import tempfile as tmp
+
 from strata.average import *
 from strata.utils import gen_filenames, find_datamap_files
 from strata.dataformats.read import read_data_file
@@ -15,6 +17,7 @@ group = 5
 datasize = 4
 fields = ('U', 'V', 'N', 'T', 'M')
 save_data = {l: np.arange(datasize) for l in ('X', 'Y')}
+
 
 def test_average_datamaps():
     with tmp.TemporaryDirectory() as tmpdir:
@@ -46,6 +49,7 @@ def test_average_datamaps():
         # Assert that the correct number of files were output
         assert (i+1 == np.floor(num_maps/group))
 
+
 def test_average_datamaps_othernums():
     with tmp.TemporaryDirectory() as tmpdir:
         tmpbase = os.path.join(tmpdir, tmpfn)
@@ -73,3 +77,52 @@ def test_average_datamaps_othernums():
         # Assert that the correct number of files were output
         out_files = list(find_datamap_files(outbase, begin=begin_out, ext=ext))
         assert (len(out_files) == 1)
+
+
+def get_datamap(dsize):
+    data = {
+        'X': np.arange(dsize),
+        'Y': np.arange(dsize)
+    }
+
+    return data
+
+
+def test_recenter_maps():
+    # Create two datamaps with:
+    #   x: 0, 1, 2, 3, 4, 5
+    #   y: 0, 1, 2, 3, 4, 5
+    data_maps = [get_datamap(6) for _ in (1, 2)]
+
+    # Recenter x around 1 and 2
+    recenter = [1., 2.]
+    recentered_maps = recenter_maps(data_maps, recenter)
+
+    # The remaining subset of x should be:
+    xs = [-1., 0., 1., 2., 3.]
+
+    # The surviving indices of the data maps are:
+    # (i.e. the subset of x in both maps after recentering)
+    indices = [
+        [0, 1, 2, 3, 4],
+        [1, 2, 3, 4, 5]
+    ]
+
+    for inds, recentered, orig in zip(indices, recentered_maps, data_maps):
+        assert(np.array_equal(xs, recentered['X']))
+        assert(np.array_equal(orig['Y'][inds], recentered['Y']))
+
+
+# Throw an error if the input number of x values do not match the number of maps
+def test_recenter_non_broadcast():
+    data_maps = [get_datamap(6) for _ in (1, 2)]
+
+    with pytest.raises(IndexError):
+        recenter_maps(data_maps, [1.])
+
+
+def test_recenter_bad_xvals():
+    data_maps = [get_datamap(6) for _ in (1, )]
+
+    with pytest.raises(TypeError):
+        recenter_maps(data_maps, [None])

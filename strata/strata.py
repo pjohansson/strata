@@ -160,6 +160,16 @@ cmd_quiver = {
 @add_argument('base', type=str)
 @add_argument('output', type=str)
 @add_argument('group', type=click.IntRange(1, None))
+@add_option('--recenter',
+        type=click.Choice(['none', 'left', 'right']), default='none',
+        help='Recenter data maps around the input contact line. (none)')
+@add_option('--floor', type=float, default=None)
+@add_option('-co', '--cutoff', type=float, default=0.,
+        help='Boundary bins require this much mass. (0)')
+@add_option('-cb', '--cutoff_bins', default=1,
+        help='Boundary bins require this many neighbours.')
+@add_option('-cr', '--cutoff_radius', default=1.,
+        help='Boundary bins search for neighbours within this radius. (1 nm)')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
@@ -204,6 +214,9 @@ def convert_cli(base, output, **kwargs):
     a five-digit integer signifying file number ('%s%05d%s').
 
     """
+
+    if kwargs['recenter'] == 'none':
+        kwargs['recenter'] = None
 
     set_none_to_inf(kwargs)
     convert(base, output, **kwargs)
