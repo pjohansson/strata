@@ -6,6 +6,7 @@ from strata.dataformats.simple.main import read_data
 data_fields = ('U', 'V', 'M', 'T', 'N')
 all_fields = data_fields + ('X', 'Y')
 
+
 def test_average_data():
     def run_test_with_settings(datasize, numdata):
         xs = np.arange(datasize)
@@ -38,6 +39,7 @@ def test_average_data():
     run_test_with_settings(datasize=8, numdata=1e3)
     run_test_with_settings(datasize=1e5, numdata=2)
 
+
 def test_avg_different_sizes():
     data = []
     for _ in np.arange(7):
@@ -55,6 +57,7 @@ def test_avg_different_sizes():
     with pytest.raises(ValueError):
         average_data(*data)
 
+
 def test_avg_empty():
     # Assert that no data returns empty dict
     assert (average_data() == {})
@@ -67,6 +70,7 @@ def test_avg_empty():
     avg_data = average_data(data)
     for label in all_fields:
         assert (np.array_equal(avg_data[label], data[label]))
+
 
 def test_fields_nan():
     xs = np.arange(8)
@@ -85,6 +89,7 @@ def test_fields_nan():
 
         # No error should be raised
         average_data(*data)
+
 
 def test_read_and_average():
     filename = 'strata/dataformats/simple/tests/data_avgsimple.dat'
@@ -107,3 +112,4 @@ def test_read_and_average():
     avg_data = average_data(data1, data2)
     for label in ('M', 'N'):
         assert (np.allclose(np.sum(avg_data[label]), 2*np.sum(data1[label])))
+    
