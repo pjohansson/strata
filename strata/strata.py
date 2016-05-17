@@ -666,8 +666,8 @@ def view(name=cmd_flowview['name'], short_help=cmd_flowview['desc']):
         metavar='MIN MAX', help='Set limits for the contour values.')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=False,
         help='Whether or not to draw a colour bar. (False)')
-@add_option('-cmap', '--colourmap', 'colormap', default=None, type=str,
-        help='Set a colour map. (None)')
+@add_option('-cmap', '--colourmap', 'colormap', default='viridis', type=str,
+        help='Set a colour map. (viridis)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
 @add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
@@ -706,8 +706,8 @@ def view_contour_cli(files, **kwargs):
         metavar='MIN MAX', help='Set limits for the shown colour values.')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=True,
         help='Whether or not to draw a colour bar. (True)')
-@add_option('-cmap', '--colourmap', 'colormap', default=None, type=str,
-        help='Set a colour map. (None)')
+@add_option('-cmap', '--colourmap', 'colormap', default='viridis', type=str,
+        help='Set a colour map. (viridis)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
 @add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
@@ -751,8 +751,8 @@ def view_heightmap_cli(files, **kwargs):
         metavar='MIN MAX', help='Set limits for the shown colour values.')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=False,
         help='Whether or not to draw a colour bar. (True)')
-@add_option('-cmap', '--colourmap', 'colormap', default=None, type=str,
-        help='Set a colour map. (None)')
+@add_option('-cmap', '--colourmap', 'colormap', default='viridis', type=str,
+        help='Set a colour map. (viridis)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
 @add_option('--dpi', type=int, default=150,
