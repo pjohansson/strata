@@ -188,6 +188,11 @@ def average_cli(base, output, group, **kwargs):
     """
 
     set_none_to_inf(kwargs)
+
+    # Set correct option for recenter
+    if kwargs['recenter'] == 'none':
+        kwargs['recenter'] = None
+
     average(base, output, group, **kwargs)
 
 
@@ -214,9 +219,6 @@ def convert_cli(base, output, **kwargs):
     a five-digit integer signifying file number ('%s%05d%s').
 
     """
-
-    if kwargs['recenter'] == 'none':
-        kwargs['recenter'] = None
 
     set_none_to_inf(kwargs)
     convert(base, output, **kwargs)
