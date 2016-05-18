@@ -36,7 +36,7 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
     kwargs.setdefault('axis', 'scaled')
 
     # Order the data labels
-    data_labels = kwargs.get('coord_labels', ['X', 'Y']) + list(labels)
+    coord_labels = kwargs.get('coord_labels', ['X', 'Y'])
 
     # Get some limits on coordinates and an optional cut-off
     xlim, ylim = [kwargs.get(lims, (None, None)) for lims in ('xlim', 'ylim')]
@@ -48,8 +48,9 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
         if colour == 'flow':
             flow.data = add_absolute_flow(flow.data)
 
-        xs, ys, us, vs, weights = get_quiver_data(flow.data, data_labels,
-                colour, clim, xlim, ylim)
+        xs, ys, us, vs, weights = get_quiver_data(flow.data,
+                list(labels), coord_labels, colour,
+                clim, xlim, ylim)
 
         try:
             plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs)
@@ -59,8 +60,33 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
             break
 
 
-def get_quiver_data(data, labels, colour, clim, xlim, ylim):
-    """Return the flow data after cutting out empty cells."""
+def get_quiver_data(data, labels, coord_labels, colour, clim, xlim, ylim):
+    """Return the flow data after cutting out empty cells.
+
+    Empty cells are cells without any flow or with a value less
+    than specified for an input cutoff and label and cutoff tuple.
+
+    Args:
+        data (record): Flow data as a `numpy.record` object.
+
+        labels (2-tuple): 2-tuple with labels of mass flow along
+            x and y.
+
+        coord_labels (2-tuple): 2-tuple with coordinate labels.
+
+        colour (str): Label to return as weights or None for
+            unitary colour.
+
+        clim (label, value): Optional cutoff label and value for data points to return. None means no cutoff is applied.
+
+        xlim, ylim (2-tuples): Limits of axes.
+
+    Returns:
+        numpy.array's: 5-tuple of arrays containing (in order)
+            coordinates along x and y, mass flow along x and y,
+            weights to colour arrows by.
+
+    """
 
     def cut_system(cs, lims):
         """Get indices of system within coordinate limits."""
@@ -70,7 +96,8 @@ def get_quiver_data(data, labels, colour, clim, xlim, ylim):
 
         return (cs >= cmin) & (cs <= cmax)
 
-    xs, ys, us, vs = (data[l] for l in labels)
+    xs, ys = (data[l] for l in coord_labels)
+    us, vs = (data[l] for l in labels)
 
     # Cut bins without flow
     inds = (us != 0.) & (vs != 0.)
