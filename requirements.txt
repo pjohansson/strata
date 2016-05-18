@@ -1,6 +1,6 @@
-matplotlib==1.4.2
-numpy>=1.9.1
-pandas>=0.15.2
-progressbar2>=2.7
-scipy>=0.14.0
-click
+matplotlib>=1.5.0
+numpy>=1.10.0
+pandas>=0.17.0
+progressbar2>=3.6
+scipy>=0.17.0
+click>=6.0
