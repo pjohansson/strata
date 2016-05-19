@@ -77,7 +77,8 @@ def get_quiver_data(data, labels, coord_labels, colour, clim, xlim, ylim):
         colour (str): Label to return as weights or None for
             unitary colour.
 
-        clim (label, value): Optional cutoff label and value for data points to return. None means no cutoff is applied.
+        clim (label, value): Optional cutoff label and value for
+            data points to return. None means no cutoff is applied.
 
         xlim, ylim (2-tuples): Limits of axes.
 
@@ -221,10 +222,23 @@ def contour(data, info, label, **kwargs):
 
 
 def add_absolute_flow(data):
-    """Return a numpy array with absolute flow as a field named 'flow'."""
+    """Return a numpy array with absolute flow as a field named 'flow'.
+
+    The absolute flow is added as a new label for the returned data
+    array, which is calculated as sqrt(U**2 + V**2) where U and V
+    are the flow arrays along the dimensions.
+
+    Args:
+        data (ndarray): Record which must contain flow labels 'U' and 'V'.
+
+    Returns:
+        ndarray: The same record with an added field with label 'flow'.
+
+    """
 
     from numpy.lib.recfunctions import append_fields
 
     absolute_flow = np.sqrt(data['U']**2 + data['V']**2)
 
     return append_fields(data, 'flow', absolute_flow, dtypes='float')
+
