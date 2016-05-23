@@ -8,9 +8,10 @@ def downsample_flow_data(flow, num_combine,
         coord_labels=('X', 'Y'), weights=[]):
     """Downsample input data by combining bins.
 
-    The input data is downsampled by averaging data values when
-    combining the bins. Data types can be weighed by others by
-    supplying a list of tuples in (label, weight) format.
+    The input data is downsampled by summing data values when
+    combining the bins. Data types can be averaged by weighing
+    against another value by supplying a list of tuples in
+    (label, weight) format.
 
     The bins are combined in positive directions starting at
     index (0, 0). If the final number of bins does not evenly
@@ -65,13 +66,18 @@ def average_data(coords, flow, num_combine, info, coord_labels, weights):
 
     nx, ny = num_combine
 
+
     for i, row in enumerate(data):
         for j, col in enumerate(row):
+            inds_x, inds_y = (slice(n*k, n*(k+1))
+                              for n, k in [(nx, i), (ny, j)])
+
             for l, w in weights:
-                data[l][i,j] = np.average(reshaped_input[l][i:i+nx, j:j+ny],
-                                          weights=reshaped_input[w][i:i+nx, j:j+ny])
+                data[l][i,j] = np.average(reshaped_input[l][inds_x, inds_y],
+                                          weights=reshaped_input[w][inds_x, inds_y])
+
             for l in data_labels:
-                data[l][i,j] = np.sum(reshaped_input[l][i:i+nx, j:j+ny])
+                data[l][i,j] = np.sum(reshaped_input[l][inds_x, inds_y])
 
     return [(l, data[l].ravel()) for l in data.dtype.names]
 

@@ -6,7 +6,7 @@ from droplets.flow import FlowData
 from droplets.resample import *
 
 
-def test_resample_to_smaller_grid():
+def test_resample_to_one_bin():
     x = [1., 3., 5., 7.]
     y = [0., 1.]
 
@@ -29,6 +29,25 @@ def test_resample_to_smaller_grid():
     # ... and attributes
     assert np.array_equal((1, 1),   resampled_flow.shape)
     assert np.array_equal((8., 2.), resampled_flow.bin_size)
+
+
+def test_resample_to_multiple_bins():
+    x = np.arange(4)
+    xs, ys = np.meshgrid(x, x)
+
+    cs = np.random.sample(xs.shape)
+
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
+    flow.bin_size = (1., 1.)
+    flow.shape = (4, 4)
+
+    resampled_flow = downsample_flow_data(flow, (2, 2))
+    reshaped_data = resampled_flow.data['C'].reshape(2, 2)
+
+    assert np.isclose(np.sum(cs[:2,:2]), reshaped_data[0,0])
+    assert np.isclose(np.sum(cs[2:,:2]), reshaped_data[1,0])
+    assert np.isclose(np.sum(cs[:2,2:]), reshaped_data[0,1])
+    assert np.isclose(np.sum(cs[2:,2:]), reshaped_data[1,1])
 
 
 # If the input coordinates have weird sorting it has to be handled
@@ -103,4 +122,3 @@ def test_resample_cutting_some_cells():
 
     assert np.array_equal([0.5], resampled_flow.data['X'])
     assert np.isclose(np.sum(cs[:2]), resampled_flow.data['C'])
-
