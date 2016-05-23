@@ -11,7 +11,8 @@ def downsample_flow_data(flow, num_combine,
     The input data is downsampled by summing data values when
     combining the bins. Data types can be averaged by weighing
     against another value by supplying a list of tuples in
-    (label, weight) format.
+    (label, weight) format. If the weighting sums to zero in
+    an area the result is returned as zero.
 
     The bins are combined in positive directions starting at
     index (0, 0). If the final number of bins does not evenly
@@ -73,8 +74,12 @@ def average_data(coords, flow, num_combine, info, coord_labels, weights):
                               for n, k in [(nx, i), (ny, j)])
 
             for l, w in weights:
-                data[l][i,j] = np.average(reshaped_input[l][inds_x, inds_y],
-                                          weights=reshaped_input[w][inds_x, inds_y])
+                # The result should be zero if no weighting data is found
+                try:
+                    data[l][i,j] = np.average(reshaped_input[l][inds_x, inds_y],
+                                              weights=reshaped_input[w][inds_x, inds_y])
+                except ZeroDivisionError:
+                    data[l][i,j] = 0.
 
             for l in data_labels:
                 data[l][i,j] = np.sum(reshaped_input[l][inds_x, inds_y])

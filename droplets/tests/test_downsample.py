@@ -92,6 +92,23 @@ def test_resample_with_weights():
     assert np.isclose(np.sum(ws), resampled_flow.data['W'])
 
 
+def test_resample_with_weights_that_are_zero():
+    xs = [0., 1.]
+    ys = [0., 0.]
+
+    # cs is averaged by weighing against zero: result should be zero
+    cs = np.random.sample(2)
+    ws = np.zeros(2)
+
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs), ('W', ws))
+    flow.bin_size = (1., 1.)
+    flow.shape = (2, 1)
+
+    resampled_flow = downsample_flow_data(flow, (2, 1), weights=[('C', 'W')])
+
+    assert np.isclose(0., resampled_flow.data['C'])
+
+
 def test_resample_other_coord_labels():
     xs = [0., 1.]
     ys = [0., 0.]
@@ -122,3 +139,4 @@ def test_resample_cutting_some_cells():
 
     assert np.array_equal([0.5], resampled_flow.data['X'])
     assert np.isclose(np.sum(cs[:2]), resampled_flow.data['C'])
+
