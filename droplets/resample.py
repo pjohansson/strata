@@ -57,8 +57,9 @@ def average_data(coords, flow, num_combine, info, coord_labels, weights):
     # Sort input data in same order as the new grid
     # and reshape to 2D array
     coords_order = [coord_labels[i] for i in (1, 0)]
+    shape = [flow.shape[i] for i in (1, 0)]
     reshaped_input = np.reshape(np.sort(flow.data, order=coords_order),
-                                flow.shape)
+                                shape)
 
     # Get data labels, keep labels to be weighed separate
     weighted_labels = [l for l, _ in weights]
@@ -67,22 +68,21 @@ def average_data(coords, flow, num_combine, info, coord_labels, weights):
 
     nx, ny = num_combine
 
-
     for i, row in enumerate(data):
         for j, col in enumerate(row):
             inds_x, inds_y = (slice(n*k, n*(k+1))
-                              for n, k in [(nx, i), (ny, j)])
+                              for n, k in [(nx, j), (ny, i)])
 
             for l, w in weights:
                 # The result should be zero if no weighting data is found
                 try:
-                    data[l][i,j] = np.average(reshaped_input[l][inds_x, inds_y],
-                                              weights=reshaped_input[w][inds_x, inds_y])
+                    data[l][i,j] = np.average(reshaped_input[l][inds_y, inds_x],
+                                              weights=reshaped_input[w][inds_y, inds_x])
                 except ZeroDivisionError:
                     data[l][i,j] = 0.
 
             for l in data_labels:
-                data[l][i,j] = np.sum(reshaped_input[l][inds_x, inds_y])
+                data[l][i,j] = np.sum(reshaped_input[l][inds_y, inds_x])
 
     return [(l, data[l].ravel()) for l in data.dtype.names]
 

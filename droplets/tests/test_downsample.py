@@ -32,22 +32,28 @@ def test_resample_to_one_bin():
 
 
 def test_resample_to_multiple_bins():
-    x = np.arange(4)
-    xs, ys = np.meshgrid(x, x)
+    x = np.arange(6)
+    y = np.arange(4)
+    xs, ys = np.meshgrid(x, y)
+    print(xs.shape)
 
     cs = np.random.sample(xs.shape)
 
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
     flow.bin_size = (1., 1.)
-    flow.shape = (4, 4)
+    flow.shape = (6, 4)
 
     resampled_flow = downsample_flow_data(flow, (2, 2))
-    reshaped_data = resampled_flow.data['C'].reshape(2, 2)
 
-    assert np.isclose(np.sum(cs[:2,:2]), reshaped_data[0,0])
-    assert np.isclose(np.sum(cs[2:,:2]), reshaped_data[1,0])
-    assert np.isclose(np.sum(cs[:2,2:]), reshaped_data[0,1])
-    assert np.isclose(np.sum(cs[2:,2:]), reshaped_data[1,1])
+    # Compare against the data
+    # Remember that the data array is ordered as [y, x] (row, col)
+    reshaped_data = resampled_flow.data['C'].reshape(2, 3)
+    assert np.isclose(np.sum(cs[ :2,  :2]), reshaped_data[0,0])
+    assert np.isclose(np.sum(cs[ :2, 2:4]), reshaped_data[0,1])
+    assert np.isclose(np.sum(cs[ :2, 4:]), reshaped_data[0,2])
+    assert np.isclose(np.sum(cs[2:,   :2]), reshaped_data[1,0])
+    assert np.isclose(np.sum(cs[2:,  2:4]), reshaped_data[1,1])
+    assert np.isclose(np.sum(cs[2:,  4:]), reshaped_data[1,2])
 
 
 # If the input coordinates have weird sorting it has to be handled
