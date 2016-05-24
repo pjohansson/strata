@@ -41,13 +41,13 @@ def downsample_flow_data(flow, num_combine,
     coords = get_downscaled_grid_coords(info)
 
     # Resample onto grid
-    resampled_flow = average_data(coords, flow, num_combine, info,
+    resampled_flow = combine_bins(coords, flow, num_combine, info,
             coord_labels, weights)
 
     return FlowData(*resampled_flow, info=info)
 
 
-def average_data(coords, flow, num_combine, info, coord_labels, weights):
+def combine_bins(coords, flow, num_combine, info, coord_labels, weights):
     # Create container for result and add coords data
     data = np.zeros(coords[0].shape, dtype=flow.data.dtype)
 
