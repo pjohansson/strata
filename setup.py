@@ -29,13 +29,13 @@ class PyTest(Command):
         raise SystemExit(errno)
 
 setup(
-        name='flowfield',
+        name='strata',
         version=get_version(),
         description='Tools for studying droplet and fluid dynamics data.',
         url='https://github.com/pjohansson/flowtools-rewrite',
         author='Petter Johansson',
         author_email='pettjoha@kth.se',
-        license='None',
+        license='LGPLv3',
         packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
         cmdclass={'test': PyTest},
         install_requires=['setuptools', 'Click'],
