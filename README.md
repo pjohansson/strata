@@ -37,6 +37,7 @@ All functionality is called from the installed command line utility `strata`.
       contact_line  Analyse data around the contact line.
       convert       Convert data files to another format.
       interface     Work with interface data of droplets.
+      sample        Sample average data maps.
       spreading     View or collect spreading data of droplets.
       view          Visualise the data of binned map files.
 
@@ -57,3 +58,10 @@ All functionality is called from the installed command line utility `strata`.
 
 - [ ] Document file formats.
 - [ ] Implement a *better* file format.
+
+
+## Development
+
+These tools were written with the intent of fully utilizing test-driven
+development and to build some experience with the methodology. Some tools,
+mainly in the `strata` layer, still have very lacking coverage. 
