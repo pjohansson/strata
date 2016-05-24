@@ -5,7 +5,8 @@ from droplets.flow import FlowData
 
 
 def downsample_flow_data(flow, num_combine,
-        coord_labels=('X', 'Y'), weights=[]):
+        coord_labels=('X', 'Y'), weights=[],
+        xlim=(None, None), ylim=(None, None)):
     """Downsample input data by combining bins.
 
     The input data is downsampled by summing data values when
@@ -19,6 +20,12 @@ def downsample_flow_data(flow, num_combine,
     divide the starting number, some bins will be cut from the
     system in the direction of positive x and y.
 
+    The system can be limited along x and y by supplying limits
+    as 2-tuples for the keyword arguments `xlim` and `ylim`.
+    Since combining datamaps is a very expensive operation
+    (in this implementation) this can have a significant impact
+    on the speed of the operation.
+
     Args:
         flow (FlowData): Object to downsample. Must have a `shape`
                 and `bin_size` attached as metadata.
@@ -31,10 +38,15 @@ def downsample_flow_data(flow, num_combine,
         weights (label, weight): A list of 2-tuples with labels of data
             and weights to calculate a weighted mean for.
 
+        xlim/ylim (2-tuple): System limits to combine bins within.
+
     Returns:
         FlowData: A new object with downsampled grid.
 
     """
+
+    # Cut system
+    flow = cut_system_limits(flow, xlim, ylim, coord_labels)
 
     # Create grid to average onto
     info = get_downscaled_grid_info(flow, num_combine, coord_labels)
@@ -85,6 +97,34 @@ def combine_bins(coords, flow, num_combine, info, coord_labels, weights):
                 data[l][i,j] = np.sum(reshaped_input[l][inds_y, inds_x])
 
     return [(l, data[l].ravel()) for l in data.dtype.names]
+
+
+def cut_system_limits(flow, xlim, ylim, coord_labels):
+    def get_cut_indices_of_axis(lims, label):
+        vmin = -np.inf if lims[0] == None else lims[0]
+        vmax =  np.inf if lims[1] == None else lims[1]
+
+        return (flow.data[label] >= vmin) & (flow.data[label] <= vmax)
+
+    xl, yl = coord_labels
+
+    inds = get_cut_indices_of_axis(xlim, xl) & get_cut_indices_of_axis(ylim, yl)
+    data = flow.data[inds]
+
+    shape = [len(np.unique(data[l])) for l in coord_labels]
+    size = [
+        [np.min(data[xl]), np.max(data[xl])],
+        [np.min(data[yl]), np.max(data[yl])]
+    ]
+    info = {
+        'shape': shape,
+        'size': size,
+        'bin_size': flow.bin_size,
+        'num_bins': shape[0]*shape[1]
+    }
+
+
+    return FlowData(*[(l, data[l]) for l in flow.data.dtype.names], info=info)
 
 
 def get_downscaled_grid_info(flow, num_combine, coord_labels):

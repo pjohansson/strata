@@ -50,10 +50,10 @@ def test_resample_to_multiple_bins():
     reshaped_data = resampled_flow.data['C'].reshape(2, 3)
     assert np.isclose(np.sum(cs[ :2,  :2]), reshaped_data[0,0])
     assert np.isclose(np.sum(cs[ :2, 2:4]), reshaped_data[0,1])
-    assert np.isclose(np.sum(cs[ :2, 4:]), reshaped_data[0,2])
+    assert np.isclose(np.sum(cs[ :2, 4:]),  reshaped_data[0,2])
     assert np.isclose(np.sum(cs[2:,   :2]), reshaped_data[1,0])
     assert np.isclose(np.sum(cs[2:,  2:4]), reshaped_data[1,1])
-    assert np.isclose(np.sum(cs[2:,  4:]), reshaped_data[1,2])
+    assert np.isclose(np.sum(cs[2:,  4:]),  reshaped_data[1,2])
 
 
 # If the input coordinates have weird sorting it has to be handled
@@ -146,3 +146,19 @@ def test_resample_cutting_some_cells():
     assert np.array_equal([0.5], resampled_flow.data['X'])
     assert np.isclose(np.sum(cs[:2]), resampled_flow.data['C'])
 
+
+def test_resample_add_xy_lims():
+    x = [0., 1., 2., 3.]
+    y = [0., 1.]
+
+    xs, ys = np.meshgrid(x, y)
+
+    flow = FlowData(('X', xs), ('Y', ys))
+    flow.bin_size = (1., 1.)
+    flow.shape = (4, 2)
+
+    resampled_flow = downsample_flow_data(flow, (2, 1),
+                                          xlim=(1., 2.), ylim=(0.5, 2.5))
+    assert np.array_equal([1.5], resampled_flow.data['X'])
+    assert np.array_equal([1.], resampled_flow.data['Y'])
+    
