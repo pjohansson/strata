@@ -2,8 +2,21 @@ import numpy as np
 
 
 def sample_per_angle_from(flow, origin, label,
-        coord_labels=('X', 'Y'), rmin=0., rmax=np.inf):
+        coord_labels=('X', 'Y'),
+        amin=0., amax=360.,
+        rmin=0., rmax=np.inf):
     """Sample data per angle from an input point.
+
+    The angle is calculated starting from the positive x-axis (i.e.
+    point (1, 0)) and going counter-clockwise in a full circle. The
+    result has a precision of 1 degree and the data is binned to the
+    closest angle of those returned.
+
+    The angles to sample over can be chosen by using the keyword
+    arguments `amin` and `amax`. Do note that since the measured angles
+    are binned as their closest bins, the angle bins at the edges will
+    be cut off as half sized bins and hence undersampled. This should
+    be improved.
 
     Args:
         flow (FlowData): A FlowData object to sample from.
@@ -15,17 +28,24 @@ def sample_per_angle_from(flow, origin, label,
     Keyword args:
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
+        amin/amax (float): Minimum and maximum angles to sample data over.
+            By default samples the entire circular range.
+
         rmin/rmax (float): Minimum and maximum radius from point to sample
             data within. By default uses the entire data set.
 
     Returns:
-        ndarray: Numpy record with angles in label 'angle' and the data
-            in the used input label.
+        ndarray: Numpy record with angles (degrees) in label 'angle'
+            and the data in the used input label.
 
     """
 
-    # Collect values in bins for each angle
-    out_angles = np.arange(360)
+    step = 1.
+    amin = max(0., amin)
+    amax = min(360.-step, amax)
+    out_angles = np.arange(amin, amax+step, step)
+
+    # Collect values in bins to average for each angle
     out_values_bins = [[] for _ in out_angles]
 
     dxs, dys = [flow.data[l] - o for l, o in zip(coord_labels, origin)]
@@ -40,8 +60,9 @@ def sample_per_angle_from(flow, origin, label,
 
     # Add data to bins
     for angle, value in zip(measured_angles, data):
-        iangle = np.abs(out_angles - angle).argmin()
-        out_values_bins[iangle].append(value)
+        if angle >= amin and angle <= amax:
+            iangle = np.abs(out_angles - angle).argmin()
+            out_values_bins[iangle].append(value)
 
     # Construct result array
     dtype = [(l, np.float) for l in ('angle', label)]
