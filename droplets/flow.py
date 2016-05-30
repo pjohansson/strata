@@ -260,21 +260,33 @@ class FlowData(object):
         Args:
             label (str): Label of data to limit values for.
 
-            lims (floats): 2-tuple of minimum and maximum values of input
-                label to include in the returned object.
+            lims (min, max): 2-tuple of minimum and maximum values of input
+                label to include in the returned object. Either or both
+                values can be `None` to not apply a cut in that direction.
 
         Return:
             FlowData: New object with selected bins.
 
         """
 
-        inds = (self.data[label] >= lims[0]) & (self.data[label] <= lims[1])
+        lims = (
+            lims[0] if lims[0] != None else -np.inf,
+            lims[1] if lims[1] != None else np.inf
+            )
+
+        try:
+            inds = (self.data[label] >= lims[0]) & (self.data[label] <= lims[1])
+        except ValueError:
+            raise KeyError("FlowData object has no data with input label %r" % label)
+
         data = self.data[inds]
 
         info = {
-            'bin_size': self.bin_size,
             'num_bins': data.size
         }
+
+        if self.bin_size != (None, None):
+            info['bin_size'] = self.bin_size
 
         data_list = [(l, data[l]) for l in data.dtype.names]
 

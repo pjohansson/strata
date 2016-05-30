@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from droplets.flow import FlowData
 
@@ -41,4 +42,32 @@ def test_flowdata_set_lims():
     # Check that values are good
     assert np.array_equal(cs[inds].ravel(), flow_lims.data['C'])
     assert flow.data.dtype == flow_lims.data.dtype
+
+
+def test_flowdata_set_lims_none():
+    xlim = (None, None)
+
+    x = np.arange(8)
+    xs, ys = np.meshgrid(x, x)
+    cs = np.random.sample(xs.shape)
+
+    flow = FlowData(('X', xs.ravel()), ('Y', ys.ravel()), ('C', cs.ravel()))
+    flow_lims = flow.lims('X', xlim)
+
+    assert np.array_equal(xs.ravel(), flow_lims.data['X'])
+    assert np.array_equal(ys.ravel(), flow_lims.data['Y'])
+    assert np.array_equal(cs.ravel(), flow_lims.data['C'])
+
+
+def test_flowdata_set_lims_badlabel():
+    vlim = (None, None)
+
+    xs = np.arange(8)
+    ys = np.arange(8)
+    cs = np.random.sample(8)
+
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
+
+    with pytest.raises(KeyError):
+        flow_lims = flow.lims('none', vlim)
 
