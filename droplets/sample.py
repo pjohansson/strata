@@ -6,13 +6,15 @@ import numpy as np
 def sample_per_angle_from(flow, origin, label,
         coord_labels=('X', 'Y'),
         amin=0., amax=360.,
-        rmin=0., rmax=np.inf):
+        rmin=0., rmax=np.inf,
+        size=1.):
     """Sample data per angle from an input point.
 
     The angle is calculated starting from the positive x-axis (i.e.
     point (1, 0)) and going counter-clockwise in a full circle. The
     result has a precision of 1 degree and the data is binned for
-    the half-open angular bin intervals [angle, angle+1).
+    the half-open angular bin intervals [angle, angle+size) where
+    size is the angular size of the bins.
 
     The angles to sample over can be chosen by using the keyword
     arguments `amin` and `amax`.
@@ -33,16 +35,17 @@ def sample_per_angle_from(flow, origin, label,
         rmin/rmax (float): Minimum and maximum radius from point to sample
             data within. By default uses the entire data set.
 
+        size (float): Size in degrees of the angular intervals.
+
     Returns:
         ndarray: Numpy record with angles (degrees) in label 'angle'
             and the data in the used input label.
 
     """
 
-    step = 1.
     amin = max(0., amin)
-    amax = min(360.-step, amax)
-    out_angles = np.arange(amin, amax+step, step)
+    amax = min(360.-size, amax)
+    out_angles = np.arange(amin, amax+size, size)
 
     # Collect values in bins to average for each angle
     out_values_bins = [[] for _ in out_angles]
@@ -64,7 +67,7 @@ def sample_per_angle_from(flow, origin, label,
     # Adjust angles by 1/2 step to center bins around the angle measurement
     # points, they will histogram correctly for the half-open interval
     # [angle, angle+step)
-    in_angles = bin_degrees[inds_alim] - 0.5*step + 1e-6
+    in_angles = bin_degrees[inds_alim] - 0.5*size + 1e-6
 
     # Add data to bins
     for angle, value in zip(in_angles, data_alim):

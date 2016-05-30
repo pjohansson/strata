@@ -3,7 +3,7 @@ import numpy as np
 from droplets.flow import FlowData
 from droplets.sample import sample_per_angle_from
 
-# Measure the quantity from (0, 0)
+# Measure the quantities from (0, 0)
 origin = (0., 0.)
 
 def test_measure_per_angle_single_cell():
@@ -133,4 +133,22 @@ def test_sample_per_angle_correct_angle_bins():
     result = sample_per_angle_from(flow, origin, 'C', amin=amin)
 
     assert cs[1] == result['C'][0]
+
+
+def test_sample_per_angle_angle_bin_size():
+    # Make bins larger for the output
+    bin_size = 90.
+
+    # First two bins should be in the first output angle
+    angles = np.radians([1e-9, 45., 90.])
+    ys = [1., 1., 1.]
+    xs = ys/np.tan(angles)
+    cs = [1., 2., 3.]
+
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
+    result = sample_per_angle_from(flow, origin, 'C', size=bin_size)
+
+    assert np.array_equal([0., 90., 180., 270.], result['angle'])
+    assert np.isclose(np.mean(cs[:2]), result['C'][0])
+    assert cs[2] == result['C'][1]
 
