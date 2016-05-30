@@ -1,5 +1,7 @@
 import numpy as np
 
+"""Tools for sampling data from FlowData objects."""
+
 
 def sample_per_angle_from(flow, origin, label,
         coord_labels=('X', 'Y'),
