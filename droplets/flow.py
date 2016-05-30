@@ -243,3 +243,40 @@ class FlowData(object):
         self.binx = self.bin_size[0]
         self.biny = self.bin_size[1]
         self.num_bins = info.get('num_bins', None)
+
+
+    def lims(self, label, lims):
+        """Return new FlowData object with input data limits.
+
+        This method cuts bins from the system abject to the input limits
+        and returns a new object with the remaining bins. There is no
+        guarantuee that the created data set is on a regular grid and
+        thus the `shape` and `size` properties are unset. `bin_size`
+        is unchanged and `num_bins` is updated to the correct number.
+
+        Since a new object is returned this method can be chained to
+        select along many different data at once.
+
+        Args:
+            label (str): Label of data to limit values for.
+
+            lims (floats): 2-tuple of minimum and maximum values of input
+                label to include in the returned object.
+
+        Return:
+            FlowData: New object with selected bins.
+
+        """
+
+        inds = (self.data[label] >= lims[0]) & (self.data[label] <= lims[1])
+        data = self.data[inds]
+
+        info = {
+            'bin_size': self.bin_size,
+            'num_bins': data.size
+        }
+
+        data_list = [(l, data[l]) for l in data.dtype.names]
+
+        return FlowData(*data_list, info=info, dtype=data.dtype)
+
