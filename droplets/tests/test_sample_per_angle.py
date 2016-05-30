@@ -117,3 +117,20 @@ def test_measure_cell_angles_minmax_angle_lims():
     result = sample_per_angle_from(flow, origin, 'C', amin=amin, amax=amax)
 
     assert np.array_equal(np.arange(0, 360, 1), result['angle'])
+
+
+def test_sample_per_angle_correct_angle_bins():
+    amin = 45.
+
+    # A bin at angle 44.9 should be excluded,
+    # one at 45.9 should be in the first bin
+    angles = np.radians([44.9, 45.9])
+    ys = [1., 1.]
+    xs = ys/np.tan(angles)
+    cs = [1., 2.]
+
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
+    result = sample_per_angle_from(flow, origin, 'C', amin=amin)
+
+    assert cs[1] == result['C'][0]
+
