@@ -276,6 +276,8 @@ class FlowData(object):
             inds = (self.data[label] >= vmin) & (self.data[label] <= vmax)
         except ValueError:
             raise KeyError("FlowData object has no data with input label %r" % label)
+        except TypeError:
+            raise TypeError("bad input limits (%r, %r): must be float or None" % (vmin, vmax))
 
         data = self.data[inds]
 

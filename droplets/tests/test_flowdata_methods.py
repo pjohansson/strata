@@ -68,6 +68,21 @@ def test_flowdata_set_lims_badlabel():
 
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
 
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError) as exc:
         flow_lims = flow.lims('none', *vlim)
+        assert "FlowData object has no data with input label" in exc
+
+
+def test_flowdata_set_lims_badlims():
+    xlim = ('a', 'b')
+
+    xs = np.arange(8)
+    ys = np.arange(8)
+    cs = np.random.sample(8)
+
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
+
+    with pytest.raises(TypeError) as exc:
+        flow_lims = flow.lims('X', *xlim)
+        assert "bad input limits" in exc
 
