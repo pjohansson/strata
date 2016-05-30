@@ -81,7 +81,7 @@ def strata():
 # Description of commands
 cmd_average = {
         'name': 'average',
-        'desc': 'Sample average data files.'
+        'desc': 'Average multiple input data files.'
         }
 cmd_convert = {
         'name': 'convert',
@@ -93,7 +93,7 @@ cmd_contactline = {
         }
 cmd_sample = {
         'name': 'sample',
-        'desc': 'Sample average data maps.'
+        'desc': 'Sample data maps.'
 }
 
 

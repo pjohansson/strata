@@ -21,7 +21,7 @@ where `python` should be your Python 3 binary.
 
 ## Usage
 
-All functionality is called from the installed command line utility `strata`.
+All command line functionality is called from the installed utility `strata`.
 
     $ strata --help
     Usage: strata [OPTIONS] COMMAND [ARGS]...
@@ -33,11 +33,11 @@ All functionality is called from the installed command line utility `strata`.
       --help     Show this message and exit.
 
     Commands:
-      average       Sample average data files.
+      average       Average multiple input data files.
       contact_line  Analyse data around the contact line.
       convert       Convert data files to another format.
       interface     Work with interface data of droplets.
-      sample        Sample average data maps.
+      sample        Sample data maps.
       spreading     View or collect spreading data of droplets.
       view          Visualise the data of binned map files.
 
