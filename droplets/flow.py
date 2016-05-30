@@ -245,7 +245,7 @@ class FlowData(object):
         self.num_bins = info.get('num_bins', None)
 
 
-    def lims(self, label, lims):
+    def lims(self, label, vmin, vmax):
         """Return new FlowData object with input data limits.
 
         This method cuts bins from the system abject to the input limits
@@ -260,7 +260,7 @@ class FlowData(object):
         Args:
             label (str): Label of data to limit values for.
 
-            lims (min, max): 2-tuple of minimum and maximum values of input
+            vmin/vmax (float/None): Minimum and maximum values of input
                 label to include in the returned object. Either or both
                 values can be `None` to not apply a cut in that direction.
 
@@ -269,13 +269,11 @@ class FlowData(object):
 
         """
 
-        lims = (
-            lims[0] if lims[0] != None else -np.inf,
-            lims[1] if lims[1] != None else np.inf
-            )
+        vmin = vmin if vmin != None else -np.inf
+        vmax = vmax if vmax != None else np.inf
 
         try:
-            inds = (self.data[label] >= lims[0]) & (self.data[label] <= lims[1])
+            inds = (self.data[label] >= vmin) & (self.data[label] <= vmax)
         except ValueError:
             raise KeyError("FlowData object has no data with input label %r" % label)
 

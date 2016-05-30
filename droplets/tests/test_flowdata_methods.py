@@ -30,7 +30,7 @@ def test_flowdata_set_lims():
     # Cut out values of X
     flow = FlowData(('X', xs.ravel()), ('Y', ys.ravel()), ('C', cs.ravel()),
             info=info)
-    flow_lims = flow.lims('X', xlim)
+    flow_lims = flow.lims('X', xlim[0], xlim[1])
 
     # Shape and size is no longer valid information
     # since the resulting grid could be unstructured
@@ -52,7 +52,7 @@ def test_flowdata_set_lims_none():
     cs = np.random.sample(xs.shape)
 
     flow = FlowData(('X', xs.ravel()), ('Y', ys.ravel()), ('C', cs.ravel()))
-    flow_lims = flow.lims('X', xlim)
+    flow_lims = flow.lims('X', *xlim)
 
     assert np.array_equal(xs.ravel(), flow_lims.data['X'])
     assert np.array_equal(ys.ravel(), flow_lims.data['Y'])
@@ -69,5 +69,5 @@ def test_flowdata_set_lims_badlabel():
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
 
     with pytest.raises(KeyError):
-        flow_lims = flow.lims('none', vlim)
+        flow_lims = flow.lims('none', *vlim)
 
