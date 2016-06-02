@@ -62,10 +62,15 @@ STR_LIST = ListStrsParamType()
 
 def print_version(ctx, param, value):
     import pkg_resources
-    version_str = pkg_resources.require("flowfield")[0].version
+
+    try:
+        version_str = pkg_resources.require("strata")[0].version
+    except Exception:
+        click.echo('Error: Could not retrieve version string')
 
     if not value or ctx.resilient_parsing:
         return
+
     click.echo('Version %s' % version_str)
     ctx.exit()
 
