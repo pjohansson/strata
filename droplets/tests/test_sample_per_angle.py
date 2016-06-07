@@ -152,3 +152,19 @@ def test_sample_per_angle_angle_bin_size():
     assert np.isclose(np.mean(cs[:2]), result['C'][0])
     assert cs[2] == result['C'][1]
 
+
+def test_sample_per_angle_weighted_average():
+    # Two cells at 45 deg. angle
+    xs = [1., 2.]
+    ys = [1., 2.]
+    cs = np.random.sample(2)
+    ws = np.random.sample(2)
+
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs), ('W', ws))
+
+    # Weigh the C label by W
+    result = sample_per_angle_from(flow, origin, 'C', weight='W')
+
+    # Result should be weighted average of the two cells
+    assert np.isclose(np.average(cs, weights=ws), result['C'][45])
+
