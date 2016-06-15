@@ -100,3 +100,35 @@ def sample_per_angle_from(flow, origin, label,
              for vals, weights in zip(out_values_bins, weights_bins)])
 
     return result
+
+
+def sample_viscous_dissipation(flow, viscosity,
+        coord_labels=('X', 'Y'), flow_labels=('U', 'V')):
+    """Return array of viscous dissipation from input flow data.
+
+    Args:
+        flow (FlowData): Object to calculate dissipation from. Must
+            contain fields for X-Y coordinates and flow.
+
+        viscosity (float): Viscosity of liquid.
+
+    Keyword args:
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
+
+        flow_labels (2-tuple, default=('U', 'V'): Record labels for flow.
+
+    """
+
+    dx, dy = flow.bin_size
+    nx, ny = flow.shape
+
+    coord_order = list(reversed(coord_labels))
+    data = np.sort(flow.data, order=coord_order).reshape(ny, nx)
+    U, V = [data[l] for l in flow_labels]
+
+    dudy, dudx = np.gradient(U, dy, dx, edge_order=2)
+    dvdy, dvdx = np.gradient(V, dy, dx, edge_order=2)
+
+    return 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)/3.0) \
+            + viscosity*(dvdx + dudy)**2
+
