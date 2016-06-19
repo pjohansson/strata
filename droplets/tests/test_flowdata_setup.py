@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from droplets.flow import *
 
+
 def test_set_data():
     xs = np.arange(9)
     ys = np.arange(5)
@@ -21,6 +22,7 @@ def test_set_data():
     # Check the set properties
     assert (set(flow.properties) == set(['X', 'Y', 'U', 'V']))
 
+
 def test_set_input_args():
     X = np.arange(8)
     Y = np.arange(8)
@@ -36,6 +38,7 @@ def test_set_input_args():
     assert (np.array_equal(flow.data['Y'], Y))
     assert (np.array_equal(flow.data['U'], U))
 
+
 def test_set_as_list():
     X = np.arange(5).tolist()
 
@@ -44,13 +47,16 @@ def test_set_as_list():
     assert (np.array_equal(X, flow.data['f0']))
     assert (set(flow.properties) == set(['f0']))
 
+
 def test_set_empty():
     X = np.arange(0)
     flow = FlowData({'X': X})
 
+
 def test_set_data_badformats():
     with pytest.raises(TypeError):
         flow = FlowData(['X', [1,2,3]])
+
 
 def test_oddlists_error():
     X = np.arange(5)
@@ -60,6 +66,7 @@ def test_oddlists_error():
         flow = FlowData({'X': X, 'Y': Y})
     assert ("added array_like objects not all of equal size" in str(excinfo.value))
 
+
 def test_infer_homogenous_dtype():
     types = ('float32', 'float64', 'int')
     for dtype in types:
@@ -68,6 +75,7 @@ def test_infer_homogenous_dtype():
 
         assert (np.array_equal(flow.data['X'], X))
         assert (flow.data['X'].dtype == dtype)
+
 
 def test_infer_heterogenous_dtype():
     X = np.arange(5, dtype='int')
@@ -79,6 +87,7 @@ def test_infer_heterogenous_dtype():
     assert (np.array_equal(flow.data['X'], X))
     assert (np.array_equal(flow.data['Y'], Y))
 
+
 def test_set_simple_dtype():
     X = np.arange(5, dtype='int')
     Y = np.arange(5, dtype='float64')
@@ -88,6 +97,7 @@ def test_set_simple_dtype():
     assert (flow.data['Y'].dtype == 'float32')
     assert (np.array_equal(flow.data['X'], X))
     assert (np.array_equal(flow.data['Y'], Y))
+
 
 def test_set_complex_dtype():
     X = np.arange(5)
@@ -100,3 +110,11 @@ def test_set_complex_dtype():
     assert (flow.data['Y'].dtype == 'int32')
     assert (np.array_equal(flow.data['X'], X))
     assert (np.array_equal(flow.data['Y'], Y))
+
+
+def test_data_is_copy():
+    xs = np.arange(8)
+
+    flow = FlowData(('X', xs))
+    assert xs is not flow.data['X']
+

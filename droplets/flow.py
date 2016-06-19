@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class FlowData(object):
     """Container for flow field data.
 
