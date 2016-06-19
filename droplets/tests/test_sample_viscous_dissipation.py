@@ -29,7 +29,7 @@ def test_calc_viscous_dissipation():
     dvdx = (vs[2, 2] - vs[2, 0])/2
     dvdy = np.gradient(vs[:, 1], 0.5, edge_order=2)[2]
 
-    visc_diss = 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)/3.0) \
+    visc_diss = 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
             + viscosity*(dvdx + dudy)**2
 
     assert np.isclose(visc_diss, result[2, 1])
@@ -56,7 +56,7 @@ def test_calc_viscous_dissipation_other_labels():
     dudy, dudx = np.gradient(us, edge_order=2)
     dvdy, dvdx = np.gradient(vs, edge_order=2)
 
-    visc_diss = 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)/3.0) \
+    visc_diss = 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
             + viscosity*(dvdx + dudy)**2
 
     assert np.isclose(visc_diss, result).all()
@@ -87,7 +87,7 @@ def test_calc_viscous_dissipation_unsorted_bins():
     dudy, dudx = np.gradient(us, edge_order=2)
     dvdy, dvdx = np.gradient(vs, edge_order=2)
 
-    visc_diss = 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)/3.0) \
+    visc_diss = 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
             + viscosity*(dvdx + dudy)**2
 
     assert np.isclose(visc_diss, result).all()
