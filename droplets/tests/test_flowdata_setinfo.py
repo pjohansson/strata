@@ -26,6 +26,22 @@ def test_set_info():
     assert flow.num_bins == good_info['num_bins']
 
 
+def test_set_info_None_None():
+    info = {
+        'spacing': (None, None),
+        'origin': (None, None),
+        'shape': (None, None),
+        'num_bins': None
+    }
+
+    flow = FlowData(data, info=info)
+
+    assert np.array_equal(flow.spacing, info['spacing'])
+    assert np.array_equal(flow.origin, info['origin'])
+    assert np.array_equal(flow.shape, info['shape'])
+    assert flow.num_bins == None
+
+
 def test_get_info_dict():
     flow = FlowData(data)
 

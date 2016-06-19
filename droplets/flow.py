@@ -79,7 +79,7 @@ class FlowData(object):
     @origin.setter
     def origin(self, origin):
         try:
-            assert origin != None
+            assert origin not in [None, (None, None)]
             self._origin = tuple(float(origin[i]) for i in (0, 1))
         except AssertionError:
             self._origin = (None, None)
@@ -97,7 +97,7 @@ class FlowData(object):
     @shape.setter
     def shape(self, shape):
         try:
-            assert shape != None
+            assert shape not in [None, (None, None)]
             self._shape = tuple(int(shape[i]) for i in (0, 1))
         except AssertionError:
             self._shape = (None, None)
@@ -115,7 +115,7 @@ class FlowData(object):
     @spacing.setter
     def spacing(self, spacing):
         try:
-            assert spacing != None
+            assert spacing not in [None, (None, None)]
             self._bin_spacing = tuple(float(spacing[i]) for i in (0, 1))
         except AssertionError:
             self._bin_spacing = (None, None)
