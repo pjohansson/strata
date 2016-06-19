@@ -128,10 +128,65 @@ class FlowData(object):
         return self.data.dtype.names
 
 
+    def copy(self):
+        """Return a deep copy of the FlowData object."""
+
+        data_array = [(l, self.data[l]) for l in self.data.dtype.names]
+        return FlowData(*data_array, info=self._info)
+
+
     def get_data(self, label):
         """Return data for a parameter label."""
 
         return self.data[label] if label in self.properties else None
+
+
+    def lims(self, label, vmin, vmax):
+        """Return new FlowData object with input data limits.
+
+        This method cuts bins from the system abject to the input limits
+        and returns a new object with the remaining bins. There is no
+        guarantee that the created data set is on a regular grid and
+        thus the `shape` and `origin` properties are unset. `spacing`
+        is unchanged and `num_bins` is updated to the correct number.
+
+        Since a new object is returned this method can be chained to
+        select along many different data at once.
+
+        Args:
+            label (str): Label of data to limit values for.
+
+            vmin/vmax (float/None): Minimum and maximum values of input
+                label to include in the returned object. Either or both
+                values can be `None` to not apply a cut in that direction.
+
+        Return:
+            FlowData: New object with selected bins.
+
+        """
+
+        vmin = vmin if vmin != None else -np.inf
+        vmax = vmax if vmax != None else np.inf
+
+        try:
+            inds = (self.data[label] >= vmin) & (self.data[label] <= vmax)
+        except ValueError:
+            raise KeyError("FlowData object has no data with input label %r" % label)
+        except TypeError:
+            raise TypeError("bad input limits (%r, %r): must be float or None" % (vmin, vmax))
+
+        data = self.data[inds]
+
+        info = {
+            'num_bins': data.size
+        }
+
+        if self.spacing != (None, None):
+            info['spacing'] = self.spacing
+
+        data_list = [(l, data[l]) for l in data.dtype.names]
+
+        return FlowData(*data_list, info=info, dtype=data.dtype)
 
 
     def set_data(self, *data, **kwargs):
@@ -245,55 +300,14 @@ class FlowData(object):
                            % (bad_item[0], bad_item[1]))
 
 
-    def lims(self, label, vmin, vmax):
-        """Return new FlowData object with input data limits.
+    @property
+    def _info(self):
+        """Access to the set properties of the object."""
 
-        This method cuts bins from the system abject to the input limits
-        and returns a new object with the remaining bins. There is no
-        guarantee that the created data set is on a regular grid and
-        thus the `shape` and `origin` properties are unset. `spacing`
-        is unchanged and `num_bins` is updated to the correct number.
-
-        Since a new object is returned this method can be chained to
-        select along many different data at once.
-
-        Args:
-            label (str): Label of data to limit values for.
-
-            vmin/vmax (float/None): Minimum and maximum values of input
-                label to include in the returned object. Either or both
-                values can be `None` to not apply a cut in that direction.
-
-        Return:
-            FlowData: New object with selected bins.
-
-        """
-
-        vmin = vmin if vmin != None else -np.inf
-        vmax = vmax if vmax != None else np.inf
-
-        try:
-            inds = (self.data[label] >= vmin) & (self.data[label] <= vmax)
-        except ValueError:
-            raise KeyError("FlowData object has no data with input label %r" % label)
-        except TypeError:
-            raise TypeError("bad input limits (%r, %r): must be float or None" % (vmin, vmax))
-
-        data = self.data[inds]
-
-        info = {
-            'num_bins': data.size
+        return {
+            'num_bins': self.num_bins,
+            'origin': self.origin,
+            'shape': self.shape,
+            'spacing': self.spacing
         }
-
-        if self.spacing != (None, None):
-            info['spacing'] = self.spacing
-
-        data_list = [(l, data[l]) for l in data.dtype.names]
-
-        return FlowData(*data_list, info=info, dtype=data.dtype)
-
-
-    def copy(self):
-        data_array = [(l, self.data[l]) for l in self.data.dtype.names]
-
 

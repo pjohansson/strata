@@ -14,6 +14,7 @@ good_info = {
         'num_bins': len(X)*len(Y)
         }
 
+
 def test_set_info():
     flow = FlowData(data, info=good_info)
 
@@ -24,6 +25,16 @@ def test_set_info():
     assert type(flow.num_bins) is int
     assert flow.num_bins == good_info['num_bins']
 
+
+def test_get_info_dict():
+    flow = FlowData(data)
+
+    assert flow._info['spacing'] == flow.spacing
+    assert flow._info['shape'] == flow.shape
+    assert flow._info['origin'] == flow.origin
+    assert flow._info['num_bins'] == flow.num_bins
+
+
 def test_no_info():
     flow = FlowData(data)
 
@@ -31,6 +42,7 @@ def test_no_info():
     assert flow.origin == (None, None)
     assert flow.spacing == (None, None)
     assert flow.num_bins == None
+
 
 def test_bad_shapes():
     flow = FlowData(data, info=good_info)
@@ -55,6 +67,7 @@ def test_bad_shapes():
         print("Last key, value pair: %r, %r" % (key, value))
         flow.set_info(info)
     assert ("%s must be" % key in str(excinfo.value))
+
 
 def test_bad_types():
     flow = FlowData(data)

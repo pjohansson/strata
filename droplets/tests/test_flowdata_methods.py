@@ -83,3 +83,23 @@ def test_flowdata_set_lims_badlims():
         flow_lims = flow.lims('X', *xlim)
         assert "bad input limits" in exc
 
+
+def test_flowdata_copy():
+    xs = np.arange(8)
+    info = {
+        'spacing': (1., 1.),
+        'origin': (0., 0.),
+        'shape': (8, 1),
+        'num_bins': 8
+    }
+
+    flow = FlowData(('x', xs), info=info)
+    copy = flow.copy()
+
+    assert flow.data is not copy.data
+    assert np.array_equal(flow.data, copy.data)
+    assert np.array_equal(flow.spacing, copy.spacing)
+    assert np.array_equal(flow.origin, copy.origin)
+    assert np.array_equal(flow.shape, copy.shape)
+    assert flow.num_bins == copy.num_bins
+
