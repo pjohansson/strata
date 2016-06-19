@@ -85,7 +85,7 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
     grouped_data = get_grouped_data(fns, average, rolling,
             progress, quiet, **kwargs)
 
-    for bin_size, left, right in grouped_data:
+    for spacing, left, right in grouped_data:
         avg_flow_per_edge = []
         xadj_per_edge = []
 
@@ -99,10 +99,10 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
             avg_flow_per_edge.append(average_flow_data(flow_data,
                     weights=weights, exclude_empty_sets=True))
 
-        yadj = get_coord_on_grid(0, bin_size[1])
+        yadj = get_coord_on_grid(0, spacing[1])
         avg_flow_per_edge = adjust_coordinates(avg_flow_per_edge,
-                xadj_per_edge, bin_size[0], yadj, recenter)
-        write(next(fnout), combine_flow_data(avg_flow_per_edge, bin_size).data)
+                xadj_per_edge, spacing[0], yadj, recenter)
+        write(next(fnout), combine_flow_data(avg_flow_per_edge, spacing).data)
 
     if not quiet:
         progress.finish()
@@ -127,7 +127,7 @@ def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
             i += 1
 
         if len(left) == average:
-            yield info['bin_size'], left, right
+            yield info['spacing'], left, right
 
             if rolling == True:
                 left.pop(0)
@@ -136,7 +136,7 @@ def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
                 left, right = [], []
 
 
-def combine_flow_data(avg_flow, bin_size):
+def combine_flow_data(avg_flow, spacing):
     """Return a combined FlowData object of the left and right edges."""
 
     def merge_data(grid, left, right):
@@ -173,12 +173,12 @@ def combine_flow_data(avg_flow, bin_size):
         return [(k, data[k]) for k in data.dtype.names]
 
     flowdata = [flow.data for flow in avg_flow]
-    grid = get_combined_grid(flowdata, bin_size)
+    grid = get_combined_grid(flowdata, spacing)
     left, right = (transfer_data(grid, flow.data) for flow in avg_flow)
 
     data = merge_data(grid, left, right)
 
-    return FlowData(*data, info={'bin_size': bin_size})
+    return FlowData(*data, info={'spacing': spacing})
 
 
 def add_adjusted_flow(cells, direction, info):

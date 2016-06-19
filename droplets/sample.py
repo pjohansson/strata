@@ -119,7 +119,7 @@ def sample_viscous_dissipation(flow, viscosity,
 
     """
 
-    dx, dy = flow.bin_size
+    dx, dy = flow.spacing
     nx, ny = flow.shape
 
     coord_order = list(reversed(coord_labels))

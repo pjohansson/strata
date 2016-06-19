@@ -61,7 +61,7 @@ def read_data_file(filename):
             'shape': tuple of number of bins in X and Y.
             'size': dict with 'X' and 'Y' tuples of minimum
                     and maximum positions along the axis.
-            'bin_size': tuple of bin size in X and Y.
+            'spacing': tuple of bin spacing in X and Y.
             'num_bins': number of bins in system.
             }
 
@@ -83,7 +83,6 @@ def read_data_file(filename):
 
     module = guess_read_module(filename)
     data, info = module.read_data(filename)
-    info['size'] = tuple(info['size'][l] for l in ('X', 'Y'))
 
     metadata = {'path': filename, 'module': module}
 

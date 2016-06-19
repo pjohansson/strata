@@ -11,7 +11,7 @@ def average_flow_data(input_flow_maps, weights=[], exclude_empty_sets=False,
     """Average input FlowData objects.
 
     The input data is projected onto a common coordinate grid before
-    being averaged. All input data hence must have bin_size's set
+    being averaged. All input data hence must have spacings set
     and identical.
 
     By default the data is averaged using an arithmetic mean. By inputting
@@ -47,44 +47,44 @@ def average_flow_data(input_flow_maps, weights=[], exclude_empty_sets=False,
 
     """
 
-    def get_bin_size(flow_maps):
+    def get_spacing(flow_maps):
         try:
             for flow in flow_maps[1:]:
-                assert (np.isclose(flow.bin_size, flow_maps[0].bin_size).all())
+                assert (np.isclose(flow.spacing, flow_maps[0].spacing).all())
         except AssertionError:
-            raise ValueError("Input bin sizes of FlowData objects not identical.")
+            raise ValueError("Input bin spacings of FlowData objects not identical.")
 
-        return flow_maps[0].bin_size
+        return flow_maps[0].spacing
 
-    def get_flowdata(data, grid, bin_size):
+    def get_flowdata(data, grid, spacing):
         info = {
                 'shape': tuple(len(np.unique(grid[l])) for l in (xl, yl)),
                 'num_bins': grid.size,
-                'size': [[grid[l][i] for i in (0, -1)] for l in (xl, yl)],
-                'bin_size': bin_size
+                'origin': [grid[l][0] for l in (xl, yl)],
+                'spacing': spacing
                 }
 
         return FlowData(*[(l, data[l]) for l in data.dtype.names], info=info)
 
     try:
-        bin_size = get_bin_size(input_flow_maps)
-        assert bin_size != (None, None)
+        spacing = get_spacing(input_flow_maps)
+        assert spacing != (None, None)
     except IndexError:
         raise ValueError("No FlowData input.")
     except AssertionError:
-        raise ValueError("No bin sizes set in FlowData input.")
+        raise ValueError("No bin spacings set in FlowData input.")
 
     xl, yl = coord_labels
     data_list = [flow.data for flow in input_flow_maps
             if (exclude_empty_sets == False or flow.data.size > 0)]
 
-    grid = get_combined_grid(data_list, bin_size, coord_labels)
+    grid = get_combined_grid(data_list, spacing, coord_labels)
     data_on_grid = [transfer_data(grid, data, coord_labels)
             for data in data_list]
 
     avg_data = average_data(data_on_grid, weights, coord_labels)
 
-    return get_flowdata(avg_data, grid, bin_size)
+    return get_flowdata(avg_data, grid, spacing)
 
 
 def average_data(data_records, weights=[], coord_labels=('X', 'Y')):
@@ -212,13 +212,13 @@ def transfer_data(grid, data, coord_labels=('X', 'Y')):
     return full_data
 
 
-def get_combined_grid(data, bin_size, coord_labels=('X', 'Y')):
-    """Return a grid with input bin size that contains all input data.
+def get_combined_grid(data, spacing, coord_labels=('X', 'Y')):
+    """Return a grid with input bin spacing that contains all input data.
 
     Args:
         data (ndarray): List of numpy records with coordinate labels.
 
-        bin_size (int's): 2-tuple with bin sizes along the coordinate axes.
+        spacing (int's): 2-tuple with bin spacings along the coordinate axes.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
@@ -246,7 +246,7 @@ def get_combined_grid(data, bin_size, coord_labels=('X', 'Y')):
 
     xmin, xmax = get_min_and_max(nonempty_data, xl)
     ymin, ymax = get_min_and_max(nonempty_data, yl)
-    dx, dy = bin_size
+    dx, dy = spacing
 
     xs = np.arange(xmin, xmax+dx, dx)
     ys = np.arange(ymin, ymax+dy, dy)

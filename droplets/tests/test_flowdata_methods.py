@@ -18,12 +18,9 @@ def test_flowdata_set_lims():
     inds = (xs >= xlim[0]) & (xs <= xlim[1])
 
     info = {
-        'bin_size': (1., 1.),
+        'spacing': (1., 1.),
         'shape': (8, 6),
-        'size': (
-            (0., 7.),
-            (0., 5.)
-        ),
+        'origin': (0., 0.),
         'num_bins': xs.size
     }
 
@@ -34,9 +31,9 @@ def test_flowdata_set_lims():
 
     # Shape and size is no longer valid information
     # since the resulting grid could be unstructured
-    assert np.array_equal((1., 1.), flow_lims.bin_size)
+    assert np.array_equal((1., 1.), flow_lims.spacing)
     assert (None, None) == flow_lims.shape
-    assert ((None, None), (None, None)) == flow_lims.size
+    assert (None, None) == flow_lims.origin
     assert 4*6 == flow_lims.num_bins
 
     # Check that values are good

@@ -31,7 +31,7 @@ class FlowData(object):
 
         info = {
             'shape': [len(xv), len(yv)],
-            'bin_size': [xv[1]-xv[0], yv[1]-yv[0]],
+            'spacing': [xv[1]-xv[0], yv[1]-yv[0]],
             'size': ([xv[0], xv[-1]], [yv[0], yv[-1]]),
             'num_bins': len(X)
             }
@@ -49,25 +49,6 @@ class FlowData(object):
         self.set_info(kwargs.pop('info', {}))
         return
 
-    @property
-    def bin_size(self):
-        """Size of a bin in the system as a 2-tuple."""
-
-        return self._bin_size
-
-    @bin_size.setter
-    def bin_size(self, bin_size):
-        try:
-            if np.shape(bin_size) == (2,):
-                self._bin_size = tuple(float(val) for val in bin_size)
-            elif bin_size == None:
-                self._bin_size = (None, None)
-            else:
-                raise TypeError
-        except TypeError:
-            raise TypeError("bin_size must be two int's")
-        except ValueError:
-            raise ValueError("bin_size must be two int's")
 
     @property
     def num_bins(self):
@@ -75,37 +56,35 @@ class FlowData(object):
 
         return self._num_bins
 
+
     @num_bins.setter
     def num_bins(self, num_bins):
         try:
-            if num_bins == None:
-                self._num_bins = None
-            else:
-                self._num_bins = int(num_bins)
-        except TypeError:
-            raise TypeError("num_bins must be a single int")
-        except ValueError:
+            assert num_bins != None
+            self._num_bins = int(num_bins)
+        except AssertionError:
+            self._num_bins = None
+        except Exception:
             raise ValueError("num_bins must be a single int")
 
+
     @property
-    def size(self):
-        """System boundaries as a (2,2)-tuple."""
+    def origin(self):
+        """Origin of coordinates as a 2-tuple."""
 
-        return self._size
+        return self._origin
 
-    @size.setter
-    def size(self, size):
+
+    @origin.setter
+    def origin(self, origin):
         try:
-            if np.shape(size) == (2,2):
-                self._size = tuple((float(i), float(j)) for i, j in size)
-            elif size == None:
-                self._size = ((None, None), (None, None))
-            else:
-                raise TypeError
-        except TypeError:
-            raise TypeError("size must be (2,2)-tuple of int's")
-        except ValueError:
-            raise ValueError("size must be 2-by-2 int's")
+            assert origin != None
+            self._origin = tuple(float(origin[i]) for i in (0, 1))
+        except AssertionError:
+            self._origin = (None, None)
+        except Exception:
+            raise ValueError("origin must be of form (float, float)")
+
 
     @property
     def shape(self):
@@ -113,19 +92,35 @@ class FlowData(object):
 
         return self._shape
 
+
     @shape.setter
     def shape(self, shape):
         try:
-            if np.shape(shape) == (2,):
-                self._shape = tuple(int(val) for val in shape)
-            elif shape == None:
-                self._shape = (None, None)
-            else:
-                raise TypeError
-        except TypeError:
-            raise TypeError("shape must be 2-tuple")
-        except ValueError:
-            raise ValueError("shape must be two int's")
+            assert shape != None
+            self._shape = tuple(int(shape[i]) for i in (0, 1))
+        except AssertionError:
+            self._shape = (None, None)
+        except Exception:
+            raise ValueError("shape must be of form (int, int)")
+
+
+    @property
+    def spacing(self):
+        """Spacing of bins in the system as a 2-tuple."""
+
+        return self._bin_spacing
+
+
+    @spacing.setter
+    def spacing(self, spacing):
+        try:
+            assert spacing != None
+            self._bin_spacing = tuple(float(spacing[i]) for i in (0, 1))
+        except AssertionError:
+            self._bin_spacing = (None, None)
+        except Exception:
+            raise ValueError("spacing must be two floats")
+
 
     @property
     def properties(self):
@@ -231,18 +226,23 @@ class FlowData(object):
         Args:
             info (dict): Dictionary containing system information as keywords:
                 'shape' (2-tuple): Number of cells in dimension 1 and 2.
-                'size' ((2,2)-tuple): System boundaries in dimension 1 and 2.
-                'bin_size' (2-tuple): Bin size in dimension 1 and 2.
+                'origin' (2-tuple): System origin in dimension 1 and 2.
+                'spacing' (2-tuple): Bin spacings in dimension 1 and 2.
                 'num_bins' (int): Number of bins.
 
         """
 
-        self.shape = info.get('shape', None)
-        self.size = info.get('size', None)
-        self.bin_size = info.get('bin_size', None)
-        self.binx = self.bin_size[0]
-        self.biny = self.bin_size[1]
-        self.num_bins = info.get('num_bins', None)
+        info_copy = info.copy()
+
+        self.shape = info_copy.pop('shape', None)
+        self.origin = info_copy.pop('origin', None)
+        self.spacing = info_copy.pop('spacing', None)
+        self.num_bins = info_copy.pop('num_bins', None)
+
+        if info_copy != {}:
+            bad_item = info_copy.popitem()
+            raise KeyError("Unknown key/value pair for system information: %r, %r"
+                           % (bad_item[0], bad_item[1]))
 
 
     def lims(self, label, vmin, vmax):
@@ -250,8 +250,8 @@ class FlowData(object):
 
         This method cuts bins from the system abject to the input limits
         and returns a new object with the remaining bins. There is no
-        guarantuee that the created data set is on a regular grid and
-        thus the `shape` and `size` properties are unset. `bin_size`
+        guarantee that the created data set is on a regular grid and
+        thus the `shape` and `origin` properties are unset. `spacing`
         is unchanged and `num_bins` is updated to the correct number.
 
         Since a new object is returned this method can be chained to
@@ -285,10 +285,15 @@ class FlowData(object):
             'num_bins': data.size
         }
 
-        if self.bin_size != (None, None):
-            info['bin_size'] = self.bin_size
+        if self.spacing != (None, None):
+            info['spacing'] = self.spacing
 
         data_list = [(l, data[l]) for l in data.dtype.names]
 
         return FlowData(*data_list, info=info, dtype=data.dtype)
+
+
+    def copy(self):
+        data_array = [(l, self.data[l]) for l in self.data.dtype.names]
+
 

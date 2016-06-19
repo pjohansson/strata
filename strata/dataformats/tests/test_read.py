@@ -21,9 +21,8 @@ def test_read_file():
     # Verify that plaintext file was read
     assert (info['num_bins'] == NUM_BINS)
     assert (info['shape'] == [NUM_X, NUM_Y])
-    assert (info['size'][0] == [MIN_X, MAX_X])
-    assert (info['size'][1] == [MIN_Y, MAX_Y])
-    assert (info['bin_size'] == [BIN_X, BIN_Y])
+    assert (info['origin'] == [MIN_X, MIN_Y])
+    assert (info['spacing'] == [BIN_X, BIN_Y])
 
 def test_read_files_generator():
     files = []
@@ -34,9 +33,8 @@ def test_read_files_generator():
     for i, (_, info, _) in enumerate(read_from_files(*files)):
         assert (info['num_bins'] == NUM_BINS)
         assert (info['shape'] == [NUM_X, NUM_Y])
-        assert (info['size'][0] == [MIN_X, MAX_X])
-        assert (info['size'][1] == [MIN_Y, MAX_Y])
-        assert (info['bin_size'] == [BIN_X, BIN_Y])
+        assert (info['origin'] == [MIN_X, MIN_Y])
+        assert (info['spacing'] == [BIN_X, BIN_Y])
 
     files = [bin_filename, plain_filename]
     for i, (_, info, _) in enumerate(read_from_files(*files)):

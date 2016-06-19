@@ -15,7 +15,7 @@ def test_calc_viscous_dissipation():
 
     viscosity = 2.
     info = {
-        'bin_size': (1.0, 0.5), # Non-quadratic bins
+        'spacing': (1.0, 0.5), # Non-quadratic bins
         'shape': (3, 3)
         }
 
@@ -43,7 +43,7 @@ def test_calc_viscous_dissipation_other_labels():
 
     viscosity = 2.
     info = {
-        'bin_size': (1., 1.), # Non-quadratic bins
+        'spacing': (1., 1.), # Non-quadratic bins
         'shape': (3, 3)
         }
 
@@ -71,7 +71,7 @@ def test_calc_viscous_dissipation_unsorted_bins():
 
     viscosity = 2.
     info = {
-        'bin_size': (1., 1.),
+        'spacing': (1., 1.),
         'shape': (3, 3)
         }
 

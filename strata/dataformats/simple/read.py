@@ -51,7 +51,7 @@ def read_data(filename, decimals=3):
 def calc_information(X, Y):
     """Return a dict of system information calculated from input cell positions.
 
-    Calculates system size ('size'), bin sizes ('bin_size'), number of cells
+    Calculates system origin ('origin'), bin spacing ('spacing'), number of cells
     ('num_bins') and shape ('shape').
 
     Args:
@@ -70,11 +70,10 @@ def calc_information(X, Y):
     info = {}
     info['num_bins'] = len(X)
     info['shape'] = [len(a) for a in (xs, ys)]
-    info['bin_size'] = [a[1] - a[0]
+    info['spacing'] = [a[1] - a[0]
             if len(a) > 1 else 2*a[0]
             for a in (xs, ys)]
-    info['size'] = {v: [np.min(a), np.max(a)]
-            for v, a in (('X', xs), ('Y', ys))}
+    info['origin'] = [np.min(vals) for vals in (xs, ys)]
 
     return info
 

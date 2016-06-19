@@ -28,7 +28,7 @@ def downsample_flow_data(flow, num_combine,
 
     Args:
         flow (FlowData): Object to downsample. Must have a `shape`
-                and `bin_size` attached as metadata.
+                and `spacing` attached as metadata.
 
         num_combine (2-tuple): Number of bins to combine along x and y.
 
@@ -46,20 +46,20 @@ def downsample_flow_data(flow, num_combine,
     """
 
     # Cut system
-    flow = cut_system_limits(flow, xlim, ylim, coord_labels)
+    flow = _cut_system_limits(flow, xlim, ylim, coord_labels)
 
     # Create grid to average onto
-    info = get_downscaled_grid_info(flow, num_combine, coord_labels)
-    coords = get_downscaled_grid_coords(info)
+    info = _get_downscaled_grid_info(flow, num_combine, coord_labels)
+    coords = _get_downscaled_grid_coords(info)
 
     # Resample onto grid
-    resampled_flow = combine_bins(coords, flow, num_combine, info,
+    resampled_flow = _combine_bins(coords, flow, num_combine, info,
             coord_labels, weights)
 
     return FlowData(*resampled_flow, info=info)
 
 
-def combine_bins(coords, flow, num_combine, info, coord_labels, weights):
+def _combine_bins(coords, flow, num_combine, info, coord_labels, weights):
     # Create container for result and add coords data
     data = np.zeros(coords[0].shape, dtype=flow.data.dtype)
 
@@ -99,7 +99,7 @@ def combine_bins(coords, flow, num_combine, info, coord_labels, weights):
     return [(l, data[l].ravel()) for l in data.dtype.names]
 
 
-def cut_system_limits(flow, xlim, ylim, coord_labels):
+def _cut_system_limits(flow, xlim, ylim, coord_labels):
     def get_cut_indices_of_axis(lims, label):
         vmin = -np.inf if lims[0] == None else lims[0]
         vmax =  np.inf if lims[1] == None else lims[1]
@@ -112,49 +112,37 @@ def cut_system_limits(flow, xlim, ylim, coord_labels):
     data = flow.data[inds]
 
     shape = [len(np.unique(data[l])) for l in coord_labels]
-    size = [
-        [np.min(data[xl]), np.max(data[xl])],
-        [np.min(data[yl]), np.max(data[yl])]
-    ]
+    origin = [np.min(data[l]) for l in coord_labels]
+
     info = {
         'shape': shape,
-        'size': size,
-        'bin_size': flow.bin_size,
+        'origin': origin,
+        'spacing': flow.spacing,
         'num_bins': shape[0]*shape[1]
     }
-
 
     return FlowData(*[(l, data[l]) for l in flow.data.dtype.names], info=info)
 
 
-def get_downscaled_grid_info(flow, num_combine, coord_labels):
-    bin_size = flow.bin_size
-    origin = [np.min(flow.data[l]) for l in coord_labels]
-
-    new_bin_size = [v*n for v, n in zip(flow.bin_size, num_combine)]
+def _get_downscaled_grid_info(flow, num_combine, coord_labels):
+    new_spacing = [v*n for v, n in zip(flow.spacing, num_combine)]
     new_shape = [v//n for v, n in zip(flow.shape, num_combine)]
     new_origin = [o + 0.5*(new_s - s)
-              for o, s, new_s in zip(origin, bin_size, new_bin_size)]
-    new_end = [o + (n-1)*s for o, n, s in zip(new_origin, new_shape, new_bin_size)]
-
-    new_size = [(o, e) for o, e in zip(new_origin, new_end)]
+              for o, s, new_s in zip(flow.origin, flow.spacing, new_spacing)]
 
     info = {
-        'bin_size': new_bin_size,
+        'spacing': new_spacing,
         'shape': new_shape,
-        'size': new_size,
+        'origin': new_origin,
         'num_bins': new_shape[0]*new_shape[1]
     }
 
     return info
 
 
-def get_downscaled_grid_coords(info):
-    origin = (v for v, _ in info['size'])
-    bin_size = info['bin_size']
-    shape = info['shape']
-
-    x, y = (o + dx*np.arange(n) for o, dx, n in zip(origin, bin_size, shape))
+def _get_downscaled_grid_coords(info):
+    x, y = (o + dx*np.arange(n) for o, dx, n in
+            zip(info['origin'], info['spacing'], info['shape']))
 
     return np.meshgrid(x, y)
     

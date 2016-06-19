@@ -14,7 +14,7 @@ def test_resample_to_one_bin():
     cs = np.random.sample(8)
 
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
-    flow.bin_size = (2., 1.)
+    flow.spacing = (2., 1.)
     flow.shape = (4, 2)
 
     resampled_flow = downsample_flow_data(flow, (4, 2))
@@ -28,19 +28,18 @@ def test_resample_to_one_bin():
 
     # ... and attributes
     assert np.array_equal((1, 1),   resampled_flow.shape)
-    assert np.array_equal((8., 2.), resampled_flow.bin_size)
+    assert np.array_equal((8., 2.), resampled_flow.spacing)
 
 
 def test_resample_to_multiple_bins():
     x = np.arange(6)
     y = np.arange(4)
     xs, ys = np.meshgrid(x, y)
-    print(xs.shape)
 
     cs = np.random.sample(xs.shape)
 
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
-    flow.bin_size = (1., 1.)
+    flow.spacing = (1., 1.)
     flow.shape = (6, 4)
 
     resampled_flow = downsample_flow_data(flow, (2, 2))
@@ -66,7 +65,7 @@ def test_resample_without_sorted_coords():
     cs = np.random.sample(4)
 
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
-    flow.bin_size = (1., 1.)
+    flow.spacing = (1., 1.)
     flow.shape = (2, 2)
 
     # Resample 1:1 and ensure that both final results have identical sorting
@@ -86,7 +85,7 @@ def test_resample_with_weights():
     ws = np.random.sample(2)
 
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs), ('W', ws))
-    flow.bin_size = (1., 1.)
+    flow.spacing = (1., 1.)
     flow.shape = (2, 1)
 
     resampled_flow = downsample_flow_data(flow, (2, 1), weights=[('C', 'W')])
@@ -107,7 +106,7 @@ def test_resample_with_weights_that_are_zero():
     ws = np.zeros(2)
 
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs), ('W', ws))
-    flow.bin_size = (1., 1.)
+    flow.spacing = (1., 1.)
     flow.shape = (2, 1)
 
     resampled_flow = downsample_flow_data(flow, (2, 1), weights=[('C', 'W')])
@@ -121,7 +120,7 @@ def test_resample_other_coord_labels():
     cs = np.random.sample(2)
 
     flow = FlowData(('f0', xs), ('f1', ys), ('C', cs))
-    flow.bin_size = [1., 1.]
+    flow.spacing = [1., 1.]
     flow.shape = (2, 1)
 
     resampled_flow = downsample_flow_data(flow, (2, 1), coord_labels=('f0', 'f1'))
@@ -137,7 +136,7 @@ def test_resample_cutting_some_cells():
     cs = np.random.sample(3)
 
     flow = FlowData(('X', xs), ('Y', ys), ('C', cs))
-    flow.bin_size = (1., 1.)
+    flow.spacing = (1., 1.)
     flow.shape = (3, 1)
 
     # Combine 2 cells along x, leaving the third cell outside of the average
@@ -154,7 +153,7 @@ def test_resample_add_xy_lims():
     xs, ys = np.meshgrid(x, y)
 
     flow = FlowData(('X', xs), ('Y', ys))
-    flow.bin_size = (1., 1.)
+    flow.spacing = (1., 1.)
     flow.shape = (4, 2)
 
     resampled_flow = downsample_flow_data(flow, (2, 1),

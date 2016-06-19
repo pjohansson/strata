@@ -28,14 +28,14 @@ def get_minmax(data):
     return x0, x1, y0, y1
 
 def test_find_common_grid():
-    bin_size = np.array([v[1] - v[0] for v in (x, y)])
+    spacing = np.array([v[1] - v[0] for v in (x, y)])
     num_maps = 100
     num_samples = 99
 
     data = [gen_data(num_samples) for i in range(num_maps)]
     x0, x1, y0, y1 = get_minmax(data)
 
-    combined_grid = get_combined_grid(data, bin_size=bin_size)
+    combined_grid = get_combined_grid(data, spacing=spacing)
 
     # Assert dtype and null default
     assert (combined_grid.dtype == data[0].dtype)
@@ -51,27 +51,27 @@ def test_find_common_grid():
 
 def test_find_common_grid_nodata():
     with pytest.raises(ValueError):
-        get_combined_grid([], bin_size=(0.1, 0.1))
+        get_combined_grid([], spacing=(0.1, 0.1))
 
 def test_fill_data():
     for i in range(100):
-        bin_size = np.array([v[1] - v[0] for v in (x, y)])
+        spacing = np.array([v[1] - v[0] for v in (x, y)])
         num_samples = 10
 
         data = gen_data(num_samples)
-        combined_grid = get_combined_grid([data], bin_size=bin_size)
+        combined_grid = get_combined_grid([data], spacing=spacing)
         filled_data = transfer_data(combined_grid, data)
 
         for d in data:
             assert (d in filled_data)
 
 def test_fill_data_baddata():
-    bin_size = np.array([v[1] - v[0] for v in (x, y)])
+    spacing = np.array([v[1] - v[0] for v in (x, y)])
     num_samples = 10
 
     data = gen_data(num_samples)
     data[0] = data[1].copy()
-    combined_grid = get_combined_grid([data], bin_size=bin_size)
+    combined_grid = get_combined_grid([data], spacing=spacing)
 
     with pytest.raises(ValueError):
         filled_data = transfer_data(combined_grid, data)
