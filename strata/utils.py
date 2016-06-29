@@ -373,12 +373,11 @@ def static_variable(variable, value):
 def write_module_header(file, module, title):
     """Write a module creation header with title to input file."""
 
-    import pkg_resources
-    import time
     import inspect
+    import strata
+    import time
 
     time_str = time.strftime('%c', time.localtime())
-    version_str = pkg_resources.require("flowfield")[0].version
     header = (
             "# %s\n"
             "# \n"
@@ -386,7 +385,7 @@ def write_module_header(file, module, title):
             "# Creation date: %s\n"
             "# Using module version: %s\n"
             "# \n"
-            % (title, module, time_str, version_str))
+            % (title, module, time_str, strata.strata.version))
 
     with open(file, 'w') as fp:
         fp.write(header)

@@ -107,11 +107,10 @@ def write_angle_data(path, base, height, times, angles, **kwargs):
     """
 
     def get_header(path, base, height, **kwargs):
-        import pkg_resources
+        import strata
         import time
 
         time_str = time.strftime('%c', time.localtime())
-        version_str = pkg_resources.require("flowfield")[0].version
 
         header = (
                 "# Measured contact angles of system\n"
@@ -120,7 +119,7 @@ def write_angle_data(path, base, height, times, angles, **kwargs):
                 "# Creation date: %s\n"
                 "# Using module version: %s\n"
                 "# \n"
-                % (__name__, time_str, version_str))
+                % (__name__, time_str, strata.strata.version))
 
         inputs = (
                 "# Input:\n"

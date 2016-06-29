@@ -3,6 +3,8 @@ from click import argument as add_argument
 from click import option as add_option
 from click import group as create_group
 import numpy as np
+import pkg_resources
+import sys
 
 from strata.average import average
 from strata.convert import convert
@@ -16,6 +18,13 @@ from strata.spreading.collect import collect
 from strata.spreading.view import view_spreading
 from strata.view_flowmap import view_flowmap_2d, view_flowfields
 from strata.sample_average import sample_average_files
+
+
+# Construct version string
+try:
+    version = pkg_resources.require("strata")[0].version
+except Exception:
+    version = "Unknown"
 
 
 class OptFloatParamType(click.ParamType):
@@ -61,17 +70,10 @@ STR_LIST = ListStrsParamType()
 """Command line utility to invoke the functionality of strata."""
 
 def print_version(ctx, param, value):
-    import pkg_resources
-
-    try:
-        version_str = pkg_resources.require("strata")[0].version
-    except Exception:
-        click.echo('Error: Could not retrieve version string')
-
     if not value or ctx.resilient_parsing:
         return
 
-    click.echo('Version %s' % version_str)
+    click.echo('Version %s' % version)
     ctx.exit()
 
 # Main functionality

@@ -196,12 +196,11 @@ def get_spreading_edges(flow, label, cutoff_radius, **kwargs):
 def write_header(output_path, input_base, kwargs):
     """Verify that output path is writable and write header."""
 
-    import pkg_resources
+    import strata
     import time
 
     with open(output_path, 'w') as fp:
         time_str = time.strftime('%c', time.localtime())
-        version_str = pkg_resources.require("flowfield")[0].version
 
         header = (
                 "# Spreading radius of a droplet impacting a substrate\n"
@@ -209,7 +208,7 @@ def write_header(output_path, input_base, kwargs):
                 "# Creation date: %s\n"
                 "# Using module version: %s\n"
                 "# \n"
-                % (time_str, version_str))
+                % (time_str, strata.strata.version))
 
         inputs = (
                 "# Input:\n"

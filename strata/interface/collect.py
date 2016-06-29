@@ -93,11 +93,10 @@ def write_interface_data(path, interface, fngroup, kwargs, recenter=None):
     """
 
     def get_header(path, fngroup):
-        import pkg_resources
+        import strata
         import time
 
         time_str = time.strftime('%c', time.localtime())
-        version_str = pkg_resources.require("flowfield")[0].version
 
         header = (
                 "# Interface coordinates of a droplet\n"
@@ -106,7 +105,7 @@ def write_interface_data(path, interface, fngroup, kwargs, recenter=None):
                 "# Creation date: %s\n"
                 "# Using module version: %s\n"
                 "# \n"
-                % (__name__, time_str, version_str))
+                % (__name__, time_str, strata.strata.version))
 
         inputs = (
                 "# Working directory: '%s'\n"

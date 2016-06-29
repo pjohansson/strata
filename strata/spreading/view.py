@@ -280,12 +280,11 @@ def write_spreading_data(path, all_series):
     """
 
     def write_header(path, all_series):
-        import pkg_resources
+        import strata
         import time
 
         with open(path, 'w') as fp:
             time_str = time.strftime('%c', time.localtime())
-            version_str = pkg_resources.require("flowfield")[0].version
 
             header = (
                     "# Spreading radius of a droplet impacting a substrate\n"
@@ -294,7 +293,7 @@ def write_spreading_data(path, all_series):
                     "# Creation date: %s\n"
                     "# Using module version: %s\n"
                     "# \n"
-                    % (__name__, time_str, version_str))
+                    % (__name__, time_str, strata.strata.version))
 
             inputs = (
                     "# Working directory: '%s'\n"
