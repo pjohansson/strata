@@ -93,7 +93,7 @@ def write_interface_data(path, interface, fngroup, kwargs, recenter=None):
     """
 
     def get_header(path, fngroup):
-        import strata
+        from strata.strata import version
         import time
 
         time_str = time.strftime('%c', time.localtime())
@@ -105,7 +105,7 @@ def write_interface_data(path, interface, fngroup, kwargs, recenter=None):
                 "# Creation date: %s\n"
                 "# Using module version: %s\n"
                 "# \n"
-                % (__name__, time_str, strata.strata.version))
+                % (__name__, time_str, version))
 
         inputs = (
                 "# Working directory: '%s'\n"

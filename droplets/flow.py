@@ -301,6 +301,33 @@ class FlowData(object):
                            % (bad_item[0], bad_item[1]))
 
 
+    def translate(self, label, value):
+        """Return a copy with the data of input label translated by input value.
+
+        Args:
+            label: Data label to translate.
+
+            value: Translate by this. Can be an array in which case it must
+                broadcastable to the data.
+
+        Returns:
+            FlowData: New object with translated data.
+
+        """
+
+        flow = self.copy()
+
+        try:
+            flow.data[label] += value
+        except ValueError as exc:
+            if 'broadcast' in str(exc):
+                raise ValueError(exc)
+            else:
+                raise KeyError("No label %r in object")
+
+        return flow
+
+
     @property
     def _info(self):
         """Access to the set properties of the object."""

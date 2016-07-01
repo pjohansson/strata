@@ -103,3 +103,32 @@ def test_flowdata_copy():
     assert np.array_equal(flow.shape, copy.shape)
     assert flow.num_bins == copy.num_bins
 
+
+def test_flowdata_translate_data():
+    xs = np.random.sample(10)
+
+    flow = FlowData(('x', xs))
+
+    trans = 1.
+
+    assert np.array_equal(xs+trans, flow.translate('x', trans).data['x'])
+    assert np.array_equal(xs, flow.data['x'])
+
+
+def test_flowdata_translate_bad_label():
+    xs = np.random.sample(10)
+    flow = FlowData(('x', xs))
+
+    with pytest.raises(KeyError) as exc:
+        flow.translate('nolabel', 1.)
+
+
+def test_flowdata_translate_cannot_broadcast():
+    xs = np.random.sample(10)
+    flow = FlowData(('x', xs))
+
+    trans = [1., 2.]
+
+    with pytest.raises(ValueError) as exc:
+        flow.translate('x', trans)
+
