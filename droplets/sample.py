@@ -95,9 +95,14 @@ def sample_per_angle_from(flow, origin, label,
 
     # Add angles and the mean of values for each
     result['angle'] = out_angles
+
+    # If weights sum to 0 the result of that angle should be 0.
+    # Also ensure that there are values to average
     result[label] = np.array(
-            [np.average(vals, weights=weights) if vals != [] else 0.
-             for vals, weights in zip(out_values_bins, weights_bins)])
+            [np.average(vals, weights=weights)
+             if vals != [] and np.sum(weights) > 0. else 0.
+             for vals, weights in zip(out_values_bins, weights_bins)
+             ])
 
     return result
 

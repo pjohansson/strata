@@ -168,3 +168,19 @@ def test_sample_per_angle_weighted_average():
     # Result should be weighted average of the two cells
     assert np.isclose(np.average(cs, weights=ws), result['C'][45])
 
+
+def test_sample_per_angle_weighted_with_zeros():
+    xs = [1., 2.]
+    ys = [1., 2.]
+    cs = np.random.sample(2)
+    ws = np.zeros(2)
+
+    flow = FlowData(('X', xs), ('Y', ys), ('C', cs), ('W', ws))
+
+    # Weighing with zeroed data should result in 0.
+    result = sample_per_angle_from(flow, origin, 'C', weight='W')
+
+    # Result should be weighted average of the two cells
+    assert np.array_equal(0., result['C'][45])
+    #assert np.isclose(np.average(cs, weights=ws), result['C'][45])
+
