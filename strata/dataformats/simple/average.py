@@ -1,14 +1,21 @@
 import numpy as np
 
-def average_data(*data):
+def average_data(*data, atol=1e-2):
     """Return a sample average of several plain maps.
 
     Note that flow ('U', 'V') are mass averaged and that the temperature
     ('T') is number averaged.
 
+    An absolute tolerance is used to ascertain that the input map coordinates
+    are identical for each map. This tolerance can be controlled by the
+    keyword argument 'atol'.
+
     Args:
         data (dict): List of dict's with data read from a simple data map,
             with fields ('X', 'Y', 'M', 'N', 'T', 'U', 'V').
+
+    Keyword Args:
+        atol (float): Absolute tolerance for grid coordinate check.
 
     Returns:
         dict: An averaged record. Empty if no data was input.
@@ -22,7 +29,12 @@ def average_data(*data):
         coords = {l: data[0][l] for l in ('X', 'Y')}
         for d in data[1:]:
             for l in ('X', 'Y'):
-                assert (np.array_equal(coords[l], d[l]))
+                # Check that input coordinates of all maps match each other
+                # An absolute tolerance value is used but might not be the
+                # best solution, better might be for the caller to assert
+                # that the coordinates match sufficiently before trying
+                # to average the maps
+                assert (np.isclose(coords[l], d[l], atol=atol).all())
         return coords
 
     def get_sum_weights():
