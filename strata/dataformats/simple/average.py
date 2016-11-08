@@ -1,21 +1,23 @@
 import numpy as np
 
-def average_data(*data, atol=1e-2):
+def average_data(*data, atol=1e-3, rtol=1e-05):
     """Return a sample average of several plain maps.
 
     Note that flow ('U', 'V') are mass averaged and that the temperature
     ('T') is number averaged.
 
-    An absolute tolerance is used to ascertain that the input map coordinates
-    are identical for each map. This tolerance can be controlled by the
-    keyword argument 'atol'.
+    Relative and absolute tolerances are used to ascertain that the input
+    map coordinates are identical for each map. These can be controlled by
+    the keyword arguments 'atol' and 'rtol'.
 
     Args:
         data (dict): List of dict's with data read from a simple data map,
             with fields ('X', 'Y', 'M', 'N', 'T', 'U', 'V').
 
     Keyword Args:
-        atol (float): Absolute tolerance for grid coordinate check.
+        atol (float): Absolute tolerance for the coordinate check.
+
+        rtol (float): Relative tolerance for the coordinate check.
 
     Returns:
         dict: An averaged record. Empty if no data was input.
@@ -33,8 +35,9 @@ def average_data(*data, atol=1e-2):
                 # An absolute tolerance value is used but might not be the
                 # best solution, better might be for the caller to assert
                 # that the coordinates match sufficiently before trying
-                # to average the maps
-                assert (np.isclose(coords[l], d[l], atol=atol).all())
+                # to average the maps. Then again floating point comparisons
+                # are what they are so it's probably best to keep it.
+                assert (np.isclose(coords[l], d[l], atol=atol, rtol=rtol).all())
         return coords
 
     def get_sum_weights():
@@ -55,7 +58,8 @@ def average_data(*data, atol=1e-2):
     try:
         avg_data = init_with_coords(data)
     except AssertionError:
-        raise ValueError("coordinates of data do not match")
+        raise ValueError("coordinates of data to average does not match for all maps")
+
     sum_weights = get_sum_weights()
 
     avg_data['M'] = get_avg('M')

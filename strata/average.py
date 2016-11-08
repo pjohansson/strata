@@ -133,7 +133,18 @@ def recenter_maps(data_maps, recenter_values):
     # Collect recentered data in array
     try:
         for i, (data, recenter) in enumerate(zip(data_maps, recenter_values)):
-            xs_trans[i] = data['X'] - recenter
+            # Transform the x axis to a spacing of 1 and round values
+            # to their closest integers. Then transform the data
+            # and return to original spacing. This removes the issue
+            # of when the grid and recentering have floating point
+            # differences, since they are all transformed to an exact
+            # common match before the transformation.
+            origin = np.min(data['X'])
+            spacing = np.mean(np.diff(np.unique(data['X'])))
+            xs_common = np.round((data['X'] - origin)/spacing)
+            recenter_common = np.round((recenter - origin)/spacing)
+            xs_trans[i] = (xs_common - recenter_common)*spacing + origin
+
     except TypeError:
         raise TypeError("Bad input values for recentering")
 
@@ -154,4 +165,3 @@ def recenter_maps(data_maps, recenter_values):
         recentered_data.append(data_subset)
 
     return recentered_data
-
