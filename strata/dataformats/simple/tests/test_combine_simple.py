@@ -1,5 +1,4 @@
 import numpy as np
-import sys
 
 from strata.dataformats.simple.average import combine_bins
 from strata.dataformats.simple.read import read_data
@@ -36,6 +35,7 @@ def test_combine_bins():
     for label, weight in labels_and_weights:
         if weight == None:
             assert(np.allclose([data[label].mean()], new_data[label]))
+        # As per above 'T' will average to 0.0 due to the weight summing to it
         elif label != 'T':
             assert(np.allclose([np.average(data[label], weights=data[weight])], new_data[label]))
         else:

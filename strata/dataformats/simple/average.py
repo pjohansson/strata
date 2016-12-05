@@ -3,7 +3,7 @@ import numpy as np
 def average_data(*data, atol=1e-3, rtol=1e-05):
     """Return a sample average of several plain maps.
 
-    Note that flow ('U', 'V') are mass averaged and that the temperature
+    Note that flows ('U', 'V') are mass averaged and that the temperature
     ('T') is number averaged.
 
     Relative and absolute tolerances are used to ascertain that the input
@@ -72,6 +72,25 @@ def average_data(*data, atol=1e-3, rtol=1e-05):
 
 
 def combine_bins(data, info, nx, ny):
+    """Combines bins of input data and returns it and a new info dict.
+
+    Note that flows ('U', 'V') are mass averaged and that the temperature
+    ('T') is number averaged.
+
+    Args:
+        data (dict): Dict with data read from a simple data map,
+            with fields ('X', 'Y', 'M', 'N', 'T', 'U', 'V').
+
+        info (dict): Information for input data. See
+            strata.dataformats.read.read_data_file for more information.
+
+        nx, ny (int): Number of bins to combine along x and y respectively.
+
+    Returns:
+        (dict, dict): The combined bin data and information.
+
+    """
+
     # Construct new grid, keeping in mind that the origin points
     # are the mid-points of each bin which means that we have to
     # correct for that in the origin calculation.

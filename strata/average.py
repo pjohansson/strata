@@ -36,6 +36,8 @@ def average(base, output, group=1, **kwargs):
         output (str): Base path to output files.
 
     Keyword Args:
+        combine ((int, int), optional): Combine bins along x and y.
+
         recenter (str, optional): Recenter data at the input contact line,
             'left' or 'right'.
 
@@ -68,6 +70,11 @@ def average(base, output, group=1, **kwargs):
     recenter = kwargs.pop('recenter', False)
     cutoff_radius = kwargs.pop('cutoff_radius', 1.)
 
+    combine = kwargs.pop('combine', (None, None))
+    print(combine)
+    if combine != (None, None):
+        nx, ny = int(combine[0]), int(combine[1])
+
     groups_singles = list(find_groups_to_singles(base, output, group, **fopts))
 
     if not quiet:
@@ -80,7 +87,7 @@ def average(base, output, group=1, **kwargs):
         group_data = []
         used_modules = set([])
 
-        for data, _, meta in read_from_files(*fn_group):
+        for data, info, meta in read_from_files(*fn_group):
             group_data.append(data)
             used_modules.add(meta.pop('module'))
 
@@ -111,6 +118,10 @@ def average(base, output, group=1, **kwargs):
             group_data = recenter_maps(group_data, xs_edges)
 
         avg_data = module.average_data(*group_data)
+
+        if combine != (None, None):
+            avg_data, _ = module.combine_bins(avg_data, info, nx, ny)
+
         write(fn_out, avg_data)
 
         if not quiet:

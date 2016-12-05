@@ -27,6 +27,20 @@ except Exception:
     version = "Unknown"
 
 
+class OptIntParamType(click.ParamType):
+    """Either an integer or None."""
+
+    name = 'int/none'
+
+    def convert(self, value, param, ctx):
+        try:
+            return int(value)
+        except ValueError:
+            if value.lower() == 'none':
+                return None
+
+        self.fail("%r is not an integer or 'None'" % value)
+
 class OptFloatParamType(click.ParamType):
     """Either a float number or None."""
 
@@ -63,6 +77,7 @@ class ListStrsParamType(click.ParamType):
         except Exception:
             self.fail("%r is not a valid string of float numbers" % value)
 
+OPT_INT = OptIntParamType()
 OPT_FLOAT = OptFloatParamType()
 STR_FLOATS = ListFloatValsParamType()
 STR_LIST = ListStrsParamType()
@@ -167,6 +182,9 @@ cmd_quiver = {
 @add_argument('base', type=str)
 @add_argument('output', type=str)
 @add_argument('group', type=click.IntRange(1, None))
+@add_option('--combine',
+        type=OPT_INT, nargs=2, default=[None, None],
+        help='Combine bins of the system along x and y. (None)')
 @add_option('--recenter',
         type=click.Choice(['none', 'left', 'right']), default='none',
         help='Recenter data maps around the input contact line. (none)')
@@ -204,6 +222,8 @@ def average_cli(base, output, group, **kwargs):
     in `strata spreading collect`.
 
     """
+
+    print('combine: ', kwargs['combine'])
 
     set_none_to_inf(kwargs)
 
