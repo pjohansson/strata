@@ -96,7 +96,7 @@ def test_recenter_maps():
 
     # Recenter x around 1 and 2
     recenter = [1., 2.]
-    recentered_maps = recenter_maps(data_maps, recenter)
+    recentered_maps, info = recenter_maps(data_maps, recenter)
 
     # The remaining subset of x should be:
     xs = [-1., 0., 1., 2., 3.]
@@ -111,6 +111,8 @@ def test_recenter_maps():
     for inds, recentered, orig in zip(indices, recentered_maps, data_maps):
         assert(np.array_equal(xs, recentered['X']))
         assert(np.array_equal(orig['Y'][inds], recentered['Y']))
+
+    assert(np.array_equal([1., 1.], info['spacing']))
 
 
 # Throw an error if the input number of x values do not match the number of maps
