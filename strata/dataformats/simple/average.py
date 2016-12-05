@@ -69,3 +69,62 @@ def average_data(*data, atol=1e-3, rtol=1e-05):
     avg_data['T'] = get_weighted_avg('T', 'N')
 
     return avg_data
+
+
+def combine_bins(data, info, nx, ny):
+    # Construct new grid, keeping in mind that the origin points
+    # are the mid-points of each bin which means that we have to
+    # correct for that in the origin calculation.
+    # This is pretty simple math but basically we take n-1
+    # steps of 0.5 times the original spacing to the right,
+    # since this brings us to the middle of the first n cells.
+    shape = [info['shape'][0] // nx, info['shape'][1] // ny]
+    spacing = [info['spacing'][0] * nx, info['spacing'][1] * ny]
+    origin = [x0 + 0.5*dx*(num - 1)
+        for x0, dx, num in zip(info['origin'], info['spacing'], (nx, ny))]
+    num_bins = shape[0]*shape[1]
+
+    new_info = {
+        'origin': origin,
+        'spacing': spacing,
+        'shape': shape,
+        'num_bins': num_bins
+    }
+
+    x, y = [np.linspace(x0, x0 + dx*(num-1), num)
+        for x0, dx, num in zip(origin, spacing, shape)]
+    xs, ys = np.meshgrid(x, y, indexing='ij')
+
+    new_data = { 'X': xs.ravel(), 'Y': ys.ravel() }
+
+    for label in ['N', 'M']:
+        new_data[label] = np.zeros(xs.shape)
+        ds = data[label].reshape(info['shape'])
+
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                new_data[label][i, j] = np.mean(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)])
+        new_data[label].resize((num_bins, ))
+
+    for label in ['U', 'V']:
+        new_data[label] = np.zeros(xs.shape)
+        ds = data[label].reshape(info['shape'])
+        ws = data['M'].reshape(info['shape'])
+
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                new_data[label][i, j] = np.average(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)],
+                    weights=ws[nx*i:nx*(i+1), ny*j:ny*(j+1)])
+        new_data[label].resize((num_bins, ))
+
+    ds = data['T'].reshape(info['shape'])
+    ws = data['N'].reshape(info['shape'])
+    new_data['T'] = np.zeros(xs.shape)
+
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            new_data['T'][i, j] = np.average(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)],
+                weights=ws[nx*i:nx*(i+1), ny*j:ny*(j+1)])
+    new_data['T'].resize((num_bins, ))
+
+    return new_data, new_info
