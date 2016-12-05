@@ -4,6 +4,8 @@ import sys
 from strata.dataformats.simple.average import combine_bins
 from strata.dataformats.simple.read import read_data
 
+labels_and_weights = ('N', None), ('M', None), ('T', 'N'), ('U', 'M'), ('V', 'M')
+
 def test_combine_bins():
     x = np.arange(2)
     y = 2*x
@@ -28,11 +30,11 @@ def test_combine_bins():
 
     # Assert that weighted averages are taken for U, V with respect
     # to the mass M and T with the respect of N.
-    for l in ['M', 'N']:
-        assert(np.allclose([data[l].mean()], new_data[l]))
-    for l in ['U', 'V']:
-        assert(np.allclose([np.average(data[l], weights=data['M'])], new_data[l]))
-    assert(np.allclose([np.average(data['T'], weights=data['N'])], new_data['T']))
+    for label, weight in labels_and_weights:
+        if weight == None:
+            assert(np.allclose([data[label].mean()], new_data[label]))
+        else:
+            assert(np.allclose([np.average(data[label], weights=data[weight])], new_data[label]))
 
     assert(np.array_equal([0.5, 1.0], new_info['origin']))
     assert(np.array_equal([2., 4.], new_info['spacing']))
@@ -52,16 +54,12 @@ def test_read_and_combine_bins():
     assert(np.array_equal([0.5, 1.0], combined_data['Y']))
 
     # More advanced checks
-    for l in ['M', 'N']:
-        ds = data[l].reshape(info['shape'])
-        assert(np.isclose(ds[0:3, 0:2].mean(), combined_data[l][0]))
-        assert(np.isclose(ds[0:3, 2:].mean(), combined_data[l][1]))
-    for l in ['U', 'V']:
-        ds = data[l].reshape(info['shape'])
-        ws = data['M'].reshape(info['shape'])
-        assert(np.isclose(np.average(ds[0:3, 0:2], weights=ws[0:3, 0:2]), combined_data[l][0]))
-        assert(np.isclose(np.average(ds[0:3, 2:], weights=ws[0:3, 2:]), combined_data[l][1]))
-    ds = data['T'].reshape(info['shape'])
-    ws = data['N'].reshape(info['shape'])
-    assert(np.isclose(np.average(ds[0:3, 0:2], weights=ws[0:3, 0:2]), combined_data['T'][0]))
-    assert(np.isclose(np.average(ds[0:3, 2:], weights=ws[0:3, 2:]), combined_data['T'][1]))
+    for label, weight in labels_and_weights:
+        ds = data[label].reshape(info['shape'])
+        if weight == None:
+            assert(np.isclose(ds[0:3, 0:2].mean(), combined_data[label][0]))
+            assert(np.isclose(ds[0:3, 2:].mean(), combined_data[label][1]))
+        else:
+            ws = data[weight].reshape(info['shape'])
+            assert(np.isclose(np.average(ds[0:3, 0:2], weights=ws[0:3, 0:2]), combined_data[label][0]))
+            assert(np.isclose(np.average(ds[0:3, 2:], weights=ws[0:3, 2:]), combined_data[label][1]))

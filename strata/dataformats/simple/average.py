@@ -97,34 +97,24 @@ def combine_bins(data, info, nx, ny):
 
     new_data = { 'X': xs.ravel(), 'Y': ys.ravel() }
 
-    for label in ['N', 'M']:
-        new_data[label] = np.zeros(xs.shape)
+    labels_and_weights = ('N', None), ('M', None), ('T', 'N'), ('U', 'M'), ('V', 'M')
+    for label, weight in labels_and_weights:
         ds = data[label].reshape(info['shape'])
+        new_data[label] = np.zeros(xs.shape)
+
+        try:
+            ws = data[weight].reshape(info['shape'])
+        except KeyError:
+            ws = None
 
         for i in range(shape[0]):
             for j in range(shape[1]):
-                new_data[label][i, j] = np.mean(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)])
+                if ws == None:
+                    new_data[label][i, j] = np.mean(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)])
+                else:
+                    new_data[label][i, j] = np.average(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)],
+                        weights=ws[nx*i:nx*(i+1), ny*j:ny*(j+1)])
+
         new_data[label].resize((num_bins, ))
-
-    for label in ['U', 'V']:
-        new_data[label] = np.zeros(xs.shape)
-        ds = data[label].reshape(info['shape'])
-        ws = data['M'].reshape(info['shape'])
-
-        for i in range(shape[0]):
-            for j in range(shape[1]):
-                new_data[label][i, j] = np.average(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)],
-                    weights=ws[nx*i:nx*(i+1), ny*j:ny*(j+1)])
-        new_data[label].resize((num_bins, ))
-
-    ds = data['T'].reshape(info['shape'])
-    ws = data['N'].reshape(info['shape'])
-    new_data['T'] = np.zeros(xs.shape)
-
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            new_data['T'][i, j] = np.average(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)],
-                weights=ws[nx*i:nx*(i+1), ny*j:ny*(j+1)])
-    new_data['T'].resize((num_bins, ))
 
     return new_data, new_info
