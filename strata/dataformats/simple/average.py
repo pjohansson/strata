@@ -128,8 +128,8 @@ def combine_bins(data, info, nx, ny):
 
         for i in range(shape[0]):
             for j in range(shape[1]):
-                if ws is None:
-                    new_data[label][i, j] = np.mean(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)])
+                if ws is weight:
+                    new_data[label][i, j] = np.sum(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)])
                 else:
                     try:
                         new_data[label][i, j] = np.average(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)],

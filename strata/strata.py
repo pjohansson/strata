@@ -223,8 +223,6 @@ def average_cli(base, output, group, **kwargs):
 
     """
 
-    print('combine: ', kwargs['combine'])
-
     set_none_to_inf(kwargs)
 
     # Set correct option for recenter

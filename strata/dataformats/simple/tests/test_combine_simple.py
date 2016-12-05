@@ -33,8 +33,12 @@ def test_combine_bins():
     assert(np.array_equal([1.0], new_data['Y']))
 
     for label, weight in labels_and_weights:
+        # The number of atoms and their mass is summed as the bins are
+        # combined. The flow and the temperature of the bins are averaged.
+        # This is taken care of by the weight labels since all the quantities
+        # that are averaged have a weight, while the others do not.
         if weight == None:
-            assert(np.allclose([data[label].mean()], new_data[label]))
+            assert(np.allclose([data[label].sum()], new_data[label]))
         # As per above 'T' will average to 0.0 due to the weight summing to it
         elif label != 'T':
             assert(np.allclose([np.average(data[label], weights=data[weight])], new_data[label]))
@@ -62,8 +66,8 @@ def test_read_and_combine_bins():
     for label, weight in labels_and_weights:
         ds = data[label].reshape(info['shape'])
         if weight == None:
-            assert(np.isclose(ds[0:3, 0:2].mean(), combined_data[label][0]))
-            assert(np.isclose(ds[0:3, 2:].mean(), combined_data[label][1]))
+            assert(np.isclose(ds[0:3, 0:2].sum(), combined_data[label][0]))
+            assert(np.isclose(ds[0:3, 2:].sum(), combined_data[label][1]))
         else:
             ws = data[weight].reshape(info['shape'])
             assert(np.isclose(np.average(ds[0:3, 0:2], weights=ws[0:3, 0:2]), combined_data[label][0]))

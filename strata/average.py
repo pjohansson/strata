@@ -71,7 +71,6 @@ def average(base, output, group=1, **kwargs):
     cutoff_radius = kwargs.pop('cutoff_radius', 1.)
 
     combine = kwargs.pop('combine', (None, None))
-    print(combine)
     if combine != (None, None):
         nx, ny = int(combine[0]), int(combine[1])
 
@@ -114,8 +113,7 @@ def average(base, output, group=1, **kwargs):
             else:
                 raise ValueError("Invalid edge to recenter around ('%s'). Must be 'left' or 'right'" % recenter)
 
-
-            group_data = recenter_maps(group_data, xs_edges)
+            group_data, info = recenter_maps(group_data, xs_edges)
 
         avg_data = module.average_data(*group_data)
 
@@ -175,4 +173,19 @@ def recenter_maps(data_maps, recenter_values):
 
         recentered_data.append(data_subset)
 
-    return recentered_data
+    # Reconstruct info dict, since the coordinate grid has to be identical
+    # for all final maps we can cheat a little bit
+    origin = [xmin, np.min(data_subset['Y'])]
+    spacing = [spacing, np.mean(np.diff(np.unique(data_subset['Y'])))]
+    nx = int((xmax - xmin)/spacing[0]) + 1
+    num_bins = data_subset['X'].size
+    shape = [nx, num_bins // nx]
+
+    info = {
+        'origin': origin,
+        'spacing': spacing,
+        'shape': shape,
+        'num_bins': num_bins
+    }
+
+    return recentered_data, info
