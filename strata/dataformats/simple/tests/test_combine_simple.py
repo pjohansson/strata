@@ -13,8 +13,13 @@ def test_combine_bins():
 
     data = { 'X': xs, 'Y': ys }
 
-    for l in ['M', 'N', 'T', 'U', 'V']:
+    # Create random numbers for all fields except 'N' which will
+    # be set to zero. This is to assert that the weighted average
+    # for a total sum of 0 does not crash but instead returns 0.0,
+    # in this case for label 'T'.
+    for l in ['M', 'T', 'U', 'V']:
         data[l] = np.random.sample(xs.shape)
+    data['N'] = np.zeros(xs.shape)
 
     info = {
         'origin': [0., 0.],
@@ -28,13 +33,13 @@ def test_combine_bins():
     assert(np.array_equal([0.5], new_data['X']))
     assert(np.array_equal([1.0], new_data['Y']))
 
-    # Assert that weighted averages are taken for U, V with respect
-    # to the mass M and T with the respect of N.
     for label, weight in labels_and_weights:
         if weight == None:
             assert(np.allclose([data[label].mean()], new_data[label]))
-        else:
+        elif label != 'T':
             assert(np.allclose([np.average(data[label], weights=data[weight])], new_data[label]))
+        else:
+            assert(np.allclose([0.0], new_data[label]))
 
     assert(np.array_equal([0.5, 1.0], new_info['origin']))
     assert(np.array_equal([2., 4.], new_info['spacing']))

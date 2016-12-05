@@ -109,11 +109,14 @@ def combine_bins(data, info, nx, ny):
 
         for i in range(shape[0]):
             for j in range(shape[1]):
-                if ws == None:
+                if ws is None:
                     new_data[label][i, j] = np.mean(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)])
                 else:
-                    new_data[label][i, j] = np.average(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)],
-                        weights=ws[nx*i:nx*(i+1), ny*j:ny*(j+1)])
+                    try:
+                        new_data[label][i, j] = np.average(ds[nx*i:nx*(i+1), ny*j:ny*(j+1)],
+                            weights=ws[nx*i:nx*(i+1), ny*j:ny*(j+1)])
+                    except ZeroDivisionError:
+                        new_data[label][i, j] = 0.0
 
         new_data[label].resize((num_bins, ))
 
