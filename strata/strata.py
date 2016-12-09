@@ -186,8 +186,8 @@ cmd_quiver = {
         type=OPT_INT, nargs=2, default=[None, None],
         help='Combine bins of the system along x and y. (None)')
 @add_option('--recenter',
-        type=click.Choice(['none', 'left', 'right']), default='none',
-        help='Recenter data maps around the input contact line. (none)')
+        type=click.Choice(['none', 'left', 'right', 'com']), default='none',
+        help='Recenter data maps around a contact line or the center of mass. (none)')
 @add_option('--floor', type=float, default=None,
         help='Height to determine the contact line at. (None)')
 @add_option('-co', '--cutoff', type=float, default=0.,
@@ -215,11 +215,11 @@ def average_cli(base, output, group, **kwargs):
     a five-digit integer signifying file number ('%s%05d%s').
 
     By supplying the keyword argument `recenter` the data maps can be
-    recentered to the left or right contact lines before calculating
-    the average. This will partly compensate for the movement of the
-    contact line if quantities around it is to be analysed. Keep in
-    mind that the geometry of the contact line will not be affected
-    by this recentering.
+    recentered to either of the left and right contact lines or the
+    center of mass of the system before calculating the average. This
+    can partly compensate for the movement of the contact line if
+    quantities around it is to be analysed. Keep in mind that the
+    geometry of the contact line will not be affected by this recentering.
 
     The determination of the contact line is by the same method as
     in `strata spreading collect`.

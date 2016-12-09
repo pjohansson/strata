@@ -2,6 +2,7 @@ import numpy as np
 import progressbar as pbar
 
 from droplets.flow import FlowData
+from droplets.sample import sample_center_of_mass
 
 from strata.dataformats.read import read_from_files
 from strata.dataformats.write import write
@@ -20,11 +21,11 @@ def average(base, output, group=1, **kwargs):
     the current bundle and M is the bundle size.
 
     By supplying the keyword argument `recenter` the data maps can be
-    recentered to the left or right contact lines before calculating
-    the average. This will partly compensate for the movement of the
-    contact line if quantities around it is to be analysed. Keep in
-    mind that the geometry of the contact line will not be affected
-    by this recentering.
+    recentered to the center of mass or either of the left and right
+    contact lines before calculating the average. This can partly
+    compensate for the movement of the contact line if quantities
+    around it is to be analysed. Keep in mind that the geometry of
+    the contact line will not be affected by this recentering.
 
     The determination of the contact line is by the same method as
     in `strata spreading collect`. Options for the spreading floor
@@ -38,8 +39,8 @@ def average(base, output, group=1, **kwargs):
     Keyword Args:
         combine ((int, int), optional): Combine bins along x and y.
 
-        recenter (str, optional): Recenter data at the input contact line,
-            'left' or 'right'.
+        recenter (str, optional): Recenter data at the center of mass ('com')
+            of either contact line ('left' or 'right').
 
         floor (float): Height at which spreading occurs. Defaults to the
             bottom interface bins found in the data map.
@@ -110,8 +111,13 @@ def average(base, output, group=1, **kwargs):
                         for data in flow_data
                     )
                 ]
+            elif recenter == 'com':
+                xs_edges = [x for x, _ in (
+                        sample_center_of_mass(data) for data in flow_data
+                    )
+                ]
             else:
-                raise ValueError("Invalid edge to recenter around ('%s'). Must be 'left' or 'right'" % recenter)
+                raise ValueError("Invalid position to recenter around ('%s'). Must be 'com', 'left' or 'right'" % recenter)
 
             group_data, info = recenter_maps(group_data, xs_edges)
 
