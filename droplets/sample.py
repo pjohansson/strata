@@ -137,3 +137,23 @@ def sample_viscous_dissipation(flow, viscosity,
     return 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
             + viscosity*(dvdx + dudy)**2
 
+
+def sample_center_of_mass(flow, mass_label='M', coord_labels=['X', 'Y']):
+    """Returns the center of mass along x and y as a tuple.
+
+    Args:
+        flow (FlowData): Object to calculate center of mass of. Must
+            contain fields for X-Y coordinates and mass.
+
+    Keyword args:
+        mass_label (str, default='M'): Label for mass of system.
+
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
+
+    Raises:
+        ZeroDivisionError: If the mass of the system sums to zero.
+
+    """
+    
+    return tuple(np.average(flow.data[l], weights=flow.data[mass_label])
+                 for l in coord_labels)
