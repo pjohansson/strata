@@ -5,8 +5,19 @@ import progressbar as pbar
 from strata.utils import find_datamap_files, pop_fileopts, prepare_path, decorate_graph
 
 
-def interface_contact_angle(base, height, delta_t=1., save_xvg=None, **kwargs):
-    """Calculate the mean contact angles of interface files with input base.
+def interface_contact_angle(base, fit=True, height=None, delta_t=1., save_xvg=None, **kwargs):
+    """Calculate the contact angles of interface files with input base.
+
+    The contact angle can be measured in two ways which may be combined:
+    Either by assuming that the interface is well fitted by a circular
+    segment and supplying the keyword argument `fig` or by measuring
+    the contact angle of both edges by supplying a height with the
+    keyword argument `height`.
+
+    The circular segment is not exactly fitted but calculated through the
+    chord length and maximum height above the substrate. A measurement
+    is made through simple trigonometrics and the mean is taken of both
+    edges.
 
     Input files are plaintext files of Grace format, with two columns
     representing x and y coordinates of the interface, connected from
@@ -16,9 +27,11 @@ def interface_contact_angle(base, height, delta_t=1., save_xvg=None, **kwargs):
     Args:
         base (str): Base path to input files.
 
-        height (float): Measure the contact angle at this height over the base.
-
     Keyword args:
+        fit (bool, optional): Measure the contact angle by fitting a circular segment.
+
+        height (float, optional): Measure the contact angle at this height over the base.
+
         delta_t (float, optional)): Time difference between interface files.
 
         save_xvg (path, optional): Save interfaces to base path.
@@ -48,19 +61,31 @@ def interface_contact_angle(base, height, delta_t=1., save_xvg=None, **kwargs):
         progress = pbar.ProgressBar(widgets=widgets, maxval=len(filenames))
         progress.start()
 
-    contact_angles = []
+    contact_angles = {
+        'fit': [],
+        'measured': []
+    }
 
     for i, fn in enumerate(filenames):
         left, right = read_interface_file(fn)
 
-        angles = [calc_angle(edge, direction, height)
-                for edge, direction in zip([left, right], ('left', 'right'))]
-        contact_angles.append(np.mean(angles))
+        if fit:
+            contact_angles['fit'].append(fit_angle_from_segment(left, right))
+
+        if height:
+            angles = [measure_angle(edge, direction, height)
+                    for edge, direction in zip([left, right], ('left', 'right'))]
+            contact_angles['measured'].append(np.mean(angles))
 
         if not quiet:
             progress.update(i+1)
 
-    times = [i*delta_t for i in range(len(contact_angles))]
+    if height != None:
+        times = [i*delta_t for i in range(len(contact_angles['measured']))]
+    elif fit:
+        times = [i*delta_t for i in range(len(contact_angles['fit']))]
+    else:
+        times = []
 
     if save_xvg:
         write_angle_data(save_xvg, base, height, times, contact_angles,
@@ -68,6 +93,7 @@ def interface_contact_angle(base, height, delta_t=1., save_xvg=None, **kwargs):
 
     if kwargs.get('show', True) or kwargs.get('save_fig', None):
         kwargs.setdefault('axis', 'tight')
+        kwargs.setdefault('legend', fit or height != None)
         draw_figure(times, contact_angles, **kwargs)
 
     if not quiet:
@@ -89,7 +115,9 @@ def draw_figure(times, angles, **kwargs):
 
     import matplotlib.pyplot as plt
 
-    plt.plot(times, angles, **kwargs)
+    for key in ('fit', 'measured'):
+        if angles[key] != []:
+            plt.plot(times, angles[key], label=key, **kwargs)
 
 
 @prepare_path
@@ -134,12 +162,22 @@ def write_angle_data(path, base, height, times, angles, **kwargs):
                     height, kwargs.get('delta_t', 1.),
                     ))
 
-        inputs += "# t (ps) mean angle (deg.)"
-
         return header + inputs
 
     header = get_header(path, base, height, **kwargs)
-    data = np.array([times, angles]).T
+
+    data_axes = [times]
+    legend = "# t (ps)"
+
+    for key in ('fit', 'measured'):
+        vs = angles[key]
+        if vs != []:
+            legend += "  %s (deg.)" % key
+            data_axes.append(vs)
+
+    data = np.array(data_axes).T
+    header += legend
+
     np.savetxt(path, data, fmt='%.3f', delimiter=' ',
             header=header, comments='')
 
@@ -149,7 +187,7 @@ def read_interface_file(fn):
 
     xs, ys = np.genfromtxt(fn, unpack=True)
 
-    length = len(xs)/2
+    length = int(len(xs)/2)
     base = np.zeros(length, dtype=[('X', 'float'), ('Y', 'float')])
 
     left = base.copy()
@@ -165,7 +203,7 @@ def read_interface_file(fn):
     return left, right
 
 
-def calc_angle(edge, direction, height):
+def measure_angle(edge, direction, height):
     """Return the contact angle adjusted for direction at height."""
 
     x0, y0 = [edge[l][0] for l in ('X', 'Y')]
@@ -180,3 +218,10 @@ def calc_angle(edge, direction, height):
         dx = -dx
 
     return np.degrees(np.arccos(dx/np.sqrt(dx**2 + dy**2)))
+
+
+def fit_angle_from_segment(left, right):
+    chord = right['X'][0] - left['X'][0]
+    height = np.mean([np.max(left['Y']), np.max(right['Y'])])
+
+    return 2*np.degrees(np.arctan(2*height/chord))
