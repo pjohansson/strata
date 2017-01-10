@@ -58,13 +58,12 @@ def sample_interfaces(base, variable, save_xvg='', delta_t=1., **kwargs):
         progress.start()
 
     for i, fn in enumerate(files):
-        interface = read_interface_file(fn)
+        xs, ys = read_interface_file(fn)
         try:
             sample = None
             if variable == 'area':
-                sample = get_area_of_interface(interface)
+                sample = get_area_of_interface(xs, ys)
             elif variable == 'length':
-                xs, ys = interface
                 sample = calc_length(xs, ys)
             else:
                 raise ValueError("Invalid input variable '%s': Must be 'area' or 'length'" % variable)
@@ -90,11 +89,11 @@ def sample_interfaces(base, variable, save_xvg='', delta_t=1., **kwargs):
     return times, collected_samples
 
 
-def get_area_of_interface(interface):
+def get_area_of_interface(xs, ys):
     """Return the integrated area of an interface.
 
     Args:
-        interface (2-tuple): Lists of x and y coordinates of interface.
+        xs, ys (floats): Lists of x and y coordinates of interface.
 
     Returns:
         float: The integrated area.
@@ -107,7 +106,6 @@ def get_area_of_interface(interface):
             top = xright[i+1] - xleft[i+1]
             yield 0.5*(bottom + top)
 
-    xs, ys = interface
     num_height = int(len(xs)/2)
 
     yleft, yright = ys[:num_height], ys[num_height:][::-1]
@@ -126,7 +124,18 @@ def get_area_of_interface(interface):
 
 
 def calc_length(xs, ys):
+    """Return the circumference of the interface.
+
+    Args:
+        xs, ys (floats): Lists of x and y coordinates of interface.
+
+    Returns:
+        float: The circumference.
+
+    """
+
     dxs, dys = [np.diff(xs), np.diff(ys)]
+
     return np.sum(np.sqrt(dxs**2 + dys**2))
 
 

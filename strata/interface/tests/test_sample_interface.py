@@ -15,4 +15,4 @@ def test_calc_interface_length():
 
 def test_calc_interface_area():
     # Area should be close to pi
-    assert np.isclose(np.pi, get_area_of_interface((xs, ys)))
+    assert np.isclose(np.pi, get_area_of_interface(xs, ys))
