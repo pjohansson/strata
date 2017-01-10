@@ -42,7 +42,6 @@ def test_read_interface():
 
     flow = FlowData(data)
     test = get_interface_coordinates(flow, 'M', adjust_com=True)
-    print(test)
     x, y = test
 
     with tmp.TemporaryDirectory() as tmpdir:
