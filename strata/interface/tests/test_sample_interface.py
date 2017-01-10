@@ -1,6 +1,6 @@
 import numpy as np
 
-from strata.interface.area import calc_length, get_area_of_interface
+from strata.interface.sample import calc_length, get_area_of_interface
 
 # Test against a circle of radius 1
 # The coordinates move clockwise from the bottom angle of -90 (+270) degrees

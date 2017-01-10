@@ -5,11 +5,16 @@ import progressbar as pbar
 from strata.interface.view import read_interface_file
 from strata.utils import find_datamap_files, pop_fileopts, prepare_path, decorate_graph, write_module_header
 
-def integrate_interfaces(base, save_xvg='', delta_t=1., **kwargs):
-    """Return the integrate areas of collected interfaces at base.
+def sample_interfaces(base, variable, save_xvg='', delta_t=1., **kwargs):
+    """Return the sampled variable of collected interfaces at base.
+
+    The variable is either 'area' or 'length' (ie. circumference) of
+    the interface.
 
     Args:
         base (str): Base path to input interfaces.
+
+        variable (str): Sample either 'area' or 'length'.
 
     Keyword Args:
         save_xvg (str, optional): Write integrated areas to an output file.
@@ -26,9 +31,9 @@ def integrate_interfaces(base, save_xvg='', delta_t=1., **kwargs):
 
     """
 
-    def prepare_output(save_xvg, base, dt, header_opts, fopts):
+    def prepare_output(save_xvg, base, variable, dt, header_opts, fopts):
         header_opts.update(fopts)
-        write_header(save_xvg, base, dt, header_opts)
+        write_header(save_xvg, base, variable, dt, header_opts)
 
     kwargs.setdefault('ext', '.xvg')
     fopts = pop_fileopts(kwargs)
@@ -36,18 +41,18 @@ def integrate_interfaces(base, save_xvg='', delta_t=1., **kwargs):
 
     if save_xvg:
         try:
-            prepare_output(save_xvg, base, delta_t, kwargs.copy(), fopts)
+            prepare_output(save_xvg, base, variable, delta_t, kwargs.copy(), fopts)
         except PermissionError:
             print("[WARNING] Output disabled: could not open '%s' for writing."
                 % save_xvg)
             save_xvg = None
 
-    collected_areas = []
+    collected_samples = []
     times = []
 
     quiet = kwargs.pop('quiet', False)
     if not quiet:
-        widgets = ['Calculating the area of files: ',
+        widgets = ['Calculating the %s of files: ' % variable,
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
         progress = pbar.ProgressBar(widgets=widgets, maxval=len(files))
         progress.start()
@@ -55,17 +60,24 @@ def integrate_interfaces(base, save_xvg='', delta_t=1., **kwargs):
     for i, fn in enumerate(files):
         interface = read_interface_file(fn)
         try:
-            area = get_area_of_interface(interface)
+            sample = None
+            if variable == 'area':
+                sample = get_area_of_interface(interface)
+            elif variable == 'length':
+                xs, ys = interface
+                sample = calc_length(xs, ys)
+            else:
+                raise ValueError("Invalid input variable '%s': Must be 'area' or 'length'" % variable)
         except TypeError as err:
-            print("Could not calculate area of interface file %r: " % fn, end='')
+            print("Could not calculate %s of interface file %r: " % (variable, fn), end='')
             print(err)
         else:
-            collected_areas.append(area)
+            collected_samples.append(sample)
             times.append(i*delta_t)
 
             if save_xvg:
                 with open(save_xvg, 'a') as fp:
-                    fp.write("%.3f %.3f\n" % (i*delta_t, area))
+                    fp.write("%.3f %.3f\n" % (i*delta_t, sample))
 
         if not quiet:
             progress.update(i+1)
@@ -73,9 +85,9 @@ def integrate_interfaces(base, save_xvg='', delta_t=1., **kwargs):
     if not quiet:
             progress.finish()
 
-    plot_interface_area(collected_areas, times, **kwargs)
+    plot_interface_area(collected_samples, times, **kwargs)
 
-    return times, collected_areas
+    return times, collected_samples
 
 
 def get_area_of_interface(interface):
@@ -96,7 +108,7 @@ def get_area_of_interface(interface):
             yield 0.5*(bottom + top)
 
     xs, ys = interface
-    num_height = len(xs)/2
+    num_height = int(len(xs)/2)
 
     yleft, yright = ys[:num_height], ys[num_height:][::-1]
     xleft, xright = xs[:num_height], xs[num_height:][::-1]
@@ -130,23 +142,26 @@ def plot_interface_area(areas, times, **kwargs):
 
 
 @prepare_path
-def write_header(output_path, input_base, dt, kwargs):
+def write_header(output_path, input_base, variable, dt, kwargs):
     """Verify that output path is writable and write header."""
 
-    title = "Integrated areas of input interface files"
+    title = "Samples of input interface files"
     write_module_header(output_path, __name__, title)
+
+    ylabel = "Area (nm^2)" if variable == 'area' else "Circumference (nm)"
 
     with open(output_path, 'a') as fp:
         inputs = (
                 "# Input:\n"
                 "#   File base path: %r\n"
+                "#   Variable: %r\n"
                 "#   Begin, end: %r, %r\n"
                 "#   Delta-t: %r\n"
                 "# \n"
-                "# Time (ps) Area (nm^2)\n"
-                % (os.path.realpath(input_base),
+                "# Time (ps) %s\n"
+                % (os.path.realpath(input_base), variable,
                     kwargs.get('begin', None), kwargs.get('end', None),
-                    kwargs.get('dt', 1.)
+                    kwargs.get('dt', 1.), ylabel
                     ))
 
         fp.write(inputs)
