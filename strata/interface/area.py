@@ -102,7 +102,7 @@ def get_area_of_interface(interface):
     xleft, xright = xs[:num_height], xs[num_height:][::-1]
 
     try:
-        assert(np.array_equal(yleft, yright))
+        assert(np.isclose(yleft, yright).all())
     except AssertionError:
         print(yleft, yright)
         raise TypeError("Bad interface coordinates encountered.")
@@ -111,6 +111,11 @@ def get_area_of_interface(interface):
     area = sum([h*m for h, m in zip(hs, get_trapezoid_base(xleft, xright))])
 
     return area
+
+
+def calc_length(xs, ys):
+    dxs, dys = [np.diff(xs), np.diff(ys)]
+    return np.sum(np.sqrt(dxs**2 + dys**2))
 
 
 @decorate_graph
