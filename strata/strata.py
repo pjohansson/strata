@@ -825,16 +825,16 @@ def view_quiver_cli(files, **kwargs):
 @strata.command(name=cmd_sample['name'], short_help=cmd_sample['desc'])
 @add_argument('base', type=str)
 @add_argument('label', type=str)
-@add_option('-o', '--output', type=click.Path(), default=None,
-        help='Write the collected data to disk.')
+@add_option('-o', '--output', type=click.Path(), default='sample.xvg',
+        help='Write the collected data to disk. (sample.xvg)')
 @add_option('-dt', '--delta_t', 'dt', default=1.,
         help='Time difference between data map files. (1)')
-@add_option('--sum/--nosum', default=False,
-        help='Whether or not to sample the summed quantity. (False)')
+@add_option('--process', type=click.Choice(['mean', 'sum']), default='mean', 
+        help='Whether to sample the mean or sum of the value. (mean)')
 @add_option('-co', '--cutoff', type=float, default=None,
-        help='Boundary bins require this much mass. (0)')
+        help='Boundary bins require this much of the cutoff value. (defaults to midpoint value)')
 @add_option('-cl', '--cutoff_label', type=str, default=None,
-        help='Label to use for cutoff. Defaults to input sample label. (None)')
+        help='Label to use for cutoff. Defaults to no cutoff. (None)')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
@@ -847,6 +847,8 @@ def sample_average_cli(base, label, **kwargs):
     """Sample average data of input label in files of input base."""
 
     set_none_to_inf(kwargs)
+    sum = kwargs.pop('process') == 'sum'
+    kwargs['sum'] = sum
     sample_average_files(base, label, **kwargs)
 
 

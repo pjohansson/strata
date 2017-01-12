@@ -2,6 +2,8 @@ import os
 import numpy as np
 import progressbar as pbar
 
+from droplets.flow import FlowData
+from droplets.sample import sample_inertial_energy
 from strata.dataformats.read import read_from_files
 from strata.utils import find_datamap_files, pop_fileopts, prepare_path, write_module_header
 
@@ -38,7 +40,7 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
             Defaults to midpoint value.
 
         cutoff_label (str, optional): Label for data to use as cutoff,
-            defaults to the input sample average label.
+            defaults to no cutoff.
 
         begin (int, default=1): First data map number.
 
@@ -105,20 +107,22 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
 def sample_value(data, label, cutoff, cutoff_label, sum):
     """Sample input data of label."""
 
-    if cutoff == None:
-        cutoff = 0.5*(np.max(data[label]) + np.min(data[label]))
+    if label == 'inertial_energy':
+        flow = FlowData(('U', data['U']), ('V', data['V']), ('M', data['M']))
+        sample_data = sample_inertial_energy(flow)
+    else:
+        sample_data = data[label]
 
-    if cutoff_label == None:
-        cutoff_label = label
+    if cutoff_label != None:
+        if cutoff == None:
+            cutoff = 0.5*(np.max(sample_data) + np.min(sample_data))
 
-    try:
-        inds = data[cutoff_label] >= cutoff
-    except KeyError:
-        print("[WARNING] Bad label: cutoff label '%s' not in system, disabling cutoff"
-                % cutoff_label)
-        inds = data[label] >= cutoff
-
-    sample_data = data[label][inds]
+        try:
+            inds = data[cutoff_label] >= cutoff
+            sample_data = sample_data[inds]
+        except KeyError:
+            print("[WARNING] Bad label: cutoff label '%s' not in system, disabling cutoff"
+                    % cutoff_label)
 
     if not sum:
         value = np.mean(sample_data)
@@ -153,4 +157,3 @@ def write_header(output_path, input_base, label, cutoff, cutoff_label, kwargs):
                     ))
 
         fp.write(inputs)
-        

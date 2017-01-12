@@ -154,6 +154,24 @@ def sample_center_of_mass(flow, mass_label='M', coord_labels=['X', 'Y']):
         ZeroDivisionError: If the mass of the system sums to zero.
 
     """
-    
+
     return tuple(np.average(flow.data[l], weights=flow.data[mass_label])
                  for l in coord_labels)
+
+
+def sample_inertial_energy(flow, mass_label='M', flow_labels=['U', 'V']):
+    """Returns the total inertial energy of the system.
+
+    Args:
+        flow (FlowData): Object to calculate center of mass of. Must
+            contain fields for flow along X-Y and mass.
+
+    Keyword args:
+        mass_label (str, default='M'): Label for mass of system.
+
+        flow_labels (2-tuple, default=('U', 'V'): Record labels for flow.
+
+    """
+
+    ul, vl = flow_labels
+    return 0.5*flow.data[mass_label]*(flow.data[ul]**2 + flow.data[vl]**2)
