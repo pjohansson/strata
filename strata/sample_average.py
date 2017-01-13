@@ -3,13 +3,13 @@ import numpy as np
 import progressbar as pbar
 
 from droplets.flow import FlowData
-from droplets.sample import sample_inertial_energy
+from droplets.sample import sample_inertial_energy, sample_viscous_dissipation
 from strata.dataformats.read import read_from_files
 from strata.utils import find_datamap_files, pop_fileopts, prepare_path, write_module_header
 
 
 def sample_average_files(base, label, output=None, sum=False, dt=1.,
-        cutoff_label=None, cutoff=None, **kwargs):
+        cutoff_label=None, cutoff=None, viscosity=8.77e-4, **kwargs):
     """Sample average collected data of input label from files.
 
     Returns lists with input file times and the averaged sampled value
@@ -18,7 +18,10 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
     The label has to be present in the read data files. If the label is
     'inertial_energy' the inertial energy is calculated for the system,
     in which case the data files must contain fields 'U' and 'V' for
-    flow and 'M' for mass. 
+    flow and 'M' for mass. If the label is 'visc_diss' the viscous
+    dissipation is calculated for the system, which required fields
+    'U' and 'V' for the flow, and 'X' and 'Y' for the coordinates. The
+    output viscous dissipation is in energy per time and bin volume.
 
     Optionally the total value of the quantity in the system can be returned
     by supplying the keyword argument `sum`.
@@ -46,6 +49,9 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
 
         cutoff_label (str, optional): Label for data to use as cutoff,
             defaults to no cutoff.
+
+        viscosity (float, optional): Viscosity of the liquid, used for
+            the calculation of viscous dissipation.
 
         begin (int, default=1): First data map number.
 
@@ -82,9 +88,10 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
         progress = pbar.ProgressBar(widgets=widgets, maxval=len(files))
         progress.start()
 
-    for i, (data, _, _) in enumerate(read_from_files(*files)):
+    for i, (data, info, _) in enumerate(read_from_files(*files)):
+        flow = FlowData(*[(l, data[l]) for l in ['X', 'Y', 'U', 'V', 'M', 'N', 'T']], info=info)
         try:
-            value = sample_value(data, label, cutoff, cutoff_label, sum)
+            value = sample_value(flow, label, cutoff, cutoff_label, sum, viscosity)
         except KeyError:
             print("[ERROR] Bad label: no data with label '%s' in system." % label)
             return [], []
@@ -94,7 +101,7 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
 
         if output:
             with open(output, 'a') as fp:
-                fp.write('%.3f %.6f\n' % (i*dt, value))
+                fp.write('%.3f %g\n' % (i*dt, value))
 
         sampled_values.append(value)
 
@@ -109,21 +116,22 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
     return times, sampled_values
 
 
-def sample_value(data, label, cutoff, cutoff_label, sum):
+def sample_value(flow, label, cutoff, cutoff_label, sum, viscosity):
     """Sample input data of label."""
 
     if label == 'inertial_energy':
-        flow = FlowData(('U', data['U']), ('V', data['V']), ('M', data['M']))
-        sample_data = sample_inertial_energy(flow)
+        sample_data = sample_inertial_energy(flow).ravel()
+    elif label == 'visc_diss':
+        sample_data = sample_viscous_dissipation(flow, viscosity).ravel()
     else:
-        sample_data = data[label]
+        sample_data = flow.data[label]
 
     if cutoff_label != None:
         if cutoff == None:
             cutoff = 0.5*(np.max(sample_data) + np.min(sample_data))
 
         try:
-            inds = data[cutoff_label] >= cutoff
+            inds = flow.data[cutoff_label] >= cutoff
             sample_data = sample_data[inds]
         except KeyError:
             print("[WARNING] Bad label: cutoff label '%s' not in system, disabling cutoff"
