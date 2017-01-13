@@ -15,6 +15,11 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
     Returns lists with input file times and the averaged sampled value
     of bins for the corresponding time.
 
+    The label has to be present in the read data files. If the label is
+    'inertial_energy' the inertial energy is calculated for the system,
+    in which case the data files must contain fields 'U' and 'V' for
+    flow and 'M' for mass. 
+
     Optionally the total value of the quantity in the system can be returned
     by supplying the keyword argument `sum`.
 
