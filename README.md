@@ -29,8 +29,8 @@ All command line functionality is called from the installed utility `strata`.
       Tools for reading and analysing files of flow data.
 
     Options:
-      --version
-      --help     Show this message and exit.
+      -v, --version  Print version number and exit.
+      -h, --help     Show this message and exit.
 
     Commands:
       average       Average multiple input data files.
@@ -64,4 +64,4 @@ All command line functionality is called from the installed utility `strata`.
 
 These tools were written with the intent of fully utilizing test-driven
 development and to build some experience with the methodology. Some tools,
-mainly in the `strata` layer, still have very lacking coverage. 
+mainly in the `strata` layer, still have very lacking coverage.

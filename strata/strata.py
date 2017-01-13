@@ -92,9 +92,9 @@ def print_version(ctx, param, value):
     ctx.exit()
 
 # Main functionality
-@create_group()
-@click.option('--version', is_flag=True, callback=print_version,
-              expose_value=False, is_eager=True)
+@create_group(context_settings=dict(help_option_names=['-h', '--help']))
+@click.option('-v', '--version', is_flag=True, callback=print_version,
+              expose_value=False, is_eager=True, help='Print version number and exit.')
 def strata():
     """Tools for reading and analysing files of flow data."""
     pass
@@ -829,7 +829,7 @@ def view_quiver_cli(files, **kwargs):
         help='Write the collected data to disk. (sample.xvg)')
 @add_option('-dt', '--delta_t', 'dt', default=1.,
         help='Time difference between data map files. (1)')
-@add_option('--process', type=click.Choice(['mean', 'sum']), default='mean', 
+@add_option('--process', type=click.Choice(['mean', 'sum']), default='mean',
         help='Whether to sample the mean or sum of the value. (mean)')
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Boundary bins require this much of the cutoff value. (defaults to midpoint value)')
