@@ -35,7 +35,9 @@ def collect(base, **kwargs):
         base (str): Base path to input files.
 
     Keyword Args:
-        output (str): Write spreading data to an output file.
+        save (str): Write spreading data to an output file.
+
+        output (str): Output either the bottom 'radius' or both 'edges'.
 
         dt (float): Time difference between input maps.
 
@@ -86,9 +88,9 @@ def collect(base, **kwargs):
 
     fopts = pop_fileopts(kwargs)
 
-    output = kwargs.pop('output', None)
-    if output != None:
-        output = prepare_output(output, kwargs.copy(), fopts)
+    save = kwargs.pop('save', None)
+    if save != None:
+        save = prepare_output(save, kwargs.copy(), fopts)
 
     quiet = kwargs.pop('quiet', False)
 
@@ -96,8 +98,12 @@ def collect(base, **kwargs):
     time = kwargs.pop('t0', 0.)
     cutoff_radius = kwargs.pop('cutoff_radius', 1.)
 
+    output = kwargs.pop('output', 'edges')
+    if output not in ['radius', 'edges']:
+        raise ValueError("output type must be either 'radius' or 'edges'")
+
     times = []
-    radii = []
+    values = []
 
     files = list(find_datamap_files(base, **fopts))
 
@@ -114,17 +120,17 @@ def collect(base, **kwargs):
         if left != None and right != None:
             radius = 0.5*(right - left)
 
-            radii.append(radius)
+            values.append(radius)
             times.append(time)
 
-            if output != None:
+            if save != None:
                 cur_path = meta.pop('path')
 
                 if not write_spreading.impact:
-                    output_impact_time(output, i*dt, cur_path)
+                    output_impact_time(save, i*dt, cur_path, output)
                     write_spreading.impact = True
 
-                write_spreading(output, time, radius, cur_path)
+                write_spreading(save, time, radius, left, right, cur_path, output)
 
             time += dt
 
@@ -134,7 +140,7 @@ def collect(base, **kwargs):
     if not quiet:
         progress.finish()
 
-    return get_spreading_ndarray(times, radii)
+    return get_spreading_ndarray(times, values)
 
 
 def get_spreading_edges(flow, label, cutoff_radius, **kwargs):
@@ -169,7 +175,6 @@ def get_spreading_edges(flow, label, cutoff_radius, **kwargs):
     def get_floor_height(floor, ys):
         if floor != None:
             return ys[np.abs(np.ceil(ys - floor) - 1).argmin()]
-
     xs, ys = (flow.data[l] for l in kwargs.get('coord_labels', ('X', 'Y')))
 
     floor = kwargs.pop('floor', None)
@@ -229,32 +234,30 @@ def write_header(output_path, input_base, kwargs):
         fp.write(header + inputs)
 
 
-def output_impact_time(output_path, time, impact_path):
+def output_impact_time(output_path, time, impact_path, output):
     """Write impact time and column header."""
 
     _, filename = os.path.split(impact_path)
     impact_comment = (
-            "# Droplet impact at t = %.3f\n"
-            "#                file = '%s'\n"
-            "# \n"
-            "# Time (ps) Radius (nm)\n" % (time, filename)
+            "# Droplet impact:\n"
+            "#   Time: %.3f ps\n"
+            "#   File: '%s'\n"
+            "# \n" % (time, filename)
             )
+    legend = "# Time (ps) " + ("Radius (nm)" if output == 'radius' else "Left (nm) Right (nm)") + "\n"
 
     with open(output_path, 'a') as fp:
         _, filename = os.path.split(impact_path)
-        impact_comment = (
-                "# Droplet impact:\n"
-                "#   Time: %.3f ps\n"
-                "#   File: '%s'\n"
-                "# \n"
-                "# Time (ps) Radius (nm)\n" % (time, filename)
-                )
         fp.write(impact_comment)
+        fp.write(legend)
 
 
 @static_variable('impact', False)
-def write_spreading(output_path, time, radius, cur_filename):
+def write_spreading(output_path, time, radius, left, right, cur_filename, output):
     """Write time and spreading radius to output file."""
 
     with open(output_path, 'a') as fp:
-        fp.write('%.3f %.3f\n' % (time, radius))
+        if output == 'radius':
+            fp.write('%.3f %.3f\n' % (time, radius))
+        else:
+            fp.write('%.3f %.3f %.3f\n' % (time, left, right))
