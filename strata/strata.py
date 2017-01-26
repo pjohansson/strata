@@ -582,8 +582,8 @@ def interface_sample_cli(base, variable, **kwargs):
 # Interface angle wrapper
 @interface.command(name=cmd_intangle['name'], short_help=cmd_intangle['desc'])
 @add_argument('base', type=str)
-@add_option('--fit/--nofit', default=True,
-        help='Measure the contact angle by a circular segment fit. (True)')
+@add_option('--fit/--nofit', default=False,
+        help='Measure the contact angle by a circular segment fit. (False)')
 @add_option('-h', '--height', type=OPT_FLOAT, default=None,
         help='Measure the contact angle at this height above the substrate. (None)')
 @add_option('-dt', '--delta_t', type=float, default=1.,
@@ -592,8 +592,8 @@ def interface_sample_cli(base, variable, **kwargs):
         help='Save figure to path.')
 @add_option('-x', '--save_xvg', type=click.Path(), default=None,
         help='Save collected data to path as an .xvg file.')
-@add_option('--show/--noshow', default=True,
-        help='Whether or not to draw graph. (True)')
+@add_option('--show/--noshow', default=False,
+        help='Whether or not to draw graph. (False)')
 @add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
 @add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
@@ -617,16 +617,22 @@ def interface_angle_cli(base, **kwargs):
 
     The contact angle can be measured in two ways which may be combined:
     Either by assuming that the interface is well fitted by a circular
-    segment and supplying the keyword argument `fig` or by measuring
+    segment and supplying the keyword argument `fit` or by measuring
     the contact angle of both edges by supplying a height with the
     keyword argument `height`.
 
     The circular segment is not exactly fitted but calculated through the
-    chord length and maximum height above the substrate. A measurement
-    is made through simple trigonometrics and the mean is taken of both
-    edges.
+    chord length and maximum height above the substrate.
+
+    A measurement is made through simple trigonometrics and both the mean
+    of the two edges and the individual edge angles themselves are output.
 
     """
+
+    if not (kwargs['fit'] or kwargs['height']):
+        print("Warning: Neither a circular fit to or a measurement of the angles was selected.")
+        print("Will not collect any data of the angles so aborting the process.")
+        return
 
     set_none_to_inf(kwargs)
     interface_contact_angle(base, **kwargs)
