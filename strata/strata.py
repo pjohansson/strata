@@ -274,11 +274,10 @@ def spreading(name=cmd_spreading['name'], short_help=cmd_spreading['desc']):
 @spreading.command(name=cmd_collect['name'], short_help=cmd_collect['desc'])
 @add_argument('base', type=str)
 @add_argument('floor', type=float)
-@add_option('-o', '--output', 'save', type=click.Path(), default=None,
-        help='Write the collected data to disk.')
-@add_option('-t', '--type', 'output',
-        default='radius', type=click.Choice(['radius', 'edges']),
-        help='Collect either the radius or edges')
+@add_option('-o', '--output', 'save', type=click.Path(), default='spread.xvg',
+        help='Write the collected data to disk. (spread.xvg)')
+@add_option('--nooutput', default=False, is_flag=True,
+        help='Do not write output to disk. (False)')
 @add_option('-dt', '--delta_t', 'dt', default=1.,
     help='Time difference between data map files. (1)')
 @add_option('-co', '--cutoff', type=float, default=None,
@@ -311,9 +310,6 @@ def spreading_collect_cli(base, floor, **kwargs):
     rightmost of these bins in the selected layer are taken as the droplet
     spreading edges from which the radius is calculated.
 
-    Alternatively the individual edge positions of the contact line can be
-    output by supplying the argument 'type'.
-
     Read data files must have data fields corresponding to coordinates
     and mass.
 
@@ -323,6 +319,9 @@ def spreading_collect_cli(base, floor, **kwargs):
     """
 
     verbose = kwargs.pop('verbose')
+
+    if kwargs.pop('nooutput'):
+        kwargs['save'] = None
 
     set_none_to_inf(kwargs)
     kwargs['floor'] = floor
