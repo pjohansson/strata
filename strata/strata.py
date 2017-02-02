@@ -278,11 +278,10 @@ def spreading(name=cmd_spreading['name'], short_help=cmd_spreading['desc']):
 @spreading.command(name=cmd_collect['name'], short_help=cmd_collect['desc'])
 @add_argument('base', type=str)
 @add_argument('floor', type=float)
-@add_option('-o', '--output', 'save', type=click.Path(), default=None,
-        help='Write the collected data to disk.')
-@add_option('-t', '--type', 'output',
-        default='radius', type=click.Choice(['radius', 'edges']),
-        help='Collect either the radius or edges')
+@add_option('-o', '--output', 'save', type=click.Path(), default='spread.xvg',
+        help='Write the collected data to disk. (spread.xvg)')
+@add_option('--nooutput', default=False, is_flag=True,
+        help='Do not write output to disk. (False)')
 @add_option('-dt', '--delta_t', 'dt', default=1.,
     help='Time difference between data map files. (1)')
 @add_option('-co', '--cutoff', type=float, default=None,
@@ -315,9 +314,6 @@ def spreading_collect_cli(base, floor, **kwargs):
     rightmost of these bins in the selected layer are taken as the droplet
     spreading edges from which the radius is calculated.
 
-    Alternatively the individual edge positions of the contact line can be
-    output by supplying the argument 'type'.
-
     Read data files must have data fields corresponding to coordinates
     and mass.
 
@@ -327,6 +323,9 @@ def spreading_collect_cli(base, floor, **kwargs):
     """
 
     verbose = kwargs.pop('verbose')
+
+    if kwargs.pop('nooutput'):
+        kwargs['save'] = None
 
     set_none_to_inf(kwargs)
     kwargs['floor'] = floor
@@ -587,8 +586,8 @@ def interface_sample_cli(base, variable, **kwargs):
 # Interface angle wrapper
 @interface.command(name=cmd_intangle['name'], short_help=cmd_intangle['desc'])
 @add_argument('base', type=str)
-@add_option('--fit/--nofit', default=True,
-        help='Measure the contact angle by a circular segment fit. (True)')
+@add_option('--fit/--nofit', default=False,
+        help='Measure the contact angle by a circular segment fit. (False)')
 @add_option('-h', '--height', type=OPT_FLOAT, default=None,
         help='Measure the contact angle at this height above the substrate. (None)')
 @add_option('-dt', '--delta_t', type=float, default=1.,
@@ -597,8 +596,8 @@ def interface_sample_cli(base, variable, **kwargs):
         help='Save figure to path.')
 @add_option('-x', '--save_xvg', type=click.Path(), default=None,
         help='Save collected data to path as an .xvg file.')
-@add_option('--show/--noshow', default=True,
-        help='Whether or not to draw graph. (True)')
+@add_option('--show/--noshow', default=False,
+        help='Whether or not to draw graph. (False)')
 @add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
 @add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
@@ -622,16 +621,22 @@ def interface_angle_cli(base, **kwargs):
 
     The contact angle can be measured in two ways which may be combined:
     Either by assuming that the interface is well fitted by a circular
-    segment and supplying the keyword argument `fig` or by measuring
+    segment and supplying the keyword argument `fit` or by measuring
     the contact angle of both edges by supplying a height with the
     keyword argument `height`.
 
     The circular segment is not exactly fitted but calculated through the
-    chord length and maximum height above the substrate. A measurement
-    is made through simple trigonometrics and the mean is taken of both
-    edges.
+    chord length and maximum height above the substrate.
+
+    A measurement is made through simple trigonometrics and both the mean
+    of the two edges and the individual edge angles themselves are output.
 
     """
+
+    if not (kwargs['fit'] or kwargs['height']):
+        print("Warning: Neither a circular fit to or a measurement of the angles was selected.")
+        print("Will not collect any data of the angles so aborting the process.")
+        return
 
     set_none_to_inf(kwargs)
     interface_contact_angle(base, **kwargs)

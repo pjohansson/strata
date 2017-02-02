@@ -37,8 +37,6 @@ def collect(base, **kwargs):
     Keyword Args:
         save (str): Write spreading data to an output file.
 
-        output (str): Output either the bottom 'radius' or both 'edges'.
-
         dt (float): Time difference between input maps.
 
         floor (float): Height at which spreading occurs. Defaults to the
@@ -98,10 +96,6 @@ def collect(base, **kwargs):
     time = kwargs.pop('t0', 0.)
     cutoff_radius = kwargs.pop('cutoff_radius', 1.)
 
-    output = kwargs.pop('output', 'edges')
-    if output not in ['radius', 'edges']:
-        raise ValueError("output type must be either 'radius' or 'edges'")
-
     times = []
     values = []
 
@@ -127,10 +121,10 @@ def collect(base, **kwargs):
                 cur_path = meta.pop('path')
 
                 if not write_spreading.impact:
-                    output_impact_time(save, i*dt, cur_path, output)
+                    output_impact_time(save, i*dt, cur_path)
                     write_spreading.impact = True
 
-                write_spreading(save, time, radius, left, right, cur_path, output)
+                write_spreading(save, time, radius, left, right, cur_path)
 
             time += dt
 
@@ -234,7 +228,7 @@ def write_header(output_path, input_base, kwargs):
         fp.write(header + inputs)
 
 
-def output_impact_time(output_path, time, impact_path, output):
+def output_impact_time(output_path, time, impact_path):
     """Write impact time and column header."""
 
     _, filename = os.path.split(impact_path)
@@ -244,7 +238,7 @@ def output_impact_time(output_path, time, impact_path, output):
             "#   File: '%s'\n"
             "# \n" % (time, filename)
             )
-    legend = "# Time (ps) " + ("Radius (nm)" if output == 'radius' else "Left (nm) Right (nm)") + "\n"
+    legend = "# Time (ps) Radius (nm) Left (nm) Right (nm)\n"
 
     with open(output_path, 'a') as fp:
         _, filename = os.path.split(impact_path)
@@ -253,11 +247,8 @@ def output_impact_time(output_path, time, impact_path, output):
 
 
 @static_variable('impact', False)
-def write_spreading(output_path, time, radius, left, right, cur_filename, output):
+def write_spreading(output_path, time, radius, left, right, cur_filename):
     """Write time and spreading radius to output file."""
 
     with open(output_path, 'a') as fp:
-        if output == 'radius':
-            fp.write('%.3f %.3f\n' % (time, radius))
-        else:
-            fp.write('%.3f %.3f %.3f\n' % (time, left, right))
+        fp.write('%.3f %.3f %.3f %.3f\n' % (time, radius, left, right))

@@ -5,7 +5,7 @@ import progressbar as pbar
 from strata.utils import find_datamap_files, pop_fileopts, prepare_path, decorate_graph
 
 
-def interface_contact_angle(base, fit=True, height=None, delta_t=1., save_xvg=None, **kwargs):
+def interface_contact_angle(base, fit=False, height=None, delta_t=1., save_xvg=None, **kwargs):
     """Calculate the contact angles of interface files with input base.
 
     The contact angle can be measured in two ways which may be combined:
@@ -63,7 +63,9 @@ def interface_contact_angle(base, fit=True, height=None, delta_t=1., save_xvg=No
 
     contact_angles = {
         'fit': [],
-        'measured': []
+        'measured': [],
+        'left': [],
+        'right': []
     }
 
     for i, fn in enumerate(filenames):
@@ -72,10 +74,12 @@ def interface_contact_angle(base, fit=True, height=None, delta_t=1., save_xvg=No
         if fit:
             contact_angles['fit'].append(fit_angle_from_segment(left, right))
 
-        if height:
-            angles = [measure_angle(edge, direction, height)
+        if height != None:
+            left, right = [measure_angle(edge, direction, height)
                     for edge, direction in zip([left, right], ('left', 'right'))]
-            contact_angles['measured'].append(np.mean(angles))
+            contact_angles['left'].append(left)
+            contact_angles['right'].append(right)
+            contact_angles['measured'].append(np.mean([left, right]))
 
         if not quiet:
             progress.update(i+1)
@@ -167,17 +171,20 @@ def write_angle_data(path, base, height, times, angles, **kwargs):
     header = get_header(path, base, height, **kwargs)
 
     data_axes = [times]
-    legend = "# t (ps)"
 
-    for key in ('fit', 'measured'):
-        vs = angles[key]
-        if vs != []:
-            legend += "  %s (deg.)" % key
-            data_axes.append(vs)
+    legend = "# t (ps)"
+    if angles['measured'] != []:
+        legend += " Mean (deg.) Left (deg.) Right (deg.)"
+        data_axes.append(angles['measured'])
+        data_axes.append(angles['left'])
+        data_axes.append(angles['right'])
+    if angles['fit'] != []:
+        legend += " Fit (deg.)"
+        data_axes.append(angles['fit'])
 
     data = np.array(data_axes).T
-    header += legend
 
+    header += legend
     np.savetxt(path, data, fmt='%.3f', delimiter=' ',
             header=header, comments='')
 
