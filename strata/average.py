@@ -53,6 +53,10 @@ def average(base, output, group=1, **kwargs):
 
         cutoff_radius (float, default=1.): Radius to include bins within.
 
+        xlim (2-tuple, default=(None, None)): Limit the system along x.
+
+        ylim (2-tuple, default=(None, None)): Limit the system along y.
+
         begin (int, default=1): First data map number.
 
         end (int, default=inf): Final data map number.
@@ -71,6 +75,17 @@ def average(base, output, group=1, **kwargs):
     recenter = kwargs.pop('recenter', False)
     cutoff_radius = kwargs.pop('cutoff_radius', 1.)
 
+    xlim = kwargs.pop('xlim', None)
+    ylim = kwargs.pop('ylim', None)
+
+    cut_x_or_y = False
+    try:
+        if xlim[0] != None or xlim[1] != None \
+                or ylim[0] != None or ylim[1] != None:
+            cut_x_or_y = True
+    except:
+        raise ValueError("`xlim` or `ylim` was not a 2-tuple")
+
     combine = kwargs.pop('combine', (None, None))
     if combine != (None, None):
         nx, ny = int(combine[0]), int(combine[1])
@@ -88,6 +103,9 @@ def average(base, output, group=1, **kwargs):
         used_modules = set([])
 
         for data, info, meta in read_from_files(*fn_group):
+            if cut_x_or_y:
+                data = cut_system(data, xlim, ylim)
+
             group_data.append(data)
             used_modules.add(meta.pop('module'))
 
@@ -195,3 +213,20 @@ def recenter_maps(data_maps, recenter_values):
     }
 
     return recentered_data, info
+
+
+def cut_system(data, xlim, ylim):
+    xs = data['X']
+    ys = data['Y']
+
+    xmin = xlim[0] if xlim[0] != None else np.min(xs)
+    xmax = xlim[1] if xlim[1] != None else np.max(xs)
+    ymin = ylim[0] if ylim[0] != None else np.min(ys)
+    ymax = ylim[1] if ylim[1] != None else np.max(ys)
+
+    inds = (xs >= xmin) & (xs <= xmax) & (ys >= ymin) & (ys <= ymax)
+
+    for key in data.keys():
+        data[key] = data[key][inds]
+
+    return data

@@ -196,6 +196,10 @@ cmd_quiver = {
         help='Boundary bins require this many neighbours.')
 @add_option('-cr', '--cutoff_radius', default=1.,
         help='Boundary bins search for neighbours within this radius. (1 nm)')
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the x axis.')
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the y axis.')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
