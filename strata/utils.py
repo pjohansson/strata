@@ -318,6 +318,13 @@ def decorate_graph(func):
             return fargs
 
         fargs = pop_figure_kwargs(kwargs)
+
+        if fargs['colormap'] != None:
+            try:
+                plt.set_cmap(fargs['colormap'])
+            except ValueError as err:
+                print(err)
+                
         func(*args, **kwargs)
 
         plt.title(fargs['title'])
@@ -333,12 +340,6 @@ def decorate_graph(func):
 
         plt.xlim(fargs['xlim'])
         plt.ylim(fargs['ylim'])
-
-        if fargs['colormap'] != None:
-            try:
-                plt.set_cmap(fargs['colormap'])
-            except ValueError as err:
-                print(err)
 
         if fargs['colorbar']:
             plt.colorbar()

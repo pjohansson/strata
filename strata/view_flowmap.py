@@ -7,7 +7,8 @@ from strata.utils import decorate_graph
 
 
 def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
-        colour=None, vlim=(None, None), pivot='middle', **kwargs):
+        alpha_label=None, alpha_cutoff=None, alpha_percentile=None,
+        colour=None, vlim=(None, None), pivot='middle', trans=None, **kwargs):
     """View flow fields of input files.
 
     Args:
@@ -21,8 +22,18 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
 
         cutoff_label (str, optional): Label for cutting data.
 
+        alpha_label (str, optional): Label for alpha data.
+
+        alpha_cutoff (float, optional): Limit of alpha data. Prioritized
+            over the percentile (see below).
+
+        alpha_percentile (int, optional): Percentile of alpha data to use
+            as limit. Overridden if a direct value is input (see above).
+
         colour (str, optional): Colour flow fields with data from this label,
             or enter 'flow' to colour by flow magnitude.
+
+        trans (str, optional): Set flow field transparency using this label.
 
         pivot (str, optional): Pivot for flow field arrows.
 
@@ -41,6 +52,7 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
     # Get some limits on coordinates and an optional cut-off
     xlim, ylim = [kwargs.get(lims, (None, None)) for lims in ('xlim', 'ylim')]
     clim = (cutoff_label, cutoff)
+    alim = (alpha_label, alpha_percentile, alpha_cutoff)
 
     for i, (data, _, _) in enumerate(read_from_files(*files)):
         flow = FlowData(data)
@@ -48,19 +60,19 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
         if colour == 'flow':
             flow.data = add_absolute_flow(flow.data)
 
-        xs, ys, us, vs, weights = get_quiver_data(flow.data,
+        xs, ys, us, vs, weights, alphas = get_quiver_data(flow.data,
                 list(labels), coord_labels, colour,
-                clim, xlim, ylim)
+                clim, alim, xlim, ylim)
 
         try:
-            plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs)
+            plot_quiver(xs, ys, us, vs, weights, alphas, pivot, vlim, **kwargs)
         except Exception as err:
             print("Could not draw/save figure: ", end='')
             print(err)
             break
 
 
-def get_quiver_data(data, labels, coord_labels, colour, clim, xlim, ylim):
+def get_quiver_data(data, labels, coord_labels, colour, clim, alim, xlim, ylim):
     """Return the flow data after cutting out empty cells.
 
     Empty cells are cells without any flow or with a value less
@@ -79,6 +91,10 @@ def get_quiver_data(data, labels, coord_labels, colour, clim, xlim, ylim):
 
         clim (label, value): Optional cutoff label and value for
             data points to return. None means no cutoff is applied.
+
+        alim (label, percentile, cutoff): Optional cutoff label, percentile
+            and cutoff value for the alpha channel. The cutoff value
+            is prioritized.
 
         xlim, ylim (2-tuples): Limits of axes.
 
@@ -113,23 +129,48 @@ def get_quiver_data(data, labels, coord_labels, colour, clim, xlim, ylim):
 
     # Weights are either from input label or unit
     try:
-        assert(colour != None)
         weights = data[colour]
+
     except Exception:
         weights = np.ones(data.size)
 
-    return (cs[inds] for cs in (xs, ys, us, vs, weights))
+    # Get alpha label and max
+    alabel, percentile, cutoff = alim
+
+    try:
+        alphas = data[alabel]
+
+        if cutoff != None:
+            amax = cutoff
+            alphas = alphas.clip(0., amax)/amax
+        elif percentile != None:
+            amax = np.percentile(data[alabel], percentile)
+            alphas = alphas.clip(0., amax)/amax
+        else:
+            alphas /= np.max(alphas)
+
+    except Exception:
+        alphas = np.ones(data.size)
+
+    return (cs[inds] for cs in (xs, ys, us, vs, weights, alphas))
 
 
 @decorate_graph
-def plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs):
+def plot_quiver(xs, ys, us, vs, weights, alphas, pivot, vlim, **kwargs):
     """Draw a quiver plot of input data."""
 
     scale = kwargs.get('scale', 1.)
     width = kwargs.get('width', 0.0015)
 
-    fig = plt.quiver(xs, ys, us, vs, weights, clim=vlim,
+    fig = plt.quiver(xs, ys, us, vs, clim=vlim,
             scale=scale, width=width, pivot=pivot)
+
+    # Set the arrow colours manually here since they won't update
+    # if they are previously set
+    collection = fig.ax.collections[0]
+    colors = collection.to_rgba(weights) # This translates from the set colormap
+    colors[:,3] = alphas
+    collection.set_color(colors)
 
     return fig
 
@@ -241,4 +282,3 @@ def add_absolute_flow(data):
     absolute_flow = np.sqrt(data['U']**2 + data['V']**2)
 
     return append_fields(data, 'flow', absolute_flow, dtypes='float')
-
