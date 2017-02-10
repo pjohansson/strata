@@ -800,10 +800,6 @@ def view_heightmap_cli(files, **kwargs):
 @add_option('-cl', '--colour_label', 'colour',
         type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow']), default='T',
         help='Colour the flow by values of this label.')
-@add_option('--alpha', is_flag=True,
-        help='Set alpha values based on the mass (95th percentile).')
-@add_option('-aco', '--alpha_cutoff', type=float, default=None, metavar='MASS',
-        help='Directly set a mass cutoff for the alpha channel.')
 @add_option('--scale', default=1., help='Scale for quiver arrows. (1)')
 @add_option('--width', default=0.0015, help='Width of quiver arrows. (0.0015)')
 @add_option('--pivot', default='middle', type=click.Choice(['tail', 'middle', 'tip']),
@@ -837,10 +833,6 @@ def view_quiver_cli(files, **kwargs):
     shown.
 
     """
-
-    if kwargs.pop('alpha'):
-        kwargs['alpha_label'] = 'M'
-        kwargs['alpha_percentile'] = 95
 
     view_flowfields(*files, cutoff_label='M', **kwargs)
 
