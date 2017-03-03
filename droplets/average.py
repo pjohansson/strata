@@ -6,8 +6,8 @@ from strata.dataformats.write import write
 """Module for averaging FlowData objects."""
 
 
-def average_flow_data(input_flow_maps, weights=[], exclude_empty_sets=False,
-        coord_labels=('X', 'Y')):
+def average_flow_data(input_flow_maps, weights=[],
+        exclude_empty_sets=False, coord_decimals=None, coord_labels=('X', 'Y')):
     """Average input FlowData objects.
 
     The input data is projected onto a common coordinate grid before
@@ -73,6 +73,12 @@ def average_flow_data(input_flow_maps, weights=[], exclude_empty_sets=False,
         raise ValueError("No FlowData input.")
     except AssertionError:
         raise ValueError("No bin spacings set in FlowData input.")
+
+    if coord_decimals:
+        spacing = [np.around(s, decimals=coord_decimals) for s in spacing]
+        for flow in input_flow_maps:
+            flow.data['X'] = np.around(flow.data['X'], decimals=coord_decimals)
+            flow.data['Y'] = np.around(flow.data['Y'], decimals=coord_decimals)
 
     xl, yl = coord_labels
     data_list = [flow.data for flow in input_flow_maps
@@ -196,6 +202,8 @@ def transfer_data(grid, data, coord_labels=('X', 'Y')):
     full_data = grid.copy()
 
     for d in data:
+        # Ensure that the data has the same coordinates as
+        # the constructed grid
         x, y = np.array([d[l] for l in (xl, yl)])
         ind = np.isclose(full_data[xl], x, atol=1e-4) & np.isclose(full_data[yl], y, atol=1e-4)
 
