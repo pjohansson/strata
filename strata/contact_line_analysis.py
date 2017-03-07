@@ -9,8 +9,8 @@ from strata.dataformats.write import write
 from strata.utils import gen_filenames, find_datamap_files, pop_fileopts
 
 
-def extract_contact_line_bins(base, output, average=1, rolling=False,
-        recenter=False, **kwargs):
+def extract_contact_line_bins(base, output, average=1, rolling=False, recenter=False,
+                             **kwargs):
     """Extract bins from the contact line of a wetting system.
 
     Can average the extracted data by supplying a positive number of
@@ -41,6 +41,25 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
 
     """
 
+    fopts = pop_fileopts(kwargs)
+
+    kwargs['cutoff_label'] = 'M'
+    weights = [('U', 'M'), ('V', 'M'), ('T', 'N')]
+
+    filenames = list(find_datamap_files(base, **fopts))
+    fnout = gen_filenames(output, **fopts)
+
+    averaged_data = get_averaged_contact_line_edges(filenames, average, rolling, recenter, weights, **kwargs)
+
+    for spacing, avg_flow_per_edge in averaged_data:
+        recombined_flow_data = combine_flow_data(avg_flow_per_edge, spacing)
+        write(next(fnout), recombined_flow_data.data)
+
+
+def get_averaged_contact_line_edges(filenames, average, rolling,
+        recenter, weights, **kwargs):
+    """Read data from filebanes and yield averaged edges with their spacing."""
+
     def adjust_coordinates(avg_flow, xadj_per_edge, dx, yadj, recenter):
         """Adjust the extracted cell coordinates."""
 
@@ -61,28 +80,36 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
 
         return (np.floor(x/dx) + 0.5)*dx
 
-    fopts = pop_fileopts(kwargs)
     quiet = kwargs.pop('quiet', False)
-
-    kwargs.setdefault('extract_area', (1., 1.))
-    kwargs['cutoff_label'] = 'M'
-    weights = [('U', 'M'), ('V', 'M'), ('T', 'N')]
-
-    fns = list(find_datamap_files(base, **fopts))
-    fnout = gen_filenames(output, **fopts)
-
     if not quiet:
-        if rolling: length = len(fns) - average + 1
-        else: length = int(len(fns)/average)
-        length = len(fns)
+        if rolling:
+            length = len(filenames) - average + 1
+        else:
+            length = int(len(filenames)/average)
 
         widgets = ['Extracting contact line: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
         progress = pbar.ProgressBar(widgets=widgets, maxval=length)
         progress.start()
 
-    # Get a generator which reads data to average over
-    grouped_data = get_grouped_data(fns, average, rolling,
+    # Get a generator which reads data to average over.
+    #
+    # The data is yielded as a somewhat complex object:
+    # grouped_data = (spacing, left, right) where
+    # spacing is the read spacing along x and y for the data
+    # and left/right are lists of the averaging length, where
+    # each element is in itself a tuple.
+    #
+    # These tuples contain the flow data for each map, which has
+    # been moved so that the innermost edge of the extracted contact
+    # line area (from the interface) is placed at x, y = 0, 0.
+    # The other part of the tuple is the original coordinates so that
+    # we can later on move the data to the original positions after
+    # the averaging is finished.
+    #
+    # This structure is a bit too complex and should be fixed.
+
+    grouped_data = get_grouped_data(filenames, average, rolling,
             progress, quiet, **kwargs)
 
     for spacing, left, right in grouped_data:
@@ -102,7 +129,8 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
         yadj = get_coord_on_grid(0, spacing[1])
         avg_flow_per_edge = adjust_coordinates(avg_flow_per_edge,
                 xadj_per_edge, spacing[0], yadj, recenter)
-        write(next(fnout), combine_flow_data(avg_flow_per_edge, spacing).data)
+
+        yield spacing, avg_flow_per_edge
 
     if not quiet:
         progress.finish()
