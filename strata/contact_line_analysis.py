@@ -6,7 +6,8 @@ from droplets.contact_line import *
 from droplets.flow import FlowData
 from strata.dataformats.read import read_data_file
 from strata.dataformats.write import write
-from strata.utils import gen_filenames, find_datamap_files, pop_fileopts
+from strata.sample_average import sample_value
+from strata.utils import gen_filenames, find_datamap_files, pop_fileopts, prepare_path, write_module_header
 
 
 def extract_contact_line_bins(base, output, average=1, rolling=False, recenter=False,
@@ -59,6 +60,87 @@ def extract_contact_line_bins(base, output, average=1, rolling=False, recenter=F
     for spacing, avg_flow_per_edge in averaged_data:
         recombined_flow_data = combine_flow_data(avg_flow_per_edge, spacing)
         write(next(fnout), recombined_flow_data.data)
+
+
+def sample_contact_line_edges(base, label, save=None,
+                              average=1, rolling=False, recenter=False,
+                              dt=1., sum=False, viscosity=8.44e-4,
+                              **kwargs):
+    """Sample data of bins from the contact line of a wetting system.
+
+    Can average the extracted data by supplying a positive number of
+    files to perform the average over.
+
+    Args:
+        base (str): Base path to input files.
+
+        label (str): Label to sample data of.
+
+    Keyword Args:
+        average (int, optional): Number of files to average data over.
+
+        rolling (bool, optional): Perform a rolling average over the data.
+
+        recenter (bool, optional): Recenter the contact line edges around zero.
+
+        dt (float, optional): Time difference between data files.
+
+        save (str, optional): Save the data as an xmgrace formatted file.
+
+        begin (int, default=1): First data map number.
+
+        end (int, default=inf): Final data map number.
+
+        ext (str, default='.dat'): File extension.
+
+        quiet (bool, default=False): Do not print progress.
+
+    See `droplets.contact_line` for additional keyword arguments.
+
+    """
+
+    def prepare_output(output, label, cutoff, cutoff_label, average, rolling, header_opts, fopts):
+        header_opts.update(fopts)
+        write_header(output, base, label, cutoff, cutoff_label, average, rolling, header_opts)
+
+    fopts = pop_fileopts(kwargs)
+
+    cutoff_label = 'M'
+    cutoff = kwargs.get('cutoff', None)
+
+    kwargs['cutoff_label'] = cutoff_label
+    weights = [('U', 'M'), ('V', 'M'), ('T', 'N')]
+
+    if save:
+        try:
+            prepare_output(save, label, cutoff, cutoff_label, average, rolling, kwargs.copy(), fopts)
+        except PermissionError:
+            print("[WARNING] Output disabled: could not open '%s' for writing."
+                % save)
+            save = None
+
+    filenames = list(find_datamap_files(base, **fopts))
+
+    # An input floor should be used which is set by the `ylims` which
+    # is in the end passed to the interface search function
+    floor = kwargs.pop('floor', None)
+    kwargs['ylims'] = (floor, None)
+
+    averaged_data = get_averaged_contact_line_edges(filenames, average, rolling, recenter, weights, **kwargs)
+
+    samples = []
+    times = []
+
+    for i, (spacing, avg_flow_per_edge) in enumerate(averaged_data):
+        recombined_flow_data = combine_flow_data(avg_flow_per_edge, spacing)
+        samples.append(sample_value(recombined_flow_data, label, cutoff, cutoff_label, sum, viscosity))
+        times.append((0.5*average + i)*dt)
+
+        if save:
+            with open(save, 'a') as fp:
+                fp.write('%.3f %g\n' % (times[-1], samples[-1]))
+
+    return times, samples
 
 
 def get_averaged_contact_line_edges(filenames, average, rolling,
@@ -147,7 +229,8 @@ def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
     label = kwargs.pop('cutoff_label')
     left, right = [], []
 
-    for i, fn in enumerate(fns):
+    j = 0
+    for fn in fns:
         data, info, _ = read_data_file(fn)
         left_cells, right_cells = get_contact_line_cells(
                 FlowData(data), label, **kwargs)
@@ -155,11 +238,11 @@ def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
         left.append(add_adjusted_flow(left_cells, 'left', info))
         right.append(add_adjusted_flow(right_cells, 'right', info))
 
-        if not quiet:
-            progress.update(i+1)
-            i += 1
-
         if len(left) == average:
+            if not quiet:
+                progress.update(j+1)
+                j += 1
+
             yield info['spacing'], left, right
 
             if rolling == True:
@@ -222,3 +305,32 @@ def add_adjusted_flow(cells, direction, info):
     flow = FlowData(*adj_data, info=info)
 
     return xadj, flow
+
+
+@prepare_path
+def write_header(output_path, input_base, label, cutoff, cutoff_label, average, rolling, kwargs):
+    """Verify that output path is writable and write header."""
+
+    title = "Sample average of contact line data from a simulation"
+    write_module_header(output_path, __name__, title)
+
+    with open(output_path, 'a') as fp:
+        inputs = (
+                "# Input:\n"
+                "#   Sample data label: %r\n"
+                "#   Average over # files: %r\n"
+                "#   Rolling average: %s\n"
+                "#   File base path: %r\n"
+                "#   Begin, end: %r, %r\n"
+                "#   Delta-t: %r\n"
+                "#   Cut-off: %r\n"
+                "#   Cut-off label: %r\n"
+                "# \n"
+                "# Time (ps) %s\n"
+                % (label, average, rolling, os.path.realpath(input_base),
+                    kwargs.get('begin', None), kwargs.get('end', None),
+                    kwargs.get('dt', 1.), cutoff,
+                    cutoff_label, label
+                    ))
+
+        fp.write(inputs)
