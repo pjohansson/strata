@@ -37,7 +37,7 @@ def test_average_data():
 
     run_test_with_settings(datasize=4, numdata=1)
     run_test_with_settings(datasize=8, numdata=1e3)
-    run_test_with_settings(datasize=1e5, numdata=2)
+    run_test_with_settings(datasize=int(1e5), numdata=2)
 
 
 def test_avg_different_sizes():
@@ -112,4 +112,3 @@ def test_read_and_average():
     avg_data = average_data(data1, data2)
     for label in ('M', 'N'):
         assert (np.allclose(np.sum(avg_data[label]), 2*np.sum(data1[label])))
-    
