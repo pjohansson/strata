@@ -23,7 +23,7 @@ system['Y'] = ys.ravel()
 system['C'] = cs.ravel()
 
 def test_find_indices_in_radius():
-    cell = np.floor(system.size/2)
+    cell = int(np.floor(system.size/2))
 
     radius = 1 - 1e-6
     indices = intf._get_indices_in_radius(cell, system, radius)
@@ -43,7 +43,7 @@ def test_find_indices_in_radius_general_names():
     system['f0'] = xs.ravel()
     system['f1'] = ys.ravel()
 
-    cell = np.floor(system.size/2)
+    cell = int(np.floor(system.size/2))
 
     radius = 1
     indices = intf._get_indices_in_radius(cell, system, radius, coord_labels=('f0', 'f1'))

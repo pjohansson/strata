@@ -277,8 +277,8 @@ def _get_indices_in_radius(cell, system, radius, **kwargs):
     coord_labels = kwargs.pop('coord_labels', ('X', 'Y'))
     radius_sq = radius**2
 
-    x, y = (system[cell][coord_labels[i]] for i in (0, 1))
-    xs, ys = (system[coord_labels[i]] for i in (0, 1))
+    x, y = [system[l][cell] for l in coord_labels]
+    xs, ys = [system[l] for l in coord_labels]
 
     # Extract part of dataset before radius search
     ixs = np.where((xs - x)**2 <= radius_sq)[0]
