@@ -105,7 +105,7 @@ def test_spreading():
     ys = np.zeros(datasize) + 1.5
     ms = np.zeros(datasize)
     other = np.zeros(datasize)
-    icenter = np.floor(datasize/2)
+    icenter = int(np.floor(datasize/2))
 
     dt = 10
 
@@ -143,7 +143,7 @@ def test_spreading():
 
         # Collect spreading from files
         output = os.path.join(tmpdir, 'spread.xvg')
-        spreading_data = collect(base, output=output, dt=dt,
+        spreading_data = collect(base, save=output, dt=dt,
                 floor=1.5, include_radius=1)
         assert (np.allclose(spreading_data['r'], control_array['r']))
         assert (np.allclose(spreading_data['t'], control_array['t']))
