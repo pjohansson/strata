@@ -34,7 +34,7 @@ All command line functionality is called from the installed utility `strata`.
 
     Commands:
       average       Average multiple input data files.
-      contact_line  Analyse data around the contact line.
+      contact_line  Analyze the contact line bins.
       convert       Convert data files to another format.
       interface     Work with interface data of droplets.
       sample        Sample data maps.
