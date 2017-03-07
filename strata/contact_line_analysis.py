@@ -49,6 +49,11 @@ def extract_contact_line_bins(base, output, average=1, rolling=False, recenter=F
     filenames = list(find_datamap_files(base, **fopts))
     fnout = gen_filenames(output, **fopts)
 
+    # An input floor should be used which is set by the `ylims` which
+    # is in the end passed to the interface search function
+    floor = kwargs.pop('floor', None)
+    kwargs['ylims'] = (floor, None)
+
     averaged_data = get_averaged_contact_line_edges(filenames, average, rolling, recenter, weights, **kwargs)
 
     for spacing, avg_flow_per_edge in averaged_data:
