@@ -798,7 +798,7 @@ def view_heightmap_cli(files, **kwargs):
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Minimum mass of bins to draw fields for. (0)')
 @add_option('-cl', '--colour_label', 'colour',
-        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow']), default='T',
+        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow', 'visc']), default='T',
         help='Colour the flow by values of this label.')
 @add_option('--scale', default=1., help='Scale for quiver arrows. (1)')
 @add_option('--width', default=0.0015, help='Width of quiver arrows. (0.0015)')

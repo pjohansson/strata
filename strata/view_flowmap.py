@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from droplets.flow import FlowData
+from droplets.sample import sample_viscous_dissipation
 from strata.dataformats.read import read_from_files
 from strata.utils import decorate_graph
 
@@ -42,11 +43,13 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
     xlim, ylim = [kwargs.get(lims, (None, None)) for lims in ('xlim', 'ylim')]
     clim = (cutoff_label, cutoff)
 
-    for i, (data, _, _) in enumerate(read_from_files(*files)):
-        flow = FlowData(data)
+    for i, (data, info, _) in enumerate(read_from_files(*files)):
+        flow = FlowData(data, info=info)
 
         if colour == 'flow':
             flow.data = add_absolute_flow(flow.data)
+        elif colour == 'visc':
+            add_viscous_dissipation(flow, viscosity=8.77e-4)
 
         xs, ys, us, vs, weights = get_quiver_data(flow.data,
                 list(labels), coord_labels, colour,
@@ -242,3 +245,38 @@ def add_absolute_flow(data):
 
     return append_fields(data, 'flow', absolute_flow, dtypes='float')
 
+
+def add_viscous_dissipation(flow, viscosity):
+    """Add the viscous dissipation as a field named 'visc'.
+
+    The dissipation is added as a new label for the data array.
+
+    Args:
+        data (ndarray): Record which must contain coordinate labels 'X' and 'Y'
+            as well as flow labels 'U' and 'V'.
+
+    """
+
+    from numpy.lib.recfunctions import append_fields
+
+    dx, dy = flow.spacing
+    nx, ny = flow.shape
+
+
+    flow.data = np.sort(flow.data, order=['Y', 'X']).reshape(ny, nx)
+    U, V = [flow.data[l]*flow.data['M'] for l in ['U', 'V']]
+
+
+    dudy, dudx = np.gradient(U, dy, dx, edge_order=2)
+    dvdy, dvdx = np.gradient(V, dy, dx, edge_order=2)
+    dvdy *= 0.0
+
+    viscous_dissipation = 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
+            + viscosity*(dvdx + dudy)**2
+    viscous_dissipation = dudy
+
+    flow.data = flow.data.ravel()
+    viscous_dissipation = viscous_dissipation.ravel()
+    viscous_dissipation /= flow.data['M']
+
+    flow.data = append_fields(flow.data, 'visc', viscous_dissipation, dtypes='float')
