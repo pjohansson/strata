@@ -255,14 +255,19 @@ def get_combined_grid(data, spacing, coord_labels=('X', 'Y')):
     xmin, xmax = get_min_and_max(nonempty_data, xl)
     ymin, ymax = get_min_and_max(nonempty_data, yl)
     dx, dy = spacing
+    nx, ny = round((xmax - xmin)/dx), round((ymax - ymin)/dy)
 
-    xs = np.arange(xmin, xmax+dx, dx)
-    ys = np.arange(ymin, ymax+dy, dy)
+    x = np.arange(xmin, xmax+dx, dx)
+    y = np.arange(ymin, ymax+dy, dy)
+    #print(x, y)
+    x = np.linspace(xmin, xmax, nx+1)
+    y = np.linspace(ymin, ymax, ny+1)
+    #print(x, y)
 
-    x, y = np.meshgrid(xs, ys)
+    xs, ys = np.meshgrid(x, y)
 
-    combined_grid = np.zeros(x.size, dtype=data[-1].dtype)
-    combined_grid[xl] = x.ravel()
-    combined_grid[yl] = y.ravel()
+    combined_grid = np.zeros(xs.size, dtype=data[-1].dtype)
+    combined_grid[xl] = xs.ravel()
+    combined_grid[yl] = ys.ravel()
 
     return combined_grid
