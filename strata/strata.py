@@ -113,13 +113,19 @@ cmd_contactline = {
         'name': 'contact_line',
         'desc': 'Analyse data around the contact line.'
         }
-cmd_contactline_sample = {
-        'name': 'contact_line_sample',
-        'desc': 'Analyse data around the contact line.'
-        }
 cmd_sample = {
         'name': 'sample',
         'desc': 'Sample data maps.'
+}
+
+
+cmd_contactline_extract = {
+        'name': 'collect',
+        'desc': 'Extract the contact line and collect to new files.'
+}
+cmd_contactline_sample = {
+        'name': 'sample',
+        'desc': 'Sample data from the contact line cells.'
 }
 
 
@@ -646,8 +652,13 @@ def interface_angle_cli(base, **kwargs):
     interface_contact_angle(base, **kwargs)
 
 # Contact line averaging wrapper
-@strata.command(name=cmd_contactline['name'],
-        short_help=cmd_contactline['desc'])
+@strata.group()
+def contact_line(name=cmd_contactline['name'], short_help=cmd_contactline['desc']):
+    """Analyze the contact line bins."""
+    pass
+
+@contact_line.command(name=cmd_contactline_extract['name'],
+        short_help=cmd_contactline_extract['desc'])
 @add_argument('base', type=str)
 @add_argument('output', type=str)
 @add_option('-av', '--average', default=1,
@@ -677,7 +688,7 @@ def interface_angle_cli(base, **kwargs):
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read and write using this file extension. (.dat)')
-def cl_average_cli(base, output, **kwargs):
+def cl_extract_cli(base, output, **kwargs):
     """Extract the contact line area of files at BASE and write to OUTPUT.
 
     The contact line area is determined as: For each considered bin
@@ -706,12 +717,10 @@ def cl_average_cli(base, output, **kwargs):
 
 
 # Contact line averaging wrapper
-@strata.command(name=cmd_contactline_sample['name'],
+@contact_line.command(name=cmd_contactline_sample['name'],
         short_help=cmd_contactline_sample['desc'])
 @add_argument('base', type=str)
 @add_argument('label', type=str)
-@add_option('--save', default=None, type=str,
-        help='Save sampled data to disk. (False)')
 @add_option('-av', '--average', default=1,
         type=click.IntRange(1, None), metavar='INTEGER',
         help='Sample average the extracted data of this many files.')
@@ -735,6 +744,8 @@ def cl_average_cli(base, output, **kwargs):
         help='Boundary bins search for neighbours within this radius. (1 nm)')
 @add_option('-cb', '--cutoff_bins', default=1,
         help='Boundary bins require this many neighbours (1).')
+@add_option('--save', default=None, type=str,
+        help='Save sampled data to disk. (False)')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
@@ -744,7 +755,7 @@ def cl_average_cli(base, output, **kwargs):
 @add_option('--ext', default='.dat',
         help='Read and write using this file extension. (.dat)')
 def cl_sample_cli(base, label, **kwargs):
-    """Extract the contact line area of files at BASE and write to OUTPUT.
+    """Sample LABEL of the contact line area of files at BASE.
 
     The contact line area is determined as: For each considered bin
     in the bottom-most layer which has more mass than a set cut-off, a
