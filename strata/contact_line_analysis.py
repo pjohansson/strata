@@ -134,7 +134,13 @@ def sample_contact_line_edges(base, label, save=None,
     for i, (spacing, avg_flow_per_edge) in enumerate(averaged_data):
         recombined_flow_data = combine_flow_data(avg_flow_per_edge, spacing)
         samples.append(sample_value(recombined_flow_data, label, cutoff, cutoff_label, sum, viscosity))
-        times.append((0.5*average + i)*dt)
+
+        if rolling:
+            time = (np.floor(0.5*average) + i)*dt
+        else:
+            time = (np.floor(0.5*average) + i*average)*dt
+
+        times.append(time)
 
         if save:
             with open(save, 'a') as fp:
