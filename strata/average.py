@@ -75,8 +75,8 @@ def average(base, output, group=1, **kwargs):
     recenter = kwargs.pop('recenter', False)
     cutoff_radius = kwargs.pop('cutoff_radius', 1.)
 
-    xlim = kwargs.pop('xlim', None)
-    ylim = kwargs.pop('ylim', None)
+    xlim = kwargs.pop('xlim', (None, None))
+    ylim = kwargs.pop('ylim', (None, None))
 
     cut_x_or_y = False
     try:
