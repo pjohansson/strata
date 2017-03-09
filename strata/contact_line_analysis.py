@@ -136,7 +136,9 @@ def sample_contact_line_edges(base, labels, save=None,
     times = []
 
     for i, (spacing, (left_edge, right_edge)) in enumerate(averaged_data):
-        #left_edge.data['U'] *= -1
+        # Since we are sampling radial flow the left edge velocities
+        # are mirrored along X
+        left_edge.data['U'] *= -1
         recombined_flow_data = combine_flow_data((left_edge, right_edge), spacing)
 
         for j, label in enumerate(labels):
