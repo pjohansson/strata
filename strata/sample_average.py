@@ -3,7 +3,7 @@ import numpy as np
 import progressbar as pbar
 
 from droplets.flow import FlowData
-from droplets.sample import sample_inertial_energy, sample_viscous_dissipation
+from droplets.sample import sample_inertial_energy, sample_viscous_dissipation, sample_flow_angle
 from strata.dataformats.read import read_from_files
 from strata.utils import find_datamap_files, pop_fileopts, prepare_path, write_module_header
 
@@ -22,6 +22,8 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
     dissipation is calculated for the system, which required fields
     'U' and 'V' for the flow, and 'X' and 'Y' for the coordinates. The
     output viscous dissipation is in energy per time and bin volume.
+    The label 'flow_angle' samples the angle of flow along X and Y which
+    requires the fields 'U' and 'V'.
 
     Optionally the total value of the quantity in the system can be returned
     by supplying the keyword argument `sum`.
@@ -123,6 +125,8 @@ def sample_value(flow, label, cutoff, cutoff_label, sum, viscosity):
         sample_data = sample_inertial_energy(flow).ravel()
     elif label == 'visc_diss':
         sample_data = sample_viscous_dissipation(flow, viscosity).ravel()
+    elif label == 'flow_angle':
+        sample_data = sample_flow_angle(flow).ravel()
     else:
         sample_data = flow.data[label]
 
@@ -138,7 +142,18 @@ def sample_value(flow, label, cutoff, cutoff_label, sum, viscosity):
                     % cutoff_label)
 
     if not sum:
-        value = np.mean(sample_data)
+        # To get the mean of angles we need to deal with the wrap-around
+        # at 360 degrees. This is done by transforming the data back to
+        # their components and taking the angle calculation of their sums.
+        # Doing the sum of an angle calculation (below) doesn't make any
+        # sense so nothing is done for that.
+        if label == 'flow_angle':
+            angles = np.radians(sample_data)
+            mean_angle = np.arctan2(np.sin(angles).sum(), np.cos(angles).sum())
+            value = (np.degrees(mean_angle) + 360) % 360
+        else:
+            value = np.mean(sample_data)
+
     else:
         value = np.sum(sample_data)
 
