@@ -175,3 +175,35 @@ def sample_inertial_energy(flow, mass_label='M', flow_labels=['U', 'V']):
 
     ul, vl = flow_labels
     return 0.5*flow.data[mass_label]*(flow.data[ul]**2 + flow.data[vl]**2)
+
+
+def sample_flow_angle(flow, flow_labels=['U', 'V']):
+    """Returns the angle of the flow of all bins in the system in degrees.
+
+    Args:
+        flow (FlowData): Object to calculate angles from. Must contain fields
+            flow along X-Y.
+
+    Keyword args:
+        flow_labels (2-tuple, default=('U', 'V'): Record labels for flow.
+
+    Returns:
+        ndarray: Angles in degrees.
+
+    """
+
+    try:
+        ulabel, vlabel = flow_labels
+    except:
+        raise ValueError("Exactly 2 flow labels must be input, but got %d (%r)"
+            % (len(flow_labels), flow_labels))
+
+    try:
+        angles = np.arctan2(flow.data[vlabel], flow.data[ulabel])
+    except:
+        raise ValueError("Flow labels %r were not found in the system"
+            % flow_labels)
+
+    angles_full_range = (angles + 2*np.pi) % (2*np.pi)
+
+    return np.degrees(angles_full_range)
