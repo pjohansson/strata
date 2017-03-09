@@ -8,17 +8,17 @@ from strata.dataformats.read import read_from_files
 from strata.utils import find_datamap_files, pop_fileopts, prepare_path, write_module_header
 
 
-def sample_average_files(base, label, output=None, sum=False, dt=1.,
+def sample_average_files(base, labels, output=None, sum=False, dt=1.,
         cutoff_label=None, cutoff=None, viscosity=8.77e-4, **kwargs):
-    """Sample average collected data of input label from files.
+    """Sample average collected data of input labels from files.
 
     Returns lists with input file times and the averaged sampled value
     of bins for the corresponding time.
 
-    The label has to be present in the read data files. If the label is
+    The labels have to be present in the read data files. If a label is
     'inertial_energy' the inertial energy is calculated for the system,
     in which case the data files must contain fields 'U' and 'V' for
-    flow and 'M' for mass. If the label is 'visc_diss' the viscous
+    flow and 'M' for mass. If one label is 'visc_diss' the viscous
     dissipation is calculated for the system, which required fields
     'U' and 'V' for the flow, and 'X' and 'Y' for the coordinates. The
     output viscous dissipation is in energy per time and bin volume.
@@ -37,7 +37,7 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
     Args:
         base (str): Base path to input files.
 
-        label (str): Label of data to sample.
+        labels (str's): Labels of data to sample. Can be a set.
 
     Keyword Args:
         output (str, optional): Write sample data to an output file.
@@ -66,46 +66,49 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
 
     """
 
-    def prepare_output(output, label, cutoff, cutoff_label, header_opts, fopts):
+    def prepare_output(output, labels, cutoff, cutoff_label, header_opts, fopts):
         header_opts.update(fopts)
-        write_header(output, base, label, cutoff, cutoff_label, header_opts)
+        write_header(output, base, labels, cutoff, cutoff_label, header_opts)
 
     fopts = pop_fileopts(kwargs)
     files = list(find_datamap_files(base, **fopts))
 
     if output:
         try:
-            prepare_output(output, label, cutoff, cutoff_label, kwargs.copy(), fopts)
+            prepare_output(output, labels, cutoff, cutoff_label, kwargs.copy(), fopts)
         except PermissionError:
             print("[WARNING] Output disabled: could not open '%s' for writing."
                 % output)
             output = None
 
-    sampled_values = []
+    sampled_values = [[] for _ in labels]
 
     quiet = kwargs.pop('quiet', False)
     if not quiet:
-        widgets = ['Sampling \'%s\' from files: ' % label,
+        widgets = ['Sampling from files: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
         progress = pbar.ProgressBar(widgets=widgets, maxval=len(files))
         progress.start()
 
     for i, (data, info, _) in enumerate(read_from_files(*files)):
         flow = FlowData(*[(l, data[l]) for l in ['X', 'Y', 'U', 'V', 'M', 'N', 'T']], info=info)
-        try:
-            value = sample_value(flow, label, cutoff, cutoff_label, sum, viscosity)
-        except KeyError:
-            print("[ERROR] Bad label: no data with label '%s' in system." % label)
-            return [], []
-        except Exception as err:
-            print("Encountered exception: %r" % err)
-            return [], []
+
+        for j, label in enumerate(labels):
+            try:
+                value = sample_value(flow, label, cutoff, cutoff_label, sum, viscosity)
+                sampled_values[j].append(value)
+            except KeyError:
+                print("[ERROR] Bad label: no data with label '%s' in system." % label)
+                return
+            except Exception as err:
+                print("Encountered exception: %r" % err)
+                return
 
         if output:
             with open(output, 'a') as fp:
-                fp.write('%.3f %g\n' % (i*dt, value))
-
-        sampled_values.append(value)
+                fp.write('%.3f ' % (i*dt))
+                fp.write(' '.join(['%g' % values[-1] for values in sampled_values]))
+                fp.write('\n')
 
         if not quiet:
             progress.update(i+1)
@@ -113,7 +116,7 @@ def sample_average_files(base, label, output=None, sum=False, dt=1.,
     if not quiet:
         progress.finish()
 
-    times = [i*dt for i in range(len(sampled_values))]
+    times = [i*dt for i in range(len(sampled_values[0]))]
 
     return times, sampled_values
 
@@ -161,7 +164,7 @@ def sample_value(flow, label, cutoff, cutoff_label, sum, viscosity):
 
 
 @prepare_path
-def write_header(output_path, input_base, label, cutoff, cutoff_label, kwargs):
+def write_header(output_path, input_base, labels, cutoff, cutoff_label, kwargs):
     """Verify that output path is writable and write header."""
 
     title = "Sample average of data from a simulation"
@@ -170,7 +173,7 @@ def write_header(output_path, input_base, label, cutoff, cutoff_label, kwargs):
     with open(output_path, 'a') as fp:
         inputs = (
                 "# Input:\n"
-                "#   Sample data label: %r\n"
+                "#   Sample data labels: %r\n"
                 "#   File base path: %r\n"
                 "#   Begin, end: %r, %r\n"
                 "#   Delta-t: %r\n"
@@ -178,10 +181,10 @@ def write_header(output_path, input_base, label, cutoff, cutoff_label, kwargs):
                 "#   Cut-off label: %r\n"
                 "# \n"
                 "# Time (ps) %s\n"
-                % (label, os.path.realpath(input_base),
+                % (labels, os.path.realpath(input_base),
                     kwargs.get('begin', None), kwargs.get('end', None),
                     kwargs.get('dt', 1.), cutoff,
-                    cutoff_label, label
+                    cutoff_label, ' '.join([l for l in labels])
                     ))
 
         fp.write(inputs)

@@ -716,11 +716,11 @@ def cl_extract_cli(base, output, **kwargs):
     extract_contact_line_bins(base, output, **kwargs)
 
 
-# Contact line averaging wrapper
+# Contact line sampling wrapper
 @contact_line.command(name=cmd_contactline_sample['name'],
         short_help=cmd_contactline_sample['desc'])
 @add_argument('base', type=str)
-@add_argument('label', type=str)
+@add_argument('labels', type=str, nargs=-1, required=True)
 @add_option('-av', '--average', default=1,
         type=click.IntRange(1, None), metavar='INTEGER',
         help='Sample average the extracted data of this many files.')
@@ -754,8 +754,8 @@ def cl_extract_cli(base, output, **kwargs):
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read and write using this file extension. (.dat)')
-def cl_sample_cli(base, label, **kwargs):
-    """Sample LABEL of the contact line area of files at BASE.
+def cl_sample_cli(base, labels, **kwargs):
+    """Sample LABELS of the contact line area of files at BASE.
 
     The contact line area is determined as: For each considered bin
     in the bottom-most layer which has more mass than a set cut-off, a
@@ -781,7 +781,7 @@ def cl_sample_cli(base, label, **kwargs):
     set_none_to_inf(kwargs)
     sum = kwargs.pop('process') == 'sum'
     kwargs['sum'] = sum
-    sample_contact_line_edges(base, label, **kwargs)
+    sample_contact_line_edges(base, labels, **kwargs)
 
 
 @strata.group()
@@ -924,7 +924,7 @@ def view_quiver_cli(files, **kwargs):
 
 @strata.command(name=cmd_sample['name'], short_help=cmd_sample['desc'])
 @add_argument('base', type=str)
-@add_argument('label', type=str)
+@add_argument('labels', type=str, nargs=-1, required=True)
 @add_option('-o', '--output', type=click.Path(), default='sample.xvg',
         help='Write the collected data to disk. (sample.xvg)')
 @add_option('-dt', '--delta_t', 'dt', default=1.,
@@ -943,13 +943,13 @@ def view_quiver_cli(files, **kwargs):
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read using this file extension. (.dat)')
-def sample_average_cli(base, label, **kwargs):
+def sample_average_cli(base, labels, **kwargs):
     """Sample average data of input label in files of input base."""
 
     set_none_to_inf(kwargs)
     sum = kwargs.pop('process') == 'sum'
     kwargs['sum'] = sum
-    sample_average_files(base, label, **kwargs)
+    sample_average_files(base, labels, **kwargs)
 
 
 def set_none_to_inf(kwargs, label='end'):

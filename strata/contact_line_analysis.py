@@ -62,7 +62,7 @@ def extract_contact_line_bins(base, output, average=1, rolling=False, recenter=F
         write(next(fnout), recombined_flow_data.data)
 
 
-def sample_contact_line_edges(base, label, save=None,
+def sample_contact_line_edges(base, labels, save=None,
                               average=1, rolling=False, recenter=False,
                               dt=1., sum=False, viscosity=8.44e-4,
                               **kwargs):
@@ -71,10 +71,14 @@ def sample_contact_line_edges(base, label, save=None,
     Can average the extracted data by supplying a positive number of
     files to perform the average over.
 
+    See `strata.sample_average.sample_value` for details on how the sampling
+    is performed. For the case of sampling the velocities along X are radial,
+    meaning that the left edge has its velocity along X reversed before sampling.
+
     Args:
         base (str): Base path to input files.
 
-        label (str): Label to sample data of.
+        labels (str's): Labels to sample data of. Can be a set.
 
     Keyword Args:
         average (int, optional): Number of files to average data over.
@@ -99,9 +103,9 @@ def sample_contact_line_edges(base, label, save=None,
 
     """
 
-    def prepare_output(output, label, cutoff, cutoff_label, average, rolling, header_opts, fopts):
+    def prepare_output(output, labels, cutoff, cutoff_label, average, rolling, header_opts, fopts):
         header_opts.update(fopts)
-        write_header(output, base, label, cutoff, cutoff_label, average, rolling, header_opts)
+        write_header(output, base, labels, cutoff, cutoff_label, average, rolling, header_opts)
 
     fopts = pop_fileopts(kwargs)
 
@@ -113,7 +117,7 @@ def sample_contact_line_edges(base, label, save=None,
 
     if save:
         try:
-            prepare_output(save, label, cutoff, cutoff_label, average, rolling, kwargs.copy(), fopts)
+            prepare_output(save, labels, cutoff, cutoff_label, average, rolling, kwargs.copy(), fopts)
         except PermissionError:
             print("[WARNING] Output disabled: could not open '%s' for writing."
                 % save)
@@ -128,12 +132,15 @@ def sample_contact_line_edges(base, label, save=None,
 
     averaged_data = get_averaged_contact_line_edges(filenames, average, rolling, recenter, weights, **kwargs)
 
-    samples = []
+    samples = [[] for _ in labels]
     times = []
 
-    for i, (spacing, avg_flow_per_edge) in enumerate(averaged_data):
-        recombined_flow_data = combine_flow_data(avg_flow_per_edge, spacing)
-        samples.append(sample_value(recombined_flow_data, label, cutoff, cutoff_label, sum, viscosity))
+    for i, (spacing, (left_edge, right_edge)) in enumerate(averaged_data):
+        #left_edge.data['U'] *= -1
+        recombined_flow_data = combine_flow_data((left_edge, right_edge), spacing)
+
+        for j, label in enumerate(labels):
+            samples[j].append(sample_value(recombined_flow_data, label, cutoff, cutoff_label, sum, viscosity))
 
         if rolling:
             time = (np.floor(0.5*average) + i)*dt
@@ -144,7 +151,9 @@ def sample_contact_line_edges(base, label, save=None,
 
         if save:
             with open(save, 'a') as fp:
-                fp.write('%.3f %g\n' % (times[-1], samples[-1]))
+                fp.write("%.3f " % times[-1])
+                fp.write(' '.join(['%g' % values[-1] for values in samples]))
+                fp.write('\n')
 
     return times, samples
 
@@ -314,7 +323,7 @@ def add_adjusted_flow(cells, direction, info):
 
 
 @prepare_path
-def write_header(output_path, input_base, label, cutoff, cutoff_label, average, rolling, kwargs):
+def write_header(output_path, input_base, labels, cutoff, cutoff_label, average, rolling, kwargs):
     """Verify that output path is writable and write header."""
 
     title = "Sample average of contact line data from a simulation"
@@ -323,7 +332,7 @@ def write_header(output_path, input_base, label, cutoff, cutoff_label, average, 
     with open(output_path, 'a') as fp:
         inputs = (
                 "# Input:\n"
-                "#   Sample data label: %r\n"
+                "#   Sample data labels: %r\n"
                 "#   Average over # files: %r\n"
                 "#   Rolling average: %s\n"
                 "#   File base path: %r\n"
@@ -333,10 +342,10 @@ def write_header(output_path, input_base, label, cutoff, cutoff_label, average, 
                 "#   Cut-off label: %r\n"
                 "# \n"
                 "# Time (ps) %s\n"
-                % (label, average, rolling, os.path.realpath(input_base),
+                % (labels, average, rolling, os.path.realpath(input_base),
                     kwargs.get('begin', None), kwargs.get('end', None),
                     kwargs.get('dt', 1.), cutoff,
-                    cutoff_label, label
+                    cutoff_label, ' '.join(labels)
                     ))
 
         fp.write(inputs)
