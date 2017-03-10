@@ -154,8 +154,8 @@ def sample_value(flow, label, cutoff, cutoff_label, sum, viscosity):
             # to recreate first as a FlowData object for the function.
             # This is a bit silly but the easiest way to do it and still
             # use the tested function in `droplets`.
-            cut_flow = FlowData(*[(l, sample_data[l]) for l in ['U', 'V']])
-            value = sample_flow_angle(cut_flow, mean=True)
+            cut_flow = FlowData(*[(l, sample_data[l]) for l in ['U', 'V', 'M']])
+            value = sample_flow_angle(cut_flow, mean=True, weight='M')
         else:
             value = np.mean(sample_data)
 
