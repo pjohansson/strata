@@ -129,13 +129,17 @@ def sample_value(flow, label, cutoff, cutoff_label, sum, viscosity):
     elif label == 'visc_diss':
         sample_data = sample_viscous_dissipation(flow, viscosity).ravel()
     elif label == 'flow_angle':
-        sample_data = sample_flow_angle(flow).ravel()
+        # If we are sampling the flow angle mean we do things a bit
+        # differently and calculate it further below. We need the
+        # full data set for it and thus keep all the data (minus the
+        # data outside of the cutoff applied below).
+        sample_data = flow.data
     else:
         sample_data = flow.data[label]
 
     if cutoff_label != None:
         if cutoff == None:
-            cutoff = 0.5*(np.max(sample_data) + np.min(sample_data))
+            cutoff = 0.5*(np.max(flow.data[cutoff_label]) + np.min(flow.data[cutoff_label]))
 
         try:
             inds = flow.data[cutoff_label] >= cutoff
@@ -145,19 +149,19 @@ def sample_value(flow, label, cutoff, cutoff_label, sum, viscosity):
                     % cutoff_label)
 
     if not sum:
-        # To get the mean of angles we need to deal with the wrap-around
-        # at 360 degrees. This is done by transforming the data back to
-        # their components and taking the angle calculation of their sums.
-        # Doing the sum of an angle calculation (below) doesn't make any
-        # sense so nothing is done for that.
         if label == 'flow_angle':
-            angles = np.radians(sample_data)
-            mean_angle = np.arctan2(np.sin(angles).sum(), np.cos(angles).sum())
-            value = (np.degrees(mean_angle) + 360) % 360
+            # We calculate the mean angle of the cut system, which we need
+            # to recreate first as a FlowData object for the function.
+            # This is a bit silly but the easiest way to do it and still
+            # use the tested function in `droplets`.
+            cut_flow = FlowData(*[(l, sample_data[l]) for l in ['U', 'V']])
+            value = sample_flow_angle(cut_flow, mean=True)
         else:
             value = np.mean(sample_data)
 
     else:
+        if label == 'flow_angle':
+            raise ValueError("Taking the sum of label `flow_angle` does not make any sense.")
         value = np.sum(sample_data)
 
     return value
