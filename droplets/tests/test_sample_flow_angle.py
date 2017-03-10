@@ -25,3 +25,15 @@ def test_calc_flow_angles_other_labels():
     # Verify that an error is properly raised if the labels were not found
     with pytest.raises(ValueError):
         assert np.isclose(expected_angles, sample_flow_angle(flow)).all()
+
+def test_calc_flow_angle_mean():
+    # Verify that the wrap-around is handled correctly when taking
+    # the mean of angles. Two angles at -1,+1 degrees should have
+    # a mean of 0 degrees.
+    us = np.array([+1, +1])
+    vs = np.array([-0.1, +0.1])
+    expected_mean_angle = 0.
+
+    flow = FlowData(('U', us), ('V', vs))
+
+    assert np.isclose(expected_mean_angle, sample_flow_angle(flow, mean=True))
