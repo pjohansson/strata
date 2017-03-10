@@ -62,12 +62,10 @@ def get_contact_line_cells(flow, label, extract_area=(0., 0.),
 
         # Add the remaining interface indices to the list
         for ind in interface_iter:
-            try:
-                assert (y(ind[0]) <= ymax)
-            except AssertionError:
+            if y(ind[0]) > ymax:
                 break
-            else:
-                interface.append(ind)
+
+            interface.append(ind)
 
         return np.array(interface).swapaxes(0, 1)
 

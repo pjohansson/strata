@@ -191,7 +191,7 @@ def get_averaged_contact_line_edges(filenames, average, rolling,
         else:
             length = int(len(filenames)/average)
 
-        widgets = ['Extracting contact line: ',
+        widgets = ['Extracting/sampling contact line: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
         progress = pbar.ProgressBar(widgets=widgets, maxval=length)
         progress.start()
