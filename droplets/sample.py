@@ -180,6 +180,9 @@ def sample_inertial_energy(flow, mass_label='M', flow_labels=['U', 'V']):
 def sample_flow_angle(flow, flow_labels=['U', 'V']):
     """Returns the angle of the flow of all bins in the system in degrees.
 
+    The angles are returned on the interval (-180, +180) degrees where
+    the positive values correspond to a counter-clockwise direction.
+
     Args:
         flow (FlowData): Object to calculate angles from. Must contain fields
             flow along X-Y.
@@ -204,6 +207,4 @@ def sample_flow_angle(flow, flow_labels=['U', 'V']):
         raise ValueError("Flow labels %r were not found in the system"
             % flow_labels)
 
-    angles_full_range = (angles + 2*np.pi) % (2*np.pi)
-
-    return np.degrees(angles_full_range)
+    return np.degrees(angles)
