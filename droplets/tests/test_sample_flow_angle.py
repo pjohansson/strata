@@ -37,3 +37,38 @@ def test_calc_flow_angle_mean():
     flow = FlowData(('U', us), ('V', vs))
 
     assert np.isclose(expected_mean_angle, sample_flow_angle(flow, mean=True))
+
+def test_calc_flow_angles_bad_number_of_labels():
+    us = np.array([+1, -1, +1, -1])
+    vs = np.array([+1, +1, -1, -1])
+
+    flow = FlowData(('U', us), ('V', vs))
+
+    with pytest.raises(ValueError):
+        sample_flow_angle(flow, flow_labels=['f0', 'f1', 'f2'])
+
+
+def test_calc_weighted_flow_angle_mean():
+    # If we want to weigh the mean angle by their mass (ie. calculcate using
+    # the momentum) this should be possible.
+    angles = np.array([-20., -10., +20.])
+    weights = np.array([1, 0, 1])
+    us = np.cos(np.radians(angles))
+    vs = np.sin(np.radians(angles))
+
+    # With the middle value having no weight the mean should be 0 degrees
+    expected_mean_angle = 0
+
+    flow = FlowData(('U', us), ('V', vs), ('M', weights))
+
+    assert np.isclose(expected_mean_angle, sample_flow_angle(flow, mean=True, weight='M'))
+
+def test_calc_weighted_flow_angle_bad_label():
+    angles = np.array([-20., -10., +20.])
+    us = np.cos(np.radians(angles))
+    vs = np.sin(np.radians(angles))
+
+    flow = FlowData(('U', us), ('V', vs))
+
+    with pytest.raises(ValueError):
+        sample_flow_angle(flow, mean=True, weight='M')

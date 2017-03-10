@@ -177,10 +177,12 @@ def sample_inertial_energy(flow, mass_label='M', flow_labels=['U', 'V']):
     return 0.5*flow.data[mass_label]*(flow.data[ul]**2 + flow.data[vl]**2)
 
 
-def sample_flow_angle(flow, flow_labels=['U', 'V'], mean=False):
+def sample_flow_angle(flow, flow_labels=['U', 'V'], mean=False, weight=None):
     """Returns the angle of the flow of all bins in the system in degrees.
 
-    Optionally sample the mean angle by supplying the `mean` keyword.
+    Optionally sample the mean angle by supplying the `mean` keyword. For
+    this operation the bins can be weighed by other values by supplying
+    the keyword `weight`.
 
     The angles are returned on the interval (-180, +180) degrees where
     the positive values correspond to a counter-clockwise direction.
@@ -194,24 +196,35 @@ def sample_flow_angle(flow, flow_labels=['U', 'V'], mean=False):
 
         mean (bool, default=False): Sample the mean angle.
 
+        weight (str, default=None): Label to weigh the flow by when
+            calculating the mean.
+
     Returns:
         ndarray: Angles in degrees, or a single angle if `mean` is True.
 
     """
 
     try:
-        ulabel, vlabel = flow_labels
-    except:
-        raise ValueError("Exactly 2 flow labels must be input, but got %d (%r)"
-            % (len(flow_labels), flow_labels))
-
-    try:
-        if not mean:
-            angles = np.arctan2(flow.data[vlabel], flow.data[ulabel])
+        us, vs = [flow.data[label].copy() for label in flow_labels]
+    except ValueError as exc:
+        if "no field" in str(exc):
+            raise ValueError("Flow labels %r were not found in the system"
+                % flow_labels)
         else:
-            angles = np.arctan2(flow.data[vlabel].sum(), flow.data[ulabel].sum())
-    except:
-        raise ValueError("Flow labels %r were not found in the system"
-            % flow_labels)
+            raise ValueError("Exactly 2 flow labels must be input, but got %d (%r)"
+                % (len(flow_labels), flow_labels))
+
+    if mean:
+        if weight:
+            try:
+                us *= flow.data[weight]
+                vs *= flow.data[weight]
+            except:
+                raise ValueError("Weight label %r was not found in the system" % weight)
+
+        us = us.sum()
+        vs = vs.sum()
+
+    angles = np.arctan2(vs, us)
 
     return np.degrees(angles)
