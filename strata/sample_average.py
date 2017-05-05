@@ -2,6 +2,8 @@ import os
 import numpy as np
 import progressbar as pbar
 
+from scipy.stats import linregress
+
 from droplets.flow import FlowData
 from droplets.sample import sample_inertial_energy, sample_viscous_dissipation, sample_flow_angle
 from strata.dataformats.read import read_from_files
@@ -9,21 +11,29 @@ from strata.utils import find_datamap_files, pop_fileopts, prepare_path, write_m
 
 
 def sample_average_files(base, labels, output=None, sum=False, dt=1.,
-        cutoff_label=None, cutoff=None, viscosity=8.77e-4, **kwargs):
+        cutoff_label=None, cutoff=None, viscosity=8.77e-4,
+        slip_floor=0.0, **kwargs):
     """Sample average collected data of input labels from files.
 
     Returns lists with input file times and the averaged sampled value
     of bins for the corresponding time.
 
-    The labels have to be present in the read data files. If a label is
-    'inertial_energy' the inertial energy is calculated for the system,
-    in which case the data files must contain fields 'U' and 'V' for
-    flow and 'M' for mass. If one label is 'visc_diss' the viscous
-    dissipation is calculated for the system, which required fields
-    'U' and 'V' for the flow, and 'X' and 'Y' for the coordinates. The
-    output viscous dissipation is in energy per time and bin volume.
+    The labels have to be present in the read data files.
+
+    If a label is 'inertial_energy' the inertial energy is calculated
+    for the system, in which case the data files must contain fields
+    'U' and 'V' for flow and 'M' for mass.
+
+    If one label is 'visc_diss' the viscous dissipation is calculated for
+    the system, which required fields 'U' and 'V' for the flow, and 'X'
+    and 'Y' for the coordinates. The output viscous dissipation is in
+    energy per time and bin volume.
+
     The label 'flow_angle' samples the angle of flow along X and Y which
     requires the fields 'U' and 'V'.
+
+    The label 'slip_length' samples the slip length of the system. Use
+    the input keyword `floor` to set a floor position.
 
     Optionally the total value of the quantity in the system can be returned
     by supplying the keyword argument `sum`.
@@ -54,6 +64,9 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
 
         viscosity (float, optional): Viscosity of the liquid, used for
             the calculation of viscous dissipation.
+
+        slip_floor (float, optional): Position of floor for calculating
+            the slip length.
 
         begin (int, default=1): First data map number.
 
@@ -95,11 +108,16 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
 
         for j, label in enumerate(labels):
             try:
-                value = sample_value(flow, label, cutoff, cutoff_label, sum, viscosity)
+                if label == 'slip_length':
+                    value, _ = sample_slip_length(flow, )
+                else:
+                    value = sample_value(flow, label, cutoff, cutoff_label, sum, viscosity)
                 sampled_values[j].append(value)
+
             except KeyError:
                 print("[ERROR] Bad label: no data with label '%s' in system." % label)
                 return
+
             except Exception as err:
                 print("Encountered exception: %r" % err)
                 return
@@ -165,6 +183,31 @@ def sample_value(flow, label, cutoff, cutoff_label, sum, viscosity):
         value = np.sum(sample_data)
 
     return value
+
+
+def sample_slip_length(flow,
+        floor=0.0,
+        coord_labels=('X', 'Y'),
+        flow_labels=('U', 'V')):
+    """Sample the slip length for a FlowData map."""
+
+    _, ylabel = coord_labels
+    ulabel, _ = flow_labels
+
+    slip_lengths = []
+
+    for column in flow.data.reshape(flow.shape):
+        ys = column[ylabel]
+        us = column[ulabel]
+
+        # The slip length is the negative of the y at which
+        # the velocity gradient is zero. This is just the
+        # intercept of the curve, so we negate it.
+        _, intercept, _, _, _ = linregress(us, ys)
+
+        slip_lengths.append(-(intercept - floor))
+
+    return np.mean(slip_lengths), np.std(slip_lengths)
 
 
 @prepare_path
