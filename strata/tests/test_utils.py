@@ -1,6 +1,8 @@
 import numpy as np
 import os
 import tempfile as tmp
+
+from droplets.flow import FlowData
 from strata.utils import *
 
 fnbase = 'data_'

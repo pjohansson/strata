@@ -84,6 +84,43 @@ def test_flowdata_set_lims_badlims():
         assert "bad input limits" in exc
 
 
+def test_flowdata_cut_system():
+    # Cut system data along x
+    xlim = (2., 5.)
+    ylim = (1., 3.)
+
+    x = np.arange(8)
+    y = np.arange(6)
+
+    xs, ys = np.meshgrid(x, y)
+    cs = np.random.sample(xs.shape)
+
+    # Get indices
+    inds = (xs >= xlim[0]) & (xs <= xlim[1]) & (ys >= ylim[0]) & (ys <= ylim[1])
+
+    info = {
+        'spacing': (1., 1.),
+        'shape': (8, 6),
+        'origin': (0., 0.),
+        'num_bins': xs.size
+    }
+
+    # Cut out values of X
+    flow = FlowData(('X', xs.ravel()), ('Y', ys.ravel()), ('C', cs.ravel()),
+            info=info)
+    flow_lims = flow.cut(xlim=xlim, ylim=ylim)
+
+    # We should know the final size and shape of the system
+    assert np.array_equal((1., 1.), flow_lims.spacing)
+    assert (4, 3) == flow_lims.shape
+    assert (2., 1.) == flow_lims.origin
+    assert 4 * 3 == flow_lims.num_bins
+
+    # Check that values are good
+    assert np.array_equal(cs[inds].ravel(), flow_lims.data['C'])
+    assert flow.data.dtype == flow_lims.data.dtype
+
+
 def test_flowdata_copy():
     xs = np.arange(8)
     info = {
@@ -131,4 +168,3 @@ def test_flowdata_translate_cannot_broadcast():
 
     with pytest.raises(ValueError) as exc:
         flow.translate('x', trans)
-

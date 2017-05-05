@@ -142,6 +142,33 @@ class FlowData(object):
         return self.data[label] if label in self.properties else None
 
 
+    def cut(self, xlim=(None, None), ylim=(None, None)):
+        max_coords = [o + n * dx
+                for o, n, dx in zip(self.origin, self.shape, self.spacing)
+                ]
+        xmin, xmax = xlim
+        xmin = xmin if xmin != None else self.origin[0]
+        xmax = xmax if xmax != None else max_coords[0]
+        flow = self.lims('X', xmin, xmax)
+
+        ymin, ymax = ylim
+        ymin = ymin if ymin != None else self.origin[1]
+        ymax = ymax if ymax != None else max_coords[1]
+        flow = flow.lims('Y', ymin, ymax)
+
+        shape = [len(np.unique(flow.data[l])) for l in ('X', 'Y')]
+
+        info = {
+            'spacing': self.spacing,
+            'origin': (xmin, ymin),
+            'shape': shape,
+            'num_bins': shape[0] * shape[1]
+        }
+        flow.set_info(info)
+
+        return flow
+
+
     def lims(self, label, vmin, vmax):
         """Return new FlowData object with input data limits.
 
@@ -338,4 +365,3 @@ class FlowData(object):
             'shape': self.shape,
             'spacing': self.spacing
         }
-
