@@ -12,7 +12,7 @@ from strata.utils import find_datamap_files, pop_fileopts, prepare_path, write_m
 
 def sample_average_files(base, labels, output=None, sum=False, dt=1.,
         cutoff_label=None, cutoff=None, viscosity=8.77e-4,
-        slip_floor=0.0, **kwargs):
+        slip_floor=0.0, verbose=True, **kwargs):
     """Sample average collected data of input labels from files.
 
     Returns lists with input file times and the averaged sampled value
@@ -68,6 +68,8 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
         slip_floor (float, optional): Position of floor for calculating
             the slip length.
 
+        verbose (bool, optional): Print the mean of all samples.
+
         begin (int, default=1): First data map number.
 
         end (int, default=inf): Final data map number.
@@ -86,6 +88,11 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
     fopts = pop_fileopts(kwargs)
     files = list(find_datamap_files(base, **fopts))
 
+    # Get some limits on coordinates
+    coord_labels = kwargs.get('coord_labels', ['X', 'Y'])
+    xlim, ylim = [kwargs.get(lims, (None, None)) for lims in ('xlim', 'ylim')]
+    set_limits = xlim != (None, None) or ylim != (None, None)
+
     if output:
         try:
             prepare_output(output, labels, cutoff, cutoff_label, kwargs.copy(), fopts)
@@ -95,6 +102,7 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
             output = None
 
     sampled_values = [[] for _ in labels]
+    sampled_stds = [[] for _ in labels]
 
     quiet = kwargs.pop('quiet', False)
     if not quiet:
@@ -106,13 +114,18 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
     for i, (data, info, _) in enumerate(read_from_files(*files)):
         flow = FlowData(*[(l, data[l]) for l in ['X', 'Y', 'U', 'V', 'M', 'N', 'T']], info=info)
 
+        if set_limits:
+            flow = flow.cut(xlim=xlim, ylim=ylim)
+
         for j, label in enumerate(labels):
             try:
                 if label == 'slip_length':
-                    value, _ = sample_slip_length(flow, )
+                    value, std = sample_slip_length(flow, floor=slip_floor)
                 else:
-                    value = sample_value(flow, label, cutoff, cutoff_label, sum, viscosity)
+                    value, std = sample_value(flow, label, cutoff, cutoff_label, sum, viscosity)
+
                 sampled_values[j].append(value)
+                sampled_stds[j].append(std)
 
             except KeyError:
                 print("[ERROR] Bad label: no data with label '%s' in system." % label)
@@ -124,8 +137,13 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
 
         if output:
             with open(output, 'a') as fp:
-                fp.write('%.3f ' % (i*dt))
-                fp.write(' '.join(['%g' % values[-1] for values in sampled_values]))
+                fp.write('%.3f' % (i * dt))
+                for value, std in zip(sampled_values, sampled_stds):
+
+                    fp.write(" %g" % value[-1])
+                    if std != None:
+                        fp.write(" %g" % std[-1])
+
                 fp.write('\n')
 
         if not quiet:
@@ -135,6 +153,10 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
         progress.finish()
 
     times = [i*dt for i in range(len(sampled_values[0]))]
+
+    if verbose:
+        for i, l in enumerate(labels):
+            print(l, np.mean(sampled_values[i]), np.mean(sampled_stds[i]))
 
     return times, sampled_values
 
@@ -174,15 +196,18 @@ def sample_value(flow, label, cutoff, cutoff_label, sum, viscosity):
             # use the tested function in `droplets`.
             cut_flow = FlowData(*[(l, sample_data[l]) for l in ['U', 'V', 'M']])
             value = sample_flow_angle(cut_flow, mean=True, weight='M')
+            std = None
         else:
             value = np.mean(sample_data)
+            std = np.std(sample_data)
 
     else:
         if label == 'flow_angle':
             raise ValueError("Taking the sum of label `flow_angle` does not make any sense.")
         value = np.sum(sample_data)
+        std = None
 
-    return value
+    return value, std
 
 
 def sample_slip_length(flow,
@@ -231,7 +256,8 @@ def write_header(output_path, input_base, labels, cutoff, cutoff_label, kwargs):
                 % (labels, os.path.realpath(input_base),
                     kwargs.get('begin', None), kwargs.get('end', None),
                     kwargs.get('dt', 1.), cutoff,
-                    cutoff_label, ' '.join([l for l in labels])
-                    ))
+                    cutoff_label, ' '.join([l for l in labels]) if len(labels) > 1 else "%s [std]" % labels[0]
+                )
+        )
 
         fp.write(inputs)

@@ -93,7 +93,7 @@ def print_version(ctx, param, value):
 
 # Main functionality
 @create_group(context_settings=dict(help_option_names=['-h', '--help']))
-@click.option('-v', '--version', is_flag=True, callback=print_version,
+@click.option('-V', '--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True, help='Print version number and exit.')
 def strata():
     """Tools for reading and analysing files of flow data."""
@@ -935,6 +935,14 @@ def view_quiver_cli(files, **kwargs):
         help='Boundary bins require this much of the cutoff value. (defaults to midpoint value)')
 @add_option('-cl', '--cutoff_label', type=str, default=None,
         help='Label to use for cutoff. Defaults to no cutoff. (None)')
+@add_option('-fl', '--floor', 'slip_floor', type=float, default=0.0,
+        help='Substrate position along z when sampling the slip length (0.0)')
+@add_option('--show/--noshow', 'verbose', default=True,
+        help='Print sample mean.')
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the x axis.')
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the y axis.')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
