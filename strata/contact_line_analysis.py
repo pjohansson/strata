@@ -1,5 +1,6 @@
 import os
 import progressbar as pbar
+import sys
 
 from droplets.average import average_flow_data, get_combined_grid, transfer_data
 from droplets.contact_line import *
@@ -154,7 +155,19 @@ def sample_contact_line_edges(base, labels, save=None,
         if save:
             with open(save, 'a') as fp:
                 fp.write("%.3f " % times[-1])
-                fp.write(' '.join(['%g' % values[-1] for values in samples]))
+                try:
+                    sampled_values = []
+                    for label_samples in samples:
+                        value, std = label_samples[-1]
+                        sampled_values.append(value)
+
+                    fp.write(' '.join(['%g' % v for v in sampled_values]))
+
+                except TypeError:
+                    print(samples)
+                    sys.stderr.write("\nError: Some sampled value was not calculated correctly, ie. a 'None'\n")
+                    sys.stderr.write("or similar value was encountered. Aborting.\n")
+                    sys.exit(1)
                 fp.write('\n')
 
     return times, samples
