@@ -142,7 +142,10 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
 
                     fp.write(" %g" % value[-1])
                     if std != None:
-                        fp.write(" %g" % std[-1])
+                        try:
+                            fp.write(" %g" % std[-1])
+                        except:
+                            pass
 
                 fp.write('\n')
 
@@ -152,11 +155,17 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
     if not quiet:
         progress.finish()
 
-    times = [i*dt for i in range(len(sampled_values[0]))]
+    times = [i * dt for i in range(len(sampled_values[0]))]
 
     if verbose:
         for i, l in enumerate(labels):
-            print(l, np.mean(sampled_values[i]), np.mean(sampled_stds[i]))
+            value = np.mean(sampled_values[i])
+
+            try:
+                std = np.mean(sampled_stds[i])
+                print(l, value, std)
+            except:
+                print(l, np.mean(sampled_values[i]))
 
     return times, sampled_values
 
