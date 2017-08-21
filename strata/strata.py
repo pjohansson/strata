@@ -670,7 +670,7 @@ def contact_line(name=cmd_contactline['name'], short_help=cmd_contactline['desc'
         help='Recenter the extracted edges around zero. (True)')
 @add_option('--floor', type=float, default=None,
         help='Height to determine the contact line at. (None)')
-@add_option('-ea', '--extract_area', type=float, default=(0., 0.), nargs=2,
+@add_option('-ea', '--extract_area', type=float, default=(1., 1.), nargs=2,
         help='Extract area of this size. (1 nm, 1 nm)')
 @add_option('-eh', '--extract_height', type=float, default=0.,
         help='Synchronise extraction box position at this interface height. (0 nm)')
