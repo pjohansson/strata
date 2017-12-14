@@ -50,8 +50,8 @@ def sample_per_angle_from(flow, origin, label,
     """
 
     amin = max(0., amin)
-    amax = min(360.-size, amax)
-    out_angles = np.arange(amin, amax+size, size)
+    amax = min(360. - size, amax)
+    out_angles = np.arange(amin, amax + size, size)
 
     # Collect values and weights in bins to average for each angle
     out_values_bins = [[] for _ in out_angles]
@@ -64,7 +64,8 @@ def sample_per_angle_from(flow, origin, label,
     inds_rlim = (drs >= rmin) & (drs <= rmax)
     data_rlim = flow.data[inds_rlim]
 
-    bin_rads = np.sign(dys[inds_rlim])*np.arccos(dxs[inds_rlim]/drs[inds_rlim])
+    bin_rads = np.sign(dys[inds_rlim]) \
+        * np.arccos(dxs[inds_rlim]/drs[inds_rlim])
     bin_degrees = np.mod(np.degrees(bin_rads), 360)
 
     # Apply angular cutoffs to remaining bins
@@ -81,7 +82,7 @@ def sample_per_angle_from(flow, origin, label,
     # Adjust angles by 1/2 step to center bins around the angle measurement
     # points, they will histogram correctly for the half-open interval
     # [angle, angle+step)
-    in_angles = bin_degrees[inds_alim] - 0.5*size + 1e-6
+    in_angles = bin_degrees[inds_alim] - 0.5 * size + 1e-6
 
     # Add data to bins
     for angle, value, optweight in zip(in_angles, label_data, weight_data):
@@ -147,7 +148,7 @@ def sample_viscous_dissipation(flow, viscosity,
     dudy, dudx = np.gradient(U, dy, dx, edge_order=2)
     dvdy, dvdx = np.gradient(V, dy, dx, edge_order=2)
 
-    return 2 * viscosity * (dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
+    return 2 * viscosity * (dudx**2 + dvdy**2 - (dudx + dvdy)**2 / 3.0) \
             + viscosity * (dvdx + dudy)**2
 
 
@@ -187,7 +188,7 @@ def sample_inertial_energy(flow, mass_label='M', flow_labels=['U', 'V']):
     """
 
     ul, vl = flow_labels
-    return 0.5*flow.data[mass_label]*(flow.data[ul]**2 + flow.data[vl]**2)
+    return 0.5 * flow.data[mass_label] * (flow.data[ul]**2 + flow.data[vl]**2)
 
 
 def sample_flow_angle(flow, flow_labels=['U', 'V'], mean=False, weight=None):
@@ -221,11 +222,15 @@ def sample_flow_angle(flow, flow_labels=['U', 'V'], mean=False, weight=None):
         us, vs = [flow.data[label].copy() for label in flow_labels]
     except ValueError as exc:
         if "no field" in str(exc):
-            raise ValueError("Flow labels %r were not found in the system"
-                % flow_labels)
+            raise ValueError(
+                    "Flow labels {!r} were not found in the system" \
+                    .format(flow_labels)
+                )
         else:
-            raise ValueError("Exactly 2 flow labels must be input, but got %d (%r)"
-                % (len(flow_labels), flow_labels))
+            raise ValueError(
+                    "Exactly 2 flow labels must be input, but got {} ({!r})" \
+                    .format(len(flow_labels), flow_labels)
+                )
 
     if mean:
         if weight:
@@ -233,7 +238,10 @@ def sample_flow_angle(flow, flow_labels=['U', 'V'], mean=False, weight=None):
                 us *= flow.data[weight]
                 vs *= flow.data[weight]
             except:
-                raise ValueError("Weight label %r was not found in the system" % weight)
+                raise ValueError(
+                        "Weight label {!r} was not found in the system" \
+                        .format(weight)
+                    )
 
         us = us.sum()
         vs = vs.sum()
