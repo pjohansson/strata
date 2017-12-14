@@ -143,7 +143,16 @@ def sample_contact_line_edges(base, labels, save=None,
         recombined_flow_data = combine_flow_data((left_edge, right_edge), spacing)
 
         for j, label in enumerate(labels):
-            samples[j].append(sample_value(recombined_flow_data, label, cutoff, cutoff_label, sum, viscosity))
+            try:
+                samples[j].append(sample_value(recombined_flow_data, label,
+                    cutoff, cutoff_label, sum, viscosity))
+            except Exception as exc:
+                print(
+                        "error: could not add value for averaged map no. {}, "
+                        "data label '{}' ({!s})".format(i + 1, label, exc)
+                    )
+
+                sys.exit(1)
 
         if rolling:
             time = (np.floor(0.5*average) + i)*dt
@@ -324,7 +333,12 @@ def combine_flow_data(avg_flow, spacing):
 
     data = merge_data(grid, left, right)
 
-    return FlowData(*data, info={'spacing': spacing})
+    # Estimate the shape of the constructed grid
+    nx = len(np.unique(grid['X']))
+    ny = len(np.unique(grid['Y']))
+    shape = (nx, ny)
+
+    return FlowData(*data, info={'spacing': spacing, 'shape': shape})
 
 
 def add_adjusted_flow(cells, direction, info):
