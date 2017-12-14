@@ -11,8 +11,8 @@ from strata.sample_average import sample_value
 from strata.utils import gen_filenames, find_datamap_files, pop_fileopts, prepare_path, write_module_header
 
 
-def extract_contact_line_bins(base, output, average=1, rolling=False, recenter=False,
-                             **kwargs):
+def extract_contact_line_bins(base, output, average=1, rolling=False,
+                              recenter=False, **kwargs):
     """Extract bins from the contact line of a wetting system.
 
     Can average the extracted data by supplying a positive number of
@@ -56,7 +56,8 @@ def extract_contact_line_bins(base, output, average=1, rolling=False, recenter=F
     floor = kwargs.pop('floor', None)
     kwargs['ylims'] = (floor, None)
 
-    averaged_data = get_averaged_contact_line_edges(filenames, average, rolling, recenter, weights, **kwargs)
+    averaged_data = get_averaged_contact_line_edges(filenames, average,
+        rolling, recenter, weights, **kwargs)
 
     for spacing, avg_flow_per_edge in averaged_data:
         recombined_flow_data = combine_flow_data(avg_flow_per_edge, spacing)
@@ -131,7 +132,8 @@ def sample_contact_line_edges(base, labels, save=None,
     floor = kwargs.pop('floor', None)
     kwargs['ylims'] = (floor, None)
 
-    averaged_data = get_averaged_contact_line_edges(filenames, average, rolling, recenter, weights, **kwargs)
+    averaged_data = get_averaged_contact_line_edges(filenames, average,
+        rolling, recenter, weights, **kwargs)
 
     samples = [[] for _ in labels]
     times = []
@@ -140,7 +142,8 @@ def sample_contact_line_edges(base, labels, save=None,
         # Since we are sampling radial flow the left edge velocities
         # are mirrored along X
         left_edge.data['U'] *= -1
-        recombined_flow_data = combine_flow_data((left_edge, right_edge), spacing)
+        recombined_flow_data = combine_flow_data((left_edge, right_edge),
+            spacing)
 
         for j, label in enumerate(labels):
             try:
@@ -155,9 +158,9 @@ def sample_contact_line_edges(base, labels, save=None,
                 sys.exit(1)
 
         if rolling:
-            time = (np.floor(0.5*average) + i)*dt
+            time = (np.floor(0.5 * average) + i) * dt
         else:
-            time = (np.floor(0.5*average) + i*average)*dt
+            time = (np.floor(0.5 * average) + i * average) * dt
 
         times.append(time)
 
@@ -305,9 +308,10 @@ def combine_flow_data(avg_flow, spacing):
             elif label == 'T':
                 weight = 'N'
             else:
-                return 0.5*(left[label] + right[label])
+                return 0.5 * (left[label] + right[label])
 
-            return (left[label]*left[weight] + right[label]*right[weight])/(left[weight] + right[weight])
+            return (left[label] * left[weight] + right[label] * right[weight]) \
+                / (left[weight] + right[weight])
 
         coord_labels = ('X', 'Y')
         value_labels = set(grid.dtype.names).difference(coord_labels)

@@ -259,10 +259,8 @@ def get_combined_grid(data, spacing, coord_labels=('X', 'Y')):
 
     x = np.arange(xmin, xmax+dx, dx)
     y = np.arange(ymin, ymax+dy, dy)
-    #print(x, y)
     x = np.linspace(xmin, xmax, nx+1)
     y = np.linspace(ymin, ymax, ny+1)
-    #print(x, y)
 
     xs, ys = np.meshgrid(x, y)
 
