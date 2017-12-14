@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from droplets.flow import FlowData
 from droplets.sample import sample_viscous_dissipation
@@ -92,3 +93,23 @@ def test_calc_viscous_dissipation_unsorted_bins():
 
     assert np.isclose(visc_diss, result).all()
 
+
+def test_calc_viscous_dissipation_raises_if_shape_or_spacing_is_not_set():
+    x = np.arange(3)
+
+    xs, ys = np.meshgrid(x, x)
+    us = np.random.sample(xs.shape)
+    vs = np.random.sample(ys.shape)
+
+    viscosity = 2.
+
+
+    with pytest.raises(ValueError):
+        info = { 'spacing': (1., 1.) }
+        flow = FlowData(('X', xs), ('Y', ys), ('U', us), ('V', vs), info=info)
+        sample_viscous_dissipation(flow, viscosity)
+
+    with pytest.raises(ValueError):
+        info = { 'shape': (3, 3) }
+        flow = FlowData(('X', xs), ('Y', ys), ('U', us), ('V', vs), info=info)
+        sample_viscous_dissipation(flow, viscosity)

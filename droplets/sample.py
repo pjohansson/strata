@@ -124,8 +124,21 @@ def sample_viscous_dissipation(flow, viscosity,
 
     """
 
-    dx, dy = flow.spacing
-    nx, ny = flow.shape
+    try:
+        nx, ny = [int(v) for v in flow.shape]
+    except:
+        raise ValueError(
+                "the shape of the flow object is not correctly set "
+                "(is {!r}, expected (int, int))".format(flow.shape)
+            )
+
+    try:
+        dx, dy = [float(v) for v in flow.spacing]
+    except:
+        raise ValueError(
+                "the spacing of the flow object is not correctly set"
+                "(is {!r}, expected (float, float))".format(flow.spacing)
+            )
 
     coord_order = list(reversed(coord_labels))
     data = np.sort(flow.data, order=coord_order).reshape(ny, nx)
@@ -134,8 +147,8 @@ def sample_viscous_dissipation(flow, viscosity,
     dudy, dudx = np.gradient(U, dy, dx, edge_order=2)
     dvdy, dvdx = np.gradient(V, dy, dx, edge_order=2)
 
-    return 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
-            + viscosity*(dvdx + dudy)**2
+    return 2 * viscosity * (dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
+            + viscosity * (dvdx + dudy)**2
 
 
 def sample_center_of_mass(flow, mass_label='M', coord_labels=['X', 'Y']):
