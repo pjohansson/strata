@@ -138,17 +138,41 @@ def sample_contact_line_edges(base, labels, save=None,
     samples = [[] for _ in labels]
     times = []
 
-    for i, (spacing, (left_edge, right_edge)) in enumerate(averaged_data):
+    # TODO: Sometime fix this.
+    if not sum:
+        print("warning: the output value is the simple (unweighed) average "
+              "of the sampled value for each contact line edge. If "
+              "the sampled data is of a type that should be weighed when "
+              "averaged (eg. temperature, mass flow) the returned value will "
+              "not be correct, unless the two edges are very similar.")
+
+    for i, (left_edge, right_edge) in enumerate(averaged_data):
         # Since we are sampling radial flow the left edge velocities
         # are mirrored along X
         left_edge.data['U'] *= -1
-        recombined_flow_data = combine_flow_data((left_edge, right_edge),
-            spacing)
 
         for j, label in enumerate(labels):
             try:
-                samples[j].append(sample_value(recombined_flow_data, label,
-                    cutoff, cutoff_label, sum, viscosity))
+                means_and_stds = [
+                        sample_value(flow, label, cutoff, cutoff_label,
+                            sum, viscosity)
+                        for flow in (left_edge, right_edge)
+                    ]
+
+                means = [t[0] for t in means_and_stds]
+                stds = [t[1] for t in means_and_stds]
+
+                if sum:
+                    value = np.sum(means)
+                else:
+                    value = np.mean(means)
+
+                try:
+                    std = np.mean([t[1] for t in means_and_stds])
+                except:
+                    std = None
+
+                samples[j].append([value, std])
             except Exception as exc:
                 print(
                         "error: could not add value for averaged map no. {}, "
@@ -166,17 +190,18 @@ def sample_contact_line_edges(base, labels, save=None,
 
         if save:
             with open(save, 'a') as fp:
-                fp.write("%.3f " % times[-1])
+                fp.write("{:.3f} ".format(times[-1]))
                 try:
                     sampled_values = []
                     for label_samples in samples:
                         value, std = label_samples[-1]
                         sampled_values.append(value)
 
-                    fp.write(' '.join(['%g' % v for v in sampled_values]))
+                    fp.write(' '.join(
+                            ['{:g}'.format(v) for v in sampled_values]
+                        ))
 
                 except TypeError:
-                    print(samples)
                     sys.stderr.write("\nError: Some sampled value was not calculated correctly, ie. a 'None'\n")
                     sys.stderr.write("or similar value was encountered. Aborting.\n")
                     sys.exit(1)
@@ -187,13 +212,15 @@ def sample_contact_line_edges(base, labels, save=None,
 
 def get_averaged_contact_line_edges(filenames, average, rolling,
         recenter, weights, **kwargs):
-    """Read data from filebanes and yield averaged edges with their spacing."""
+    """Read data from filebanes and yield averaged edges as `EdgeData` objects.
+
+    """
 
     def adjust_coordinates(avg_flow, xadj_per_edge, dx, yadj, recenter):
         """Adjust the extracted cell coordinates."""
 
         if recenter:
-            xdiff = 0.5*(xadj_per_edge[1] - xadj_per_edge[0])
+            xdiff = 0.5 * (xadj_per_edge[1] - xadj_per_edge[0])
             xadj_per_edge[0] = -xdiff
             xadj_per_edge[1] = xdiff
 
@@ -207,14 +234,22 @@ def get_averaged_contact_line_edges(filenames, average, rolling,
     def get_coord_on_grid(x, dx):
         """Return input coordinate x on grid of difference dx."""
 
-        return (np.floor(x/dx) + 0.5)*dx
+        return (np.floor(x / dx) + 0.5) * dx
+
+    def estimate_shape(data):
+        """Estimate the shape of the contact line grid."""
+
+        nx = len(np.unique(data['X']))
+        ny = len(np.unique(data['Y']))
+
+        return (nx, ny)
 
     quiet = kwargs.pop('quiet', False)
     if not quiet:
         if rolling:
             length = len(filenames) - average + 1
         else:
-            length = int(len(filenames)/average)
+            length = int(len(filenames) / average)
 
         widgets = ['Extracting/sampling contact line: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
@@ -259,7 +294,7 @@ def get_averaged_contact_line_edges(filenames, average, rolling,
         avg_flow_per_edge = adjust_coordinates(avg_flow_per_edge,
                 xadj_per_edge, spacing[0], yadj, recenter)
 
-        yield spacing, avg_flow_per_edge
+        yield avg_flow_per_edge
 
     if not quiet:
         progress.finish()
@@ -274,15 +309,15 @@ def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
     j = 0
     for fn in fns:
         data, info, _ = read_data_file(fn)
-        left_cells, right_cells = get_contact_line_cells(
-                FlowData(data), label, **kwargs)
+        left_cells, right_cells = get_contact_line_cells(FlowData(data),
+            label, **kwargs)
 
         left.append(add_adjusted_flow(left_cells, 'left', info))
         right.append(add_adjusted_flow(right_cells, 'right', info))
 
         if len(left) == average:
             if not quiet:
-                progress.update(j+1)
+                progress.update(j + 1)
                 j += 1
 
             yield info['spacing'], left, right
@@ -292,57 +327,6 @@ def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
                 right.pop(0)
             else:
                 left, right = [], []
-
-
-def combine_flow_data(avg_flow, spacing):
-    """Return a combined FlowData object of the left and right edges."""
-
-    def merge_data(grid, left, right):
-        """Merge the data from averaged edges onto a grid."""
-
-        def average_value(left, right, label):
-            """Average the value based on type."""
-
-            if label in ('U', 'V'):
-                weight = 'M'
-            elif label == 'T':
-                weight = 'N'
-            else:
-                return 0.5 * (left[label] + right[label])
-
-            return (left[label] * left[weight] + right[label] * right[weight]) \
-                / (left[weight] + right[weight])
-
-        coord_labels = ('X', 'Y')
-        value_labels = set(grid.dtype.names).difference(coord_labels)
-
-        data = np.empty_like(grid)
-
-        for d, l, r in zip(data, left, right):
-            for k in coord_labels:
-                d[k] = l[k]
-            for k in value_labels:
-                # Choose either set if the other is empty else average
-                # the value properly
-                if l[k] == 0. or r[k] == 0.:
-                    d[k] = l[k] + r[k]
-                else:
-                    d[k] = average_value(l, r, k)
-
-        return [(k, data[k]) for k in data.dtype.names]
-
-    flowdata = [flow.data for flow in avg_flow]
-    grid = get_combined_grid(flowdata, spacing)
-    left, right = (transfer_data(grid, flow.data) for flow in avg_flow)
-
-    data = merge_data(grid, left, right)
-
-    # Estimate the shape of the constructed grid
-    nx = len(np.unique(grid['X']))
-    ny = len(np.unique(grid['Y']))
-    shape = (nx, ny)
-
-    return FlowData(*data, info={'spacing': spacing, 'shape': shape})
 
 
 def add_adjusted_flow(cells, direction, info):
