@@ -148,8 +148,10 @@ def sample_viscous_dissipation(flow, viscosity,
     dudy, dudx = np.gradient(U, dy, dx, edge_order=2)
     dvdy, dvdx = np.gradient(V, dy, dx, edge_order=2)
 
-    return 2 * viscosity * (dudx**2 + dvdy**2 - (dudx + dvdy)**2 / 3.0) \
+    dissipation = 2 * viscosity * (dudx**2 + dvdy**2 - (dudx + dvdy)**2 / 3.0) \
             + viscosity * (dvdx + dudy)**2
+
+    return dissipation
 
 
 def sample_center_of_mass(flow, mass_label='M', coord_labels=['X', 'Y']):

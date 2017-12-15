@@ -175,6 +175,10 @@ def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
         if label == 'flow':
             flow.data = add_absolute_flow(flow.data)
 
+        if label == 'visc_diss':
+            label = 'visc'
+            add_viscous_dissipation(flow, viscosity=8.77e-4)
+
         if print_avg_value:
             print_average_value(flow.data, label, kwargs)
 
