@@ -109,7 +109,8 @@ def sample_per_angle_from(flow, origin, label,
 
 
 def sample_viscous_dissipation(flow, viscosity,
-        coord_labels=('X', 'Y'), flow_labels=('U', 'V')):
+        coord_labels=('X', 'Y'), flow_labels=('U', 'V'),
+        weight_label=None):
     """Return array of viscous dissipation from input flow data.
 
     Args:
@@ -144,7 +145,8 @@ def sample_viscous_dissipation(flow, viscosity,
     coord_order = list(reversed(coord_labels))
     flow.data.sort(order=coord_order)
     data = flow.data.reshape(ny, nx)
-    U, V = [data[l] for l in flow_labels]
+    weights = data[weight_label] if weight_label != None else 1.
+    U, V = [data[l] * weights for l in flow_labels]
 
     dudy, dudx = np.gradient(U, dy, dx, edge_order=2)
     dvdy, dvdx = np.gradient(V, dy, dx, edge_order=2)
@@ -152,7 +154,7 @@ def sample_viscous_dissipation(flow, viscosity,
     dissipation = 2 * viscosity * (dudx**2 + dvdy**2 - (dudx + dvdy)**2 / 3.0) \
             + viscosity * (dvdx + dudy)**2
 
-    return dissipation
+    return dissipation / weights**2
 
 
 def sample_center_of_mass(flow, mass_label='M', coord_labels=['X', 'Y']):

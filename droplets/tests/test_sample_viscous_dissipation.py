@@ -64,6 +64,39 @@ def test_calc_viscous_dissipation_orders_the_flow_data():
     assert (sorted_data == flow.data).all()
 
 
+def test_calc_viscous_dissipation_with_weights():
+    # Sample on 3x3 grid
+    x = np.arange(3)
+    y = 0.5 * x
+
+    xs, ys = np.meshgrid(x, y)
+    us = np.random.sample((3, 3))
+    vs = np.random.sample((3, 3))
+
+    weights = np.random.sample((3, 3))
+    w_us = us * weights
+    w_vs = vs * weights
+
+    viscosity = 2.
+    info = {
+        'spacing': (1.0, 0.5), # Non-quadratic bins
+        'shape': (3, 3)
+        }
+
+    flow = FlowData(('X', xs), ('Y', ys), ('U', us), ('V', vs), ('W', weights),
+        info=info)
+    result = sample_viscous_dissipation(flow, viscosity, weight_label='W')
+
+    # Control dissipation in edge cell (1, 2) (center-bottom)
+    # The dy terms are second order, becase the bin is at the bottom
+    # The dx terms are regular first order terms, because it is at the center
+    dudx = (w_us[2, 2] - w_us[2, 0]) / 2. / weights[2, 1]
+    dudy = np.gradient(w_us[:, 1], 0.5, edge_order=2)[2] / weights[2, 1]
+    dvdx = (w_vs[2, 2] - w_vs[2, 0]) / 2. / weights[2, 1]
+    dvdy = np.gradient(w_vs[:, 1], 0.5, edge_order=2)[2] / weights[2, 1]
+
+    visc_diss = 2 * viscosity * (dudx**2 + dvdy**2 - (dudx + dvdy)**2 / 3.0) \
+            + viscosity * (dvdx + dudy)**2
 
     assert np.isclose(visc_diss, result[2, 1])
 

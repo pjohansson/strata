@@ -263,24 +263,8 @@ def add_viscous_dissipation(flow, viscosity):
 
     from numpy.lib.recfunctions import append_fields
 
-    dx, dy = flow.spacing
-    nx, ny = flow.shape
+    viscous_dissipation = sample_viscous_dissipation(flow, viscosity,
+        weight_label='M')
 
-
-    flow.data = np.sort(flow.data, order=['Y', 'X']).reshape(ny, nx)
-    U, V = [flow.data[l]*flow.data['M'] for l in ['U', 'V']]
-
-
-    dudy, dudx = np.gradient(U, dy, dx, edge_order=2)
-    dvdy, dvdx = np.gradient(V, dy, dx, edge_order=2)
-    dvdy *= 0.0
-
-    viscous_dissipation = 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
-            + viscosity*(dvdx + dudy)**2
-    viscous_dissipation = dudy
-
-    flow.data = flow.data.ravel()
-    viscous_dissipation = viscous_dissipation.ravel()
-    viscous_dissipation /= flow.data['M']
-
-    flow.data = append_fields(flow.data, 'visc', viscous_dissipation, dtypes='float')
+    flow.data = append_fields(flow.data, 'visc', viscous_dissipation.ravel(),
+        dtypes='float')
