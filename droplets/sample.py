@@ -142,7 +142,8 @@ def sample_viscous_dissipation(flow, viscosity,
             )
 
     coord_order = list(reversed(coord_labels))
-    data = np.sort(flow.data, order=coord_order).reshape(ny, nx)
+    flow.data.sort(order=coord_order)
+    data = flow.data.reshape(ny, nx)
     U, V = [data[l] for l in flow_labels]
 
     dudy, dudx = np.gradient(U, dy, dx, edge_order=2)
