@@ -113,6 +113,13 @@ def sample_viscous_dissipation(flow, viscosity,
         weight_label=None):
     """Return array of viscous dissipation from input flow data.
 
+    Note that this function sorts the underlying flow data to align
+    with the returned viscous dissipation data. This is because
+    viscous dissipation can only be calculated on a grid that is
+    regular and sorted. It makes sense to return data that corresponds
+    exactly to the input grid, but it is difficult to "unorder" the
+    calculated dissipation array to match the input.
+
     Args:
         flow (FlowData): Object to calculate dissipation from. Must
             contain fields for X-Y coordinates and flow.
