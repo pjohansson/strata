@@ -59,7 +59,9 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
     averaged_data = get_averaged_contact_line_edges(filenames, average,
         rolling, recenter, weights, **kwargs)
 
-    for spacing, avg_flow_per_edge in averaged_data:
+    #for spacing, avg_flow_per_edge in averaged_data:
+    for avg_flow_per_edge in averaged_data:
+        spacing = avg_flow_per_edge[0].spacing
         recombined_flow_data = combine_flow_data(avg_flow_per_edge, spacing)
         write(next(fnout), recombined_flow_data.data)
 
@@ -160,17 +162,17 @@ def sample_contact_line_edges(base, labels, save=None,
                     ]
 
                 means = [t[0] for t in means_and_stds]
-                stds = [t[1] for t in means_and_stds]
+                # stds = [t[1] for t in means_and_stds]
 
                 if sum:
                     value = np.sum(means)
                 else:
                     value = np.mean(means)
 
-                try:
-                    std = np.mean([t[1] for t in means_and_stds])
-                except:
-                    std = None
+                # try:
+                    # std = np.mean([t[1] for t in means_and_stds])
+                # except:
+                    # std = None
 
                 samples[j].append([value, std])
             except Exception as exc:
@@ -327,6 +329,57 @@ def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
                 right.pop(0)
             else:
                 left, right = [], []
+
+
+def combine_flow_data(avg_flow, spacing):
+    """Return a combined FlowData object of the left and right edges."""
+
+    def merge_data(grid, left, right):
+        """Merge the data from averaged edges onto a grid."""
+
+        def average_value(left, right, label):
+            """Average the value based on type."""
+
+            if label in ('U', 'V'):
+                weight = 'M'
+            elif label == 'T':
+                weight = 'N'
+            else:
+                return 0.5 * (left[label] + right[label])
+
+            return (left[label] * left[weight] + right[label] * right[weight]) \
+                / (left[weight] + right[weight])
+
+        coord_labels = ('X', 'Y')
+        value_labels = set(grid.dtype.names).difference(coord_labels)
+
+        data = np.empty_like(grid)
+
+        for d, l, r in zip(data, left, right):
+            for k in coord_labels:
+                d[k] = l[k]
+            for k in value_labels:
+                # Choose either set if the other is empty else average
+                # the value properly
+                if l[k] == 0. or r[k] == 0.:
+                    d[k] = l[k] + r[k]
+                else:
+                    d[k] = average_value(l, r, k)
+
+        return [(k, data[k]) for k in data.dtype.names]
+
+    flowdata = [flow.data for flow in avg_flow]
+    grid = get_combined_grid(flowdata, spacing)
+    left, right = (transfer_data(grid, flow.data) for flow in avg_flow)
+
+    data = merge_data(grid, left, right)
+
+    # Estimate the shape of the constructed grid
+    nx = len(np.unique(grid['X']))
+    ny = len(np.unique(grid['Y']))
+    shape = (nx, ny)
+
+    return FlowData(*data, info={'spacing': spacing, 'shape': shape})
 
 
 def add_adjusted_flow(cells, direction, info):
