@@ -131,6 +131,8 @@ def sample_viscous_dissipation(flow, viscosity,
 
         flow_labels (2-tuple, default=('U', 'V'): Record labels for flow.
 
+        weight_label (string, opt.): Weigh the flow using this data.
+
     """
 
     try:
