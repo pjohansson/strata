@@ -136,8 +136,9 @@ def plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs):
 
     return fig
 
-
-def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
+def view_flowmap_2d(*files, label='M', type='heightmap',
+        cutoff_label='M', cutoff=None,
+        **kwargs):
     """View bin data of input files.
 
     Args:
@@ -145,6 +146,10 @@ def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
 
     Keyword Args:
         label (str, optional): Data label to use as height values.
+
+        cutoff (float, optional): Cutoff for data to show bins for.
+
+        cutoff_label (str, optional): Label for cutting data.
 
         type (str, optional): Type of map to draw, can be 'height'
             or 'contour'.
@@ -178,6 +183,9 @@ def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
         if label == 'visc_diss':
             label = 'visc'
             add_viscous_dissipation(flow, viscosity=8.77e-4)
+
+        if cutoff != None and cutoff_label != None:
+            flow = flow.lims(cutoff_label, cutoff, None)
 
         if print_avg_value:
             print_average_value(flow.data, label, kwargs)

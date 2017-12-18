@@ -846,6 +846,11 @@ def view_contour_cli(files, **kwargs):
         metavar='MIN MAX', help='Set cut-offs for the binned values to include.')
 @add_option('--vlim', nargs=2, default=(None, None), type=OPT_FLOAT,
         metavar='MIN MAX', help='Set limits for the shown colour values.')
+@add_option('-cl', '--cutoff_label',
+        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow', 'visc']), default=None,
+        help='Use a cutoff to only show bins in which their value of this label exceeds a cutoff. The value is set using the `--cutoff` option.')
+@add_option('-co', '--cutoff', type=float, default=None,
+        help='Minimum value for `cutoff_label` to show bins for. (0)')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=True,
         help='Whether or not to draw a colour bar. (True)')
 @add_option('-cmap', '--colourmap', 'colormap', default='viridis', type=str,
