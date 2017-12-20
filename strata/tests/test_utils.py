@@ -1,9 +1,13 @@
 import numpy as np
 import os
+import pytest
 import tempfile as tmp
+import warnings
 
 from droplets.flow import FlowData
 from strata.utils import *
+
+pytestmark = pytest.mark.filterwarnings('ignore')
 
 fnbase = 'data_'
 begin_def = 1
@@ -83,6 +87,11 @@ def test_find_datamaps_group():
     find_datamaps_test_runner(num_files=20, group=5)
     find_datamaps_test_runner(num_files=23, group=5)
     find_datamaps_test_runner(begin=5, end=1, group=5)
+
+def test_find_datamaps_raises_warning_if_no_files_are_found():
+    with tmp.TemporaryDirectory() as tmp_dir:
+        with pytest.warns(UserWarning):
+            list(find_datamap_files('does_not_exist'))
 
 def test_groups_to_singles_filenames():
     num_files = 10
