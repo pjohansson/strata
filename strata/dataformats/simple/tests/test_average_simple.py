@@ -76,19 +76,41 @@ def test_fields_nan():
     xs = np.arange(8)
     ys = np.arange(8)
 
-    # For each field in turn, set all values to 0 in all maps
-    for zero_label in data_fields:
-        data = []
-        for _ in np.arange(4):
-            d = {'X': xs, 'Y': ys}
-            for label in data_fields:
-                d[label] = np.random.sample(8)
+    data = []
 
-            d[zero_label] *= 0
-            data.append(d)
+    # T is averaged with N, so assert that if N = 0,
+    # so is T
+    for _ in np.arange(4):
+        d = {'X': xs, 'Y': ys}
 
-        # No error should be raised
-        average_data(*data)
+        for label in data_fields:
+            d[label] = np.random.sample(8)
+
+        data.append(d)
+
+    # Get reference data
+    avg_data_ref = average_data(*data)
+
+    # Set all N values to 0 and get the new values
+    for d in data:
+        d['N'] *= 0
+
+    # Assert that no warning is raised
+    with pytest.warns(None) as record:
+        avg_data_nan = average_data(*data)
+    assert (len(record.list) == 0)
+
+    # The T (and N) fields should be averaged to zero
+    assert (np.array_equiv(avg_data_nan['T'], 0.))
+    assert (np.array_equiv(avg_data_nan['N'], 0.))
+
+    # All non-N or T fields should be as before
+    fields = list(data_fields)
+    fields.remove('N')
+    fields.remove('T')
+
+    for label in fields:
+        assert (np.array_equal(avg_data_ref[label], avg_data_nan[label]))
 
 
 def test_read_and_average():
