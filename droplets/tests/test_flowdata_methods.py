@@ -168,3 +168,24 @@ def test_flowdata_translate_cannot_broadcast():
 
     with pytest.raises(ValueError) as exc:
         flow.translate('x', trans)
+
+def test_flowdata_size():
+    xs = np.random.sample(10)
+    shape = (3, 5)
+    spacing = (0.1, 0.2)
+
+    flow = FlowData(('x', xs), info={'shape': shape, 'spacing': spacing})
+
+    dx, dy = flow.size()
+
+    assert (dx == shape[0] * spacing[0])
+    assert (dy == shape[1] * spacing[1])
+
+    flow = FlowData(('x', xs), info={'shape': shape})
+    assert (None == flow.size())
+
+    flow = FlowData(('x', xs), info={'spacing': spacing})
+    assert (None == flow.size())
+
+    flow = FlowData(('x', xs), info={})
+    assert (None == flow.size())

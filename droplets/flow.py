@@ -328,6 +328,33 @@ class FlowData(object):
                            % (bad_item[0], bad_item[1]))
 
 
+    def size(self):
+        """Return the size of the system, if it can be calculated.
+
+        This requires that the system `shape` and `spacing` are both set.
+
+        Returns:
+            (float, float): The size of the system if it could be calculated.
+            None: If either the `shape` or `spacing` is not set for the map.
+
+        """
+
+        print(self.shape)
+        print(self.spacing)
+
+        try:
+            nx, ny = self.shape
+            dx, dy = self.spacing
+
+            if None in [nx, ny, dx, dy]:
+                raise ValueError
+
+        except:
+            return None
+
+        return nx * dx, ny * dy
+
+
     def translate(self, label, value):
         """Return a copy with the data of input label translated by input value.
 
