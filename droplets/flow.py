@@ -339,9 +339,6 @@ class FlowData(object):
 
         """
 
-        print(self.shape)
-        print(self.spacing)
-
         try:
             nx, ny = self.shape
             dx, dy = self.spacing
