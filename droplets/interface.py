@@ -101,15 +101,28 @@ def get_interface(flow, label, **kwargs):
     Indices are yielded from bottom to the top and correspond to found
     left and right indices of the boundary.
 
-    The simple for bins to be a part of the liquid is that the cell
+    Two search methods are available to detect the interface edges:
+
+    (1, default): Look for the left and right edges by going from
+    the outermost edge and inwards, until finding a filled cell. This
+    does not account for periodic boundary conditions.
+
+    (2, new): Go through all cells in a layer and determine whether
+    they are filled or not. Then take the longest continuous stretch
+    of cells that are filled as the interface. Take the edge cells from
+    that stretch. This method accounts for periodic boundary conditions.
+    Select this method by supplying the `search_longest_connected=True`
+    keyword argument.
+
+    The condition for bins to be a part of the liquid is that the cell
     and a given number of bins within a radius of it must have a given
     parameter value (the input label) larger than or equal to a cut-off
     value.
 
-    Periodic boundary conditions are not applied for the radius search.
-    This means that bins on the outermost edges of the system are searching
-    for neighbouring bins in a smaller area around themselves and might
-    not be detected given identical settings.
+    Periodic boundary conditions are not applied for the radius search
+    for method (1) above. This means that bins on the outermost edges
+    of the system are searching for neighbouring bins in a smaller area
+    around themselves and might not be detected given identical settings.
 
     Args:
         flow (FlowData): A FlowData object. Must contain a data record
@@ -126,6 +139,10 @@ def get_interface(flow, label, **kwargs):
 
         cutoff_bins (int, default=1): Number of bins inside the set radius
             which must pass the cut-off criteria.
+
+        search_longest_connected (bool, default=False): Instead of searching
+            for the interface from out and in, look for the longest stretch
+            of filled cells and take the edges as the edges of those.
 
         ylims (2-tuple, default=(None, None)): Only return interface boundary
             within these height limits.
@@ -169,6 +186,67 @@ def get_interface(flow, label, **kwargs):
 
         return radius
 
+    def find_interface_edges_in_layer(sorted_layer, data):
+        """Return the interface edge indices inside the input sorted layer."""
+
+        filled_cells = [False] * len(sorted_layer)
+
+        for i, cell in enumerate(sorted_layer):
+            index = np.where(data == cell)[0][0]
+
+            filled_cells[i] = _cell_is_droplet(
+                index, data, label, cutoff_radius, cutoff, **kwargs
+            )
+
+        # Add one PBC copy of the bottom layer, then search it for
+        # the longest total filled stretch
+        filled_cells *= 2
+
+        index_best = None
+        len_best = 0
+
+        ibegin = None
+        len_current = 0
+
+        for i, cell in enumerate(filled_cells):
+            if cell:
+                # Start the current count
+                if ibegin == None:
+                    ibegin = i
+                    len_current = 1
+                # Add to the current length
+                else:
+                    len_current += 1
+            # Stop the count and compare to the best
+            elif ibegin != None and len_current > len_best:
+                index_best = ibegin
+                len_best = len_current
+
+                ibegin = None
+                len_current = 0
+            # Ensure that even if the best length wasn't updated, we reset
+            else:
+                ibegin = None
+                len_current = 0
+
+        # If no starting point was found, the layer is empty
+        if len_current > 0 and len_best == 0:
+            index_best = 0
+            len_best = len_current
+        elif len_best == 0:
+            return None
+
+        # If no interface edges were found, the layer is completely filled
+        if len_best == 0:
+            index_best = 0
+            len_best = len_current
+
+        # Adjust the indices for PBC, which can invert the left/right positions
+        edge1 = index_best % len(sorted_layer)
+        edge2 = (edge1 + len_best - 1) % len(sorted_layer)
+
+        return edge1, edge2
+
     def traverse_layer(sorted_layer, data):
         for cell in sorted_layer:
             index = np.where(data == cell)[0][0]
@@ -185,6 +263,8 @@ def get_interface(flow, label, **kwargs):
         print("[WARNING]: System is homogenous: no interface can be found.")
         return None, None
 
+    search_from_inside = kwargs.pop('search_longest_connected', False)
+
     coord_labels = kwargs.get('coord_labels', ('X', 'Y'))
     cutoff_radius = get_radius(flow.data, *coord_labels, **kwargs)
 
@@ -192,22 +272,97 @@ def get_interface(flow, label, **kwargs):
 
     xlabel, ylabel = kwargs.get('coord_labels', ('X', 'Y'))
 
-    # Work with non-zero part of dataset
-    indices = np.where(flow.data[label] >= cutoff)[0]
-    data = flow.data[indices]
+    if search_from_inside:
+        data = flow.data
 
-    Y = data[ylabel]
-    ys = get_yvalues(Y, *ylims)
+        try:
+            nx, _ = flow.shape
+            dx, _ = flow.spacing
+            box_x, _ = flow.size()
+        except Exception:
+            raise ValueError(
+                    "the system `shape` and `spacing` have to be set to "
+                    "adjust for the periodic boundary in the interface search"
+                )
 
-    for i, y in enumerate(ys):
-        layer = data[Y == y]
-        sorted_layer = np.sort(layer, order=xlabel)
+        # To account for pbc's: extend the data from (xmin, xmax)
+        # to (xmin - cutoff_radius, xmax + cutoff_radius) by copying
+        # the data from each side to the other and adjusting the positions.
+        # This means that we can walk through the system and assert that
+        # all bins within the cutoff radius are included, even if they are
+        # on the other side of the periodic boundary.
+        left_edge_indices = np.where(data[xlabel] <= cutoff_radius)
+        left_pbc_data = data[left_edge_indices]
+        left_pbc_data[xlabel] += box_x
 
-        left = traverse_layer(sorted_layer, data)
+        right_edge_indices = np.where(data[xlabel] >= box_x - cutoff_radius)
+        right_pbc_data = data[right_edge_indices]
+        right_pbc_data[xlabel] -= box_x
 
-        if left != None:
-            right = traverse_layer(reversed(sorted_layer), data)
-            yield [indices[edge] for edge in (left, right)]
+        pbc_data = np.append(left_pbc_data, right_pbc_data)
+
+        # The maximum index number is the original data size - 1.
+        max_index = data.size - 1
+
+        Y = data[ylabel]
+        ys = get_yvalues(Y, *ylims)
+
+        for i, y in enumerate(ys):
+            # Get the indices from our full dataset that has our current
+            # y-value. This accounts for input data which may be unsorted,
+            # or otherwise unregular.
+            indices = np.where(Y == y)[0]
+
+            # These are then the full data for the layer of the current y-value.
+            # We then sort it, to traverse it in the order of increasing x.
+            layer = data[indices]
+            sorted_layer = np.sort(layer, order=xlabel)
+
+            # Limit the search for cell neighbours in the data which is
+            # within the possible radius of the layer.
+            yslice_indices = np.where(
+                (data[ylabel] <= y + cutoff_radius)
+                    & (data[ylabel] >= y - cutoff_radius)
+            )[0]
+            pbc_yslice_indices = np.where(
+                (pbc_data[ylabel] <= y + cutoff_radius)
+                    & (pbc_data[ylabel] >= y - cutoff_radius)
+            )[0]
+
+            # This data is the full search space within which the layer
+            # cells will look for full neighbours, including PBC cells.
+            yslice_data = np.append(
+                data[yslice_indices],
+                pbc_data[pbc_yslice_indices]
+            )
+
+            result = find_interface_edges_in_layer(sorted_layer, yslice_data)
+
+            # The result is the left and right edges of the interface (if
+            # one was found), as indices from the input `sorted_layer`.
+            # We then return the corresponding indices from our full
+            # dataset.
+            # TODO: This does not account for an unsorted input dataset though??
+            if result != None:
+                left, right = result
+                yield [indices[edge] for edge in (left, right)]
+    else:
+        # Work with non-zero part of dataset
+        indices = np.where(flow.data[label] >= cutoff)[0]
+        data = flow.data[indices]
+
+        Y = data[ylabel]
+        ys = get_yvalues(Y, *ylims)
+
+        for i, y in enumerate(ys):
+            layer = data[Y == y]
+            sorted_layer = np.sort(layer, order=xlabel)
+
+            left = traverse_layer(sorted_layer, data)
+
+            if left != None:
+                right = traverse_layer(reversed(sorted_layer), data)
+                yield [indices[edge] for edge in (left, right)]
 
 
 def _cell_is_droplet(cell, system, label, radius, cutoff, **kwargs):
