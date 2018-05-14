@@ -100,6 +100,30 @@ class TestGetSpread(object):
         left, right = get_spreading_edges(flow, label, radius, **kwargs)
         assert (left == xs[xmin] and right == xs[xmax])
 
+    def test_collect_edges_from_longest_filled_section_with_pbc(self):
+        # Layer bins:      1 1 0 1 2 1 0 1 1
+        # Detect edges at:   x           x
+        # I.e.               1           7.
+        # But -- reversed, since the edge at 7 is the left edge
+        # when accounting for the periodic image
+        xs = np.array([0., 1., 2., 3., 4., 5., 6., 7., 8.])
+        ms = np.array([1., 1., 0., 1., 2., 1., 0., 1., 1.])
+        ys = np.zeros(xs.shape)
+
+        info = {
+            'shape': (9, 1),
+            'spacing': (1., 1.),
+        }
+
+        flow = FlowData(('X', xs), ('Y', ys), ('M', ms), info=info)
+
+        left, right = get_spreading_edges(flow, 'M', 1.1,
+            search_longest_connected=True)
+
+        assert (left == 7.0)
+        assert (right == 1.0)
+
+
 def test_spreading():
     xs = np.linspace(0, 1, datasize)
     ys = np.zeros(datasize) + 1.5
