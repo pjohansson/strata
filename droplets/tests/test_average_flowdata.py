@@ -75,3 +75,58 @@ def test_fill_data_baddata():
 
     with pytest.raises(ValueError):
         filled_data = transfer_data(combined_grid, data)
+
+def test_average_flow_maps():
+    x = np.arange(5)
+    xs, ys = np.meshgrid(x, x)
+
+    num_maps = 5
+    info = {'spacing': [1, 1]}
+
+    f0_sets = [np.random.random(xs.shape) for _ in range(num_maps)]
+    f1_sets = [np.random.random(xs.shape) for _ in range(num_maps)]
+    flow_maps = [FlowData(('X', xs), ('Y', ys), ('f0', f0_sets[i]), ('f1', f1_sets[i]), info=info)
+            for i in range(num_maps)]
+
+    f0_mean = np.average(f0_sets, axis=0)
+    f1_mean = np.average(f1_sets, axis=0, weights=f0_sets)
+
+    flow_mean = average_flow_data(flow_maps, weights=[('f1', 'f0')])
+    assert np.array_equal(xs.ravel(), flow_mean.data['X'])
+    assert np.array_equal(ys.ravel(), flow_mean.data['Y'])
+    assert np.isclose(f0_mean.ravel(), flow_mean.data['f0']).all()
+    assert np.isclose(f1_mean.ravel(), flow_mean.data['f1']).all()
+
+def test_average_flow_maps_close_coords():
+    # Slightly disturb the coordinates of one set and ensure equality through
+    # an optional rounding to close values
+
+    x = np.arange(5, dtype=float)
+    xs, ys = np.meshgrid(x, x)
+
+    num_maps = 2
+    info = {'spacing': [1, 1]}
+
+    f0_sets = [np.random.random(xs.shape) for _ in range(num_maps)]
+    f1_sets = [np.random.random(xs.shape) for _ in range(num_maps)]
+    flow_maps = [FlowData(('X', xs), ('Y', ys), ('f0', f0_sets[i]), ('f1', f1_sets[i]), info=info)
+            for i in range(num_maps)]
+
+    f0_mean = np.average(f0_sets, axis=0)
+    f1_mean = np.average(f1_sets, axis=0, weights=f0_sets)
+
+    # Slightly perturb the values
+    flow_maps[1].data['X'] += 0.01
+    flow_maps[1].data['Y'] += 0.02
+
+    # This should cause an error since the coordinates no longer match
+    # when doing the average
+    with pytest.raises(ValueError):
+        flow_mean = average_flow_data(flow_maps, weights=[('f1', 'f0')])
+
+    # Add a keyword to round coordinates to a decimal
+    flow_mean = average_flow_data(flow_maps, weights=[('f1', 'f0')], coord_decimals=1)
+    assert np.isclose(xs.ravel(), flow_mean.data['X']).all()
+    assert np.isclose(ys.ravel(), flow_mean.data['Y']).all()
+    assert np.isclose(f0_mean.ravel(), flow_mean.data['f0']).all()
+    assert np.isclose(f1_mean.ravel(), flow_mean.data['f1']).all()

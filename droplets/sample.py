@@ -50,8 +50,8 @@ def sample_per_angle_from(flow, origin, label,
     """
 
     amin = max(0., amin)
-    amax = min(360.-size, amax)
-    out_angles = np.arange(amin, amax+size, size)
+    amax = min(360. - size, amax)
+    out_angles = np.arange(amin, amax + size, size)
 
     # Collect values and weights in bins to average for each angle
     out_values_bins = [[] for _ in out_angles]
@@ -64,7 +64,8 @@ def sample_per_angle_from(flow, origin, label,
     inds_rlim = (drs >= rmin) & (drs <= rmax)
     data_rlim = flow.data[inds_rlim]
 
-    bin_rads = np.sign(dys[inds_rlim])*np.arccos(dxs[inds_rlim]/drs[inds_rlim])
+    bin_rads = np.sign(dys[inds_rlim]) \
+        * np.arccos(dxs[inds_rlim]/drs[inds_rlim])
     bin_degrees = np.mod(np.degrees(bin_rads), 360)
 
     # Apply angular cutoffs to remaining bins
@@ -81,7 +82,7 @@ def sample_per_angle_from(flow, origin, label,
     # Adjust angles by 1/2 step to center bins around the angle measurement
     # points, they will histogram correctly for the half-open interval
     # [angle, angle+step)
-    in_angles = bin_degrees[inds_alim] - 0.5*size + 1e-6
+    in_angles = bin_degrees[inds_alim] - 0.5 * size + 1e-6
 
     # Add data to bins
     for angle, value, optweight in zip(in_angles, label_data, weight_data):
@@ -108,8 +109,16 @@ def sample_per_angle_from(flow, origin, label,
 
 
 def sample_viscous_dissipation(flow, viscosity,
-        coord_labels=('X', 'Y'), flow_labels=('U', 'V')):
+        coord_labels=('X', 'Y'), flow_labels=('U', 'V'),
+        weight_label=None):
     """Return array of viscous dissipation from input flow data.
+
+    Note that this function sorts the underlying flow data to align
+    with the returned viscous dissipation data. This is because
+    viscous dissipation can only be calculated on a grid that is
+    regular and sorted. It makes sense to return data that corresponds
+    exactly to the input grid, but it is difficult to "unorder" the
+    calculated dissipation array to match the input.
 
     Args:
         flow (FlowData): Object to calculate dissipation from. Must
@@ -122,20 +131,39 @@ def sample_viscous_dissipation(flow, viscosity,
 
         flow_labels (2-tuple, default=('U', 'V'): Record labels for flow.
 
+        weight_label (string, opt.): Weigh the flow using this data.
+
     """
 
-    dx, dy = flow.spacing
-    nx, ny = flow.shape
+    try:
+        nx, ny = [int(v) for v in flow.shape]
+    except:
+        raise ValueError(
+                "the shape of the flow object is not correctly set "
+                "(is {!r}, expected (int, int))".format(flow.shape)
+            )
+
+    try:
+        dx, dy = [float(v) for v in flow.spacing]
+    except:
+        raise ValueError(
+                "the spacing of the flow object is not correctly set"
+                "(is {!r}, expected (float, float))".format(flow.spacing)
+            )
 
     coord_order = list(reversed(coord_labels))
-    data = np.sort(flow.data, order=coord_order).reshape(ny, nx)
-    U, V = [data[l] for l in flow_labels]
+    flow.data.sort(order=coord_order)
+    data = flow.data.reshape(ny, nx)
+    weights = data[weight_label] if weight_label != None else 1.
+    U, V = [data[l] * weights for l in flow_labels]
 
     dudy, dudx = np.gradient(U, dy, dx, edge_order=2)
     dvdy, dvdx = np.gradient(V, dy, dx, edge_order=2)
 
-    return 2*viscosity*(dudx**2 + dvdy**2 - (dudx + dvdy)**2/3.0) \
-            + viscosity*(dvdx + dudy)**2
+    dissipation = 2 * viscosity * (dudx**2 + dvdy**2 - (dudx + dvdy)**2 / 3.0) \
+            + viscosity * (dvdx + dudy)**2
+
+    return dissipation / weights**2
 
 
 def sample_center_of_mass(flow, mass_label='M', coord_labels=['X', 'Y']):
@@ -174,4 +202,64 @@ def sample_inertial_energy(flow, mass_label='M', flow_labels=['U', 'V']):
     """
 
     ul, vl = flow_labels
-    return 0.5*flow.data[mass_label]*(flow.data[ul]**2 + flow.data[vl]**2)
+    return 0.5 * flow.data[mass_label] * (flow.data[ul]**2 + flow.data[vl]**2)
+
+
+def sample_flow_angle(flow, flow_labels=['U', 'V'], mean=False, weight=None):
+    """Returns the angle of the flow of all bins in the system in degrees.
+
+    Optionally sample the mean angle by supplying the `mean` keyword. For
+    this operation the bins can be weighed by other values by supplying
+    the keyword `weight`.
+
+    The angles are returned on the interval (-180, +180) degrees where
+    the positive values correspond to a counter-clockwise direction.
+
+    Args:
+        flow (FlowData): Object to calculate angles from. Must contain fields
+            flow along X-Y.
+
+    Keyword args:
+        flow_labels (2-tuple, default=('U', 'V'): Record labels for flow.
+
+        mean (bool, default=False): Sample the mean angle.
+
+        weight (str, default=None): Label to weigh the flow by when
+            calculating the mean.
+
+    Returns:
+        ndarray: Angles in degrees, or a single angle if `mean` is True.
+
+    """
+
+    try:
+        us, vs = [flow.data[label].copy() for label in flow_labels]
+    except ValueError as exc:
+        if "no field" in str(exc):
+            raise ValueError(
+                    "Flow labels {!r} were not found in the system" \
+                    .format(flow_labels)
+                )
+        else:
+            raise ValueError(
+                    "Exactly 2 flow labels must be input, but got {} ({!r})" \
+                    .format(len(flow_labels), flow_labels)
+                )
+
+    if mean:
+        if weight:
+            try:
+                us *= flow.data[weight]
+                vs *= flow.data[weight]
+            except:
+                raise ValueError(
+                        "Weight label {!r} was not found in the system" \
+                        .format(weight)
+                    )
+
+        us = us.sum()
+        vs = vs.sum()
+
+    angles = np.arctan2(vs, us)
+
+    return np.degrees(angles)

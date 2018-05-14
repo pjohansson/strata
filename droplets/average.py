@@ -6,8 +6,8 @@ from strata.dataformats.write import write
 """Module for averaging FlowData objects."""
 
 
-def average_flow_data(input_flow_maps, weights=[], exclude_empty_sets=False,
-        coord_labels=('X', 'Y')):
+def average_flow_data(input_flow_maps, weights=[],
+        exclude_empty_sets=False, coord_decimals=None, coord_labels=('X', 'Y')):
     """Average input FlowData objects.
 
     The input data is projected onto a common coordinate grid before
@@ -73,6 +73,12 @@ def average_flow_data(input_flow_maps, weights=[], exclude_empty_sets=False,
         raise ValueError("No FlowData input.")
     except AssertionError:
         raise ValueError("No bin spacings set in FlowData input.")
+
+    if coord_decimals:
+        spacing = [np.around(s, decimals=coord_decimals) for s in spacing]
+        for flow in input_flow_maps:
+            flow.data['X'] = np.around(flow.data['X'], decimals=coord_decimals)
+            flow.data['Y'] = np.around(flow.data['Y'], decimals=coord_decimals)
 
     xl, yl = coord_labels
     data_list = [flow.data for flow in input_flow_maps
@@ -196,6 +202,8 @@ def transfer_data(grid, data, coord_labels=('X', 'Y')):
     full_data = grid.copy()
 
     for d in data:
+        # Ensure that the data has the same coordinates as
+        # the constructed grid
         x, y = np.array([d[l] for l in (xl, yl)])
         ind = np.isclose(full_data[xl], x, atol=1e-4) & np.isclose(full_data[yl], y, atol=1e-4)
 
@@ -247,14 +255,17 @@ def get_combined_grid(data, spacing, coord_labels=('X', 'Y')):
     xmin, xmax = get_min_and_max(nonempty_data, xl)
     ymin, ymax = get_min_and_max(nonempty_data, yl)
     dx, dy = spacing
+    nx, ny = round((xmax - xmin)/dx), round((ymax - ymin)/dy)
 
-    xs = np.arange(xmin, xmax+dx, dx)
-    ys = np.arange(ymin, ymax+dy, dy)
+    x = np.arange(xmin, xmax+dx, dx)
+    y = np.arange(ymin, ymax+dy, dy)
+    x = np.linspace(xmin, xmax, nx+1)
+    y = np.linspace(ymin, ymax, ny+1)
 
-    x, y = np.meshgrid(xs, ys)
+    xs, ys = np.meshgrid(x, y)
 
-    combined_grid = np.zeros(x.size, dtype=data[-1].dtype)
-    combined_grid[xl] = x.ravel()
-    combined_grid[yl] = y.ravel()
+    combined_grid = np.zeros(xs.size, dtype=data[-1].dtype)
+    combined_grid[xl] = xs.ravel()
+    combined_grid[yl] = ys.ravel()
 
     return combined_grid

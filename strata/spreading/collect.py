@@ -107,12 +107,36 @@ def collect(base, **kwargs):
         progress = pbar.ProgressBar(widgets=widgets, maxval=len(files))
         progress.start()
 
-    for i, (data, _, meta) in enumerate(read_from_files(*files)):
-        flow = FlowData(data)
-        left, right = get_spreading_edges(flow, 'M', cutoff_radius, **kwargs)
+    pbc_multiplier_left = 0
+    pbc_multiplier_right = 0
+
+    for i, (data, info, meta) in enumerate(read_from_files(*files)):
+        flow = FlowData(data, info=info)
+        left, right = get_spreading_edges(flow, 'M', cutoff_radius,
+            search_longest_connected=True, **kwargs)
 
         if left != None and right != None:
-            radius = 0.5*(right - left)
+            box_x, _ = flow.size()
+
+            left_total = left + pbc_multiplier_left * box_x
+            right_total = right + pbc_multiplier_right * box_x
+
+            # If the edges have crossed a periodic boundary, treat that here
+            if left_total > right_total:
+                pbc_multiplier_right += 1
+                right_total += box_x
+                # Guess at whether the edges crossed on the left or right
+                # side of the system: it should be that which is closest
+                # afterwards, unless the movement is extremely fast.
+            #     if abs(left - box_x) > right:
+            #         pbc_multiplier_left += 1
+            #     else:
+            #         pbc_multiplier_right += 1
+            #
+            # left += pbc_multiplier_left * box_x
+            # right += pbc_multiplier_right * box_x
+
+            radius = abs(0.5*(right_total - left_total))
 
             values.append(radius)
             times.append(time)
@@ -124,7 +148,9 @@ def collect(base, **kwargs):
                     output_impact_time(save, i*dt, cur_path)
                     write_spreading.impact = True
 
-                write_spreading(save, time, radius, left, right, cur_path)
+                write_spreading(
+                    save, time, radius, left_total, right_total, cur_path
+                )
 
             time += dt
 
@@ -158,6 +184,11 @@ def get_spreading_edges(flow, label, cutoff_radius, **kwargs):
 
         cutoff_bins (int, default=1): Number of bins inside the set radius
             which must pass the cut-off criteria.
+
+        search_longest_connected (bool, default=False): Instead of searching
+            for the interface from out and in, look for the longest stretch
+            of filled cells and take the edges as the edges of those.
+            See `get_interface` for a description of this method.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 

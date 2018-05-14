@@ -62,21 +62,20 @@ def get_contact_line_cells(flow, label, extract_area=(0., 0.),
 
         # Add the remaining interface indices to the list
         for ind in interface_iter:
-            try:
-                assert (y(ind[0]) <= ymax)
-            except AssertionError:
+            if y(ind[0]) > ymax:
                 break
-            else:
-                interface.append(ind)
+
+            interface.append(ind)
 
         return np.array(interface).swapaxes(0, 1)
 
-    def get_cells_in_direction(inds, dir_mod, dx, extract_height):
+    def get_cells_of_edge(inds, edge, dx, extract_height):
         """Get all the cells for the edge inds in the inwards direction."""
 
         xs = flow.data[xlabel]
         ys = flow.data[ylabel]
 
+        # Find the interface index at which height to place the extraction box
         i = 0
         try:
             while y(inds[i+1]) <= y(inds[0])+extract_height:
@@ -85,15 +84,19 @@ def get_contact_line_cells(flow, label, extract_area=(0., 0.),
             pass
 
         try:
-            xinner = x(inds[i]) + dx*dir_mod
-        except IndexError:
-            icells = []
-        else:
+            if edge == 'left':
+                xinner = x(inds[i]) + dx
+            else:
+                xinner = x(inds[i]) - dx
+
             xmin = np.min([x(inds).min(), xinner])
             xmax = np.max([x(inds).max(), xinner])
             ymin, ymax = (y(inds)[i] for i in (0, -1))
 
             icells = (xs >= xmin) & (xs <= xmax) & (ys >= ymin) & (ys <= ymax)
+
+        except IndexError:
+            icells = []
 
         return flow.data[icells].copy()
 
@@ -101,11 +104,11 @@ def get_contact_line_cells(flow, label, extract_area=(0., 0.),
     x = lambda index: flow.data[index][xlabel]
     y = lambda index: flow.data[index][ylabel]
 
-    dx, dy = extract_area
+    width, height = extract_area
 
-    interface = get_interface_of_height(dy)
-    left, right = [get_cells_in_direction(inds, dir_mod, dx, extract_height)
-            for inds, dir_mod in zip(interface, (1, -1))]
+    interface_inds = get_interface_of_height(height)
+    left, right = [get_cells_of_edge(edge_inds, edge, width, extract_height)
+            for edge_inds, edge in zip(interface_inds, ('left', 'right'))]
 
     return left, right
 

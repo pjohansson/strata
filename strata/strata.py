@@ -12,7 +12,7 @@ from strata.interface.angle import interface_contact_angle
 from strata.interface.collect import collect_interfaces
 from strata.interface.view import view_interfaces
 from strata.interface.sample import sample_interfaces
-from strata.contact_line_analysis import extract_contact_line_bins
+from strata.contact_line_analysis import extract_contact_line_bins, sample_contact_line_edges
 from strata.spreading.fit import fit_spreading_data
 from strata.spreading.collect import collect
 from strata.spreading.view import view_spreading
@@ -93,7 +93,7 @@ def print_version(ctx, param, value):
 
 # Main functionality
 @create_group(context_settings=dict(help_option_names=['-h', '--help']))
-@click.option('-v', '--version', is_flag=True, callback=print_version,
+@click.option('-V', '--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True, help='Print version number and exit.')
 def strata():
     """Tools for reading and analysing files of flow data."""
@@ -116,6 +116,16 @@ cmd_contactline = {
 cmd_sample = {
         'name': 'sample',
         'desc': 'Sample data maps.'
+}
+
+
+cmd_contactline_extract = {
+        'name': 'collect',
+        'desc': 'Extract the contact line and collect to new files.'
+}
+cmd_contactline_sample = {
+        'name': 'sample',
+        'desc': 'Sample data from the contact line cells.'
 }
 
 
@@ -642,8 +652,13 @@ def interface_angle_cli(base, **kwargs):
     interface_contact_angle(base, **kwargs)
 
 # Contact line averaging wrapper
-@strata.command(name=cmd_contactline['name'],
-        short_help=cmd_contactline['desc'])
+@strata.group()
+def contact_line(name=cmd_contactline['name'], short_help=cmd_contactline['desc']):
+    """Analyze the contact line bins."""
+    pass
+
+@contact_line.command(name=cmd_contactline_extract['name'],
+        short_help=cmd_contactline_extract['desc'])
 @add_argument('base', type=str)
 @add_argument('output', type=str)
 @add_option('-av', '--average', default=1,
@@ -653,7 +668,9 @@ def interface_angle_cli(base, **kwargs):
         help='Perform a rolling average over the data. (False)')
 @add_option('--recenter/--norecenter', default=True,
         help='Recenter the extracted edges around zero. (True)')
-@add_option('-ea', '--extract_area', type=float, default=(0., 0.), nargs=2,
+@add_option('--floor', type=float, default=None,
+        help='Height to determine the contact line at. (None)')
+@add_option('-ea', '--extract_area', type=float, default=(1., 1.), nargs=2,
         help='Extract area of this size. (1 nm, 1 nm)')
 @add_option('-eh', '--extract_height', type=float, default=0.,
         help='Synchronise extraction box position at this interface height. (0 nm)')
@@ -671,7 +688,7 @@ def interface_angle_cli(base, **kwargs):
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read and write using this file extension. (.dat)')
-def cl_average_cli(base, output, **kwargs):
+def cl_extract_cli(base, output, **kwargs):
     """Extract the contact line area of files at BASE and write to OUTPUT.
 
     The contact line area is determined as: For each considered bin
@@ -697,6 +714,74 @@ def cl_average_cli(base, output, **kwargs):
 
     set_none_to_inf(kwargs)
     extract_contact_line_bins(base, output, **kwargs)
+
+
+# Contact line sampling wrapper
+@contact_line.command(name=cmd_contactline_sample['name'],
+        short_help=cmd_contactline_sample['desc'])
+@add_argument('base', type=str)
+@add_argument('labels', type=str, nargs=-1, required=True)
+@add_option('-av', '--average', default=1,
+        type=click.IntRange(1, None), metavar='INTEGER',
+        help='Sample average the extracted data of this many files.')
+@add_option('--rolling/--norolling', default=False,
+        help='Perform a rolling average over the data. (False)')
+@add_option('--recenter/--norecenter', default=True,
+        help='Recenter the extracted edges around zero. (True)')
+@add_option('--floor', type=float, default=None,
+        help='Height to determine the contact line at. (None)')
+@add_option('-ea', '--extract_area', type=float, default=(0., 0.), nargs=2,
+        help='Extract area of this size. (1 nm, 1 nm)')
+@add_option('-eh', '--extract_height', type=float, default=0.,
+        help='Synchronise extraction box position at this interface height. (0 nm)')
+@add_option('-dt', '--delta_t', 'dt', default=1.,
+        help='Time difference between data map files. (1)')
+@add_option('--process', type=click.Choice(['mean', 'sum']), default='mean',
+        help='Whether to sample the mean or sum of the value. (mean)')
+@add_option('-co', '--cutoff', type=float, default=None,
+        help='Boundary bins require this much mass. (0)')
+@add_option('-cr', '--cutoff_radius', default=1.,
+        help='Boundary bins search for neighbours within this radius. (1 nm)')
+@add_option('-cb', '--cutoff_bins', default=1,
+        help='Boundary bins require this many neighbours (1).')
+@add_option('--save', default=None, type=str,
+        help='Save sampled data to disk. (False)')
+@add_option('-b', '--begin', default=1,
+        type=click.IntRange(0, None), metavar='INTEGER',
+        help='Begin reading from BASE at this number. (1)')
+@add_option('-e', '--end', default=None,
+        type=click.IntRange(0, None), metavar='INTEGER',
+        help='End reading from BASE at this number. (None)')
+@add_option('--ext', default='.dat',
+        help='Read and write using this file extension. (.dat)')
+def cl_sample_cli(base, labels, **kwargs):
+    """Sample LABELS of the contact line area of files at BASE.
+
+    The contact line area is determined as: For each considered bin
+    in the bottom-most layer which has more mass than a set cut-off, a
+    search is made for similarly filled bins within a set radius. If the
+    number of filled bins within this radius surpasses the final requirement,
+    the bin is considered to be connected to the main droplet. The left- and
+    rightmost of these bins in the selected layer are taken as the contact
+    line edge bins.
+
+    From these bins an area of input extraction size into the bulk is
+    included, as well as any cells up to and including the interface
+    at each height.
+
+    The data can be sample averaged by supplying a number of files to
+    average over. In this case all input files must be of similar coordinate
+    grid spacings. Additionally, a rolling average can be performed.
+
+    File names are generated by joining the base path and extension with
+    a five-digit integer signifying file number ('%s%05d%s').
+
+    """
+
+    set_none_to_inf(kwargs)
+    sum = kwargs.pop('process') == 'sum'
+    kwargs['sum'] = sum
+    sample_contact_line_edges(base, labels, **kwargs)
 
 
 @strata.group()
@@ -755,12 +840,17 @@ def view_contour_cli(files, **kwargs):
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
 @add_option('-o', '--save_fig', type=click.Path(), default=None,
         help='Save figure to path. (None)')
-@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V', 'flow']),
+@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V', 'flow', 'visc_diss']),
         default='M', help='Label of data to use as height map. (M)')
 @add_option('--clim', nargs=2, default=(None, None), type=OPT_FLOAT,
         metavar='MIN MAX', help='Set cut-offs for the binned values to include.')
 @add_option('--vlim', nargs=2, default=(None, None), type=OPT_FLOAT,
         metavar='MIN MAX', help='Set limits for the shown colour values.')
+@add_option('-cl', '--cutoff_label',
+        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow', 'visc']), default=None,
+        help='Use a cutoff to only show bins in which their value of this label exceeds a cutoff. The value is set using the `--cutoff` option.')
+@add_option('-co', '--cutoff', type=float, default=None,
+        help='Minimum value for `cutoff_label` to show bins for. (0)')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=True,
         help='Whether or not to draw a colour bar. (True)')
 @add_option('-cmap', '--colourmap', 'colormap', default='viridis', type=str,
@@ -798,7 +888,7 @@ def view_heightmap_cli(files, **kwargs):
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Minimum mass of bins to draw fields for. (0)')
 @add_option('-cl', '--colour_label', 'colour',
-        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow']), default='T',
+        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow', 'visc']), default='T',
         help='Colour the flow by values of this label.')
 @add_option('--scale', default=1., help='Scale for quiver arrows. (1)')
 @add_option('--width', default=0.0015, help='Width of quiver arrows. (0.0015)')
@@ -839,7 +929,7 @@ def view_quiver_cli(files, **kwargs):
 
 @strata.command(name=cmd_sample['name'], short_help=cmd_sample['desc'])
 @add_argument('base', type=str)
-@add_argument('label', type=str)
+@add_argument('labels', type=str, nargs=-1, required=True)
 @add_option('-o', '--output', type=click.Path(), default='sample.xvg',
         help='Write the collected data to disk. (sample.xvg)')
 @add_option('-dt', '--delta_t', 'dt', default=1.,
@@ -850,6 +940,14 @@ def view_quiver_cli(files, **kwargs):
         help='Boundary bins require this much of the cutoff value. (defaults to midpoint value)')
 @add_option('-cl', '--cutoff_label', type=str, default=None,
         help='Label to use for cutoff. Defaults to no cutoff. (None)')
+@add_option('-fl', '--floor', 'slip_floor', type=float, default=0.0,
+        help='Substrate position along z when sampling the slip length (0.0)')
+@add_option('--show/--noshow', 'verbose', default=True,
+        help='Print sample mean.')
+@add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the x axis.')
+@add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
+        metavar='MIN MAX', help='Set limits on the y axis.')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
@@ -858,13 +956,13 @@ def view_quiver_cli(files, **kwargs):
         help='End reading from BASE at this number. (None)')
 @add_option('--ext', default='.dat',
         help='Read using this file extension. (.dat)')
-def sample_average_cli(base, label, **kwargs):
+def sample_average_cli(base, labels, **kwargs):
     """Sample average data of input label in files of input base."""
 
     set_none_to_inf(kwargs)
     sum = kwargs.pop('process') == 'sum'
     kwargs['sum'] = sum
-    sample_average_files(base, label, **kwargs)
+    sample_average_files(base, labels, **kwargs)
 
 
 def set_none_to_inf(kwargs, label='end'):

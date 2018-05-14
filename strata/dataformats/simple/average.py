@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 def average_data(*data, atol=1e-3, rtol=1e-05):
     """Return a sample average of several plain maps.
@@ -49,7 +50,12 @@ def average_data(*data, atol=1e-3, rtol=1e-05):
 
     def get_weighted_avg(field, weight):
         weighted_sum = np.sum([d[field]*d[weight] for d in data], 0)
-        weighted_avg = weighted_sum/sum_weights[weight]
+
+        # A warning will be raised if any summed weight is 0. Catch that
+        # warning, then set all nan-results to 0. 
+        with warnings.catch_warnings(record=True):
+            weighted_avg = weighted_sum/sum_weights[weight]
+
         return np.nan_to_num(weighted_avg)
 
     if list(data) == []:

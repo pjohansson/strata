@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import warnings
 
 """Utilities for interacting with data files."""
 
@@ -68,10 +69,18 @@ def find_datamap_files(base, **kwargs):
     """
 
     def yield_singles(base, begin, end, ext):
+        files_found = False
+
         for filename in gen_filenames(base, begin=begin, end=end, ext=ext):
             if os.access(filename, os.F_OK) == True:
+                files_found = True
                 yield filename
             else:
+                if files_found == False:
+                    warnings.warn(
+                            "No files with base {!r} beginning at number {} were found".format(base, begin), UserWarning
+                        )
+
                 break
 
     def yield_groups(base, begin, end, ext):

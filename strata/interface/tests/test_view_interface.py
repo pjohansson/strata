@@ -43,7 +43,7 @@ def test_combine_interfaces():
 
     for i, (x, y) in enumerate(zip(xs, ys)):
         inds = left[i].notnull()
-        num = np.floor(len(y)/2)
+        num = int(np.floor(len(y)/2))
 
         # Assert that non-NaN-values are identical to original arrays
         assert (np.array_equal(left[inds].index, y[:num]))

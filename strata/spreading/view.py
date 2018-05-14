@@ -111,7 +111,7 @@ def sync_time_at_radius(data, radius):
     """
 
     def calc_closest_time(s, radius):
-        return (s - radius).abs().argmin()
+        return (s - radius).abs().idxmin()
 
     def get_adjusted_series(s, radius, sync_time):
         times = s.index - (calc_closest_time(s, radius) - sync_time)

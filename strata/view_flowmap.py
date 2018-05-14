@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from droplets.flow import FlowData
+from droplets.sample import sample_viscous_dissipation
 from strata.dataformats.read import read_from_files
 from strata.utils import decorate_graph
 
@@ -42,11 +43,13 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
     xlim, ylim = [kwargs.get(lims, (None, None)) for lims in ('xlim', 'ylim')]
     clim = (cutoff_label, cutoff)
 
-    for i, (data, _, _) in enumerate(read_from_files(*files)):
-        flow = FlowData(data)
+    for i, (data, info, _) in enumerate(read_from_files(*files)):
+        flow = FlowData(data, info=info)
 
         if colour == 'flow':
             flow.data = add_absolute_flow(flow.data)
+        elif colour == 'visc':
+            add_viscous_dissipation(flow, viscosity=8.77e-4)
 
         xs, ys, us, vs, weights = get_quiver_data(flow.data,
                 list(labels), coord_labels, colour,
@@ -133,8 +136,9 @@ def plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs):
 
     return fig
 
-
-def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
+def view_flowmap_2d(*files, label='M', type='heightmap',
+        cutoff_label='M', cutoff=None,
+        **kwargs):
     """View bin data of input files.
 
     Args:
@@ -142,6 +146,10 @@ def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
 
     Keyword Args:
         label (str, optional): Data label to use as height values.
+
+        cutoff (float, optional): Cutoff for data to show bins for.
+
+        cutoff_label (str, optional): Label for cutting data.
 
         type (str, optional): Type of map to draw, can be 'height'
             or 'contour'.
@@ -171,6 +179,13 @@ def view_flowmap_2d(*files, label='M', type='heightmap', **kwargs):
 
         if label == 'flow':
             flow.data = add_absolute_flow(flow.data)
+
+        if label == 'visc_diss':
+            label = 'visc'
+            add_viscous_dissipation(flow, viscosity=8.77e-4)
+
+        if cutoff != None and cutoff_label != None:
+            flow = flow.lims(cutoff_label, cutoff, None)
 
         if print_avg_value:
             print_average_value(flow.data, label, kwargs)
@@ -242,3 +257,22 @@ def add_absolute_flow(data):
 
     return append_fields(data, 'flow', absolute_flow, dtypes='float')
 
+
+def add_viscous_dissipation(flow, viscosity):
+    """Add the viscous dissipation as a field named 'visc'.
+
+    The dissipation is added as a new label for the data array.
+
+    Args:
+        data (ndarray): Record which must contain coordinate labels 'X' and 'Y'
+            as well as flow labels 'U' and 'V'.
+
+    """
+
+    from numpy.lib.recfunctions import append_fields
+
+    viscous_dissipation = sample_viscous_dissipation(flow, viscosity,
+        weight_label='M')
+
+    flow.data = append_fields(flow.data, 'visc', viscous_dissipation.ravel(),
+        dtypes='float')
