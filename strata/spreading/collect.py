@@ -16,122 +16,6 @@ function of time.
 
 """
 
-PeriodicInfo = namedtuple(
-    "PeriodicInfo",
-    ["xleft_prev", "xright_prev", "pbc_multiplier_left", "pbc_multiplier_right"]
-)
-
-def init_periodic_info():
-    """Initialize a `PeriodicInfo` object with no previous positions
-    and zeroed multipliers.
-
-    """
-    return PeriodicInfo(
-            xleft_prev=None,
-            xright_prev=None,
-            pbc_multiplier_left=0,
-            pbc_multiplier_right=0
-        )
-
-def check_and_update_periodic_info(pbc_info, box_x,
-        xleft_current, xright_current):
-    """Detect whether an edge has crossed a boundary and update the multipliers.
-
-    If a PBC boundary has been crossed by one edge (assuming that the time
-    difference between maps is small enough to not allow both edges to cross
-    at once), the edge that crossed should be the one which is furthest from
-    its previous position.
-
-    The boundary that it crossed is that which is furthest away from its new
-    position, by which we can infer how to adjust box-relative position to
-    the system-absolute.
-
-    Note that this function assumes that at all times, the system-absolute
-    position of the left edge is smaller (along x) than the system-absolute
-    position of the right edge. The exception is for the first step, when
-    no previous positions have been set. If that is the case and the left
-    position is ahead of the right edge, it is assumed that the right edge
-    has alread crossed the edge once: that multiplier is increased by 1.
-
-    Args:
-        pbc_info (PeriodicInfo): The previous state of the periodic multiplers
-            and edge positions.
-
-        box_x (float): The system size along x.
-
-        xleft_current, xright_current (float): The box-relative position of
-            the left and right edges.
-
-    Returns:
-        PeriodicInfo: The new state of the periodic multipliers
-            and edge positions.
-
-    """
-
-    def get_pbc_edge_multiplier_addition(x_current, box_x):
-        """Return -1 if the left edge was crossed, +1 if the right edge."""
-
-        if x_current % box_x > abs(box_x - x_current % box_x):
-            return -1
-        else:
-            return +1
-
-    def detect_crossing_event(xleft_current, xright_current,
-            xleft_prev, xright_prev):
-        """Detect whether an edge was crossed since the last state."""
-
-        left_ahead_current = xleft_current > xright_current
-        left_ahead_prev = xleft_prev > xright_prev
-
-        return (left_ahead_current and (not left_ahead_prev)) \
-            or ((not left_ahead_current) and left_ahead_prev)
-
-    pbc_multiplier_left = pbc_info.pbc_multiplier_left
-    pbc_multiplier_right = pbc_info.pbc_multiplier_right
-
-    xleft = xleft_current + pbc_multiplier_left * box_x
-    xright = xright_current + pbc_multiplier_right * box_x
-
-    try:
-        crossing_event = detect_crossing_event(xleft_current, xright_current,
-            pbc_info.xleft_prev, pbc_info.xright_prev)
-    # Catch if we are in the state where no previous positions are set:
-    # If so, ignore the regular PBC check and only check whether the left
-    # edge is ahead of the right. If that is true, add to the right multiplier.
-    except TypeError:
-        if xleft_current > xright_current:
-            pbc_multiplier_right += 1
-    else:
-        if crossing_event:
-            dx_left = abs(xleft_current - pbc_info.xleft_prev)
-            dx_right = abs(xright_current - pbc_info.xright_prev)
-
-            if dx_left > dx_right:
-                pbc_multiplier_left += get_pbc_edge_multiplier_addition(
-                    xleft, box_x
-                )
-            else:
-                pbc_multiplier_right += get_pbc_edge_multiplier_addition(
-                    xright, box_x
-                )
-
-    pbc_info = PeriodicInfo(
-        xleft_prev=xleft_current,
-        xright_prev=xright_current,
-        pbc_multiplier_left=pbc_multiplier_left,
-        pbc_multiplier_right=pbc_multiplier_right
-    )
-
-    return pbc_info
-
-def add_pbc_multipliers_to_edges(pbc_info, box_x, xleft, xright):
-    """Adjust the input edge coordinates to their system absolute positions."""
-
-    return (
-            xleft + pbc_info.pbc_multiplier_left * box_x,
-            xright + pbc_info.pbc_multiplier_right * box_x
-        )
-
 def collect(base, **kwargs):
     """Return the spreading radius of a droplet as a function of time.
 
@@ -326,6 +210,122 @@ def get_spreading_edges(flow, label, cutoff_radius, **kwargs):
 
     return xs[ileft], xs[iright]
 
+
+PeriodicInfo = namedtuple(
+    "PeriodicInfo",
+    ["xleft_prev", "xright_prev", "pbc_multiplier_left", "pbc_multiplier_right"]
+)
+
+def init_periodic_info(xleft=None, xright=None):
+    """Initialize a `PeriodicInfo` object with no previous positions
+    and zeroed multipliers.
+
+    """
+    return PeriodicInfo(
+            xleft_prev=xleft,
+            xright_prev=xright,
+            pbc_multiplier_left=0,
+            pbc_multiplier_right=0
+        )
+
+def check_and_update_periodic_info(pbc_info, box_x,
+        xleft_current, xright_current):
+    """Detect whether an edge has crossed a boundary and update the multipliers.
+
+    If a PBC boundary has been crossed by one edge (assuming that the time
+    difference between maps is small enough to not allow both edges to cross
+    at once), the edge that crossed should be the one which is furthest from
+    its previous position.
+
+    The boundary that it crossed is that which is furthest away from its new
+    position, by which we can infer how to adjust box-relative position to
+    the system-absolute.
+
+    Note that this function assumes that at all times, the system-absolute
+    position of the left edge is smaller (along x) than the system-absolute
+    position of the right edge. The exception is for the first step, when
+    no previous positions have been set. If that is the case and the left
+    position is ahead of the right edge, it is assumed that the right edge
+    has alread crossed the edge once: that multiplier is increased by 1.
+
+    Args:
+        pbc_info (PeriodicInfo): The previous state of the periodic multiplers
+            and edge positions.
+
+        box_x (float): The system size along x.
+
+        xleft_current, xright_current (float): The box-relative position of
+            the left and right edges.
+
+    Returns:
+        PeriodicInfo: The new state of the periodic multipliers
+            and edge positions.
+
+    """
+
+    def get_pbc_edge_multiplier_addition(x_current, box_x):
+        """Return -1 if the left edge was crossed, +1 if the right edge."""
+
+        if x_current % box_x > abs(box_x - x_current % box_x):
+            return -1
+        else:
+            return +1
+
+    def detect_crossing_event(xleft_current, xright_current,
+            xleft_prev, xright_prev):
+        """Detect whether an edge was crossed since the last state."""
+
+        left_ahead_current = xleft_current > xright_current
+        left_ahead_prev = xleft_prev > xright_prev
+
+        return (left_ahead_current and (not left_ahead_prev)) \
+            or ((not left_ahead_current) and left_ahead_prev)
+
+    pbc_multiplier_left = pbc_info.pbc_multiplier_left
+    pbc_multiplier_right = pbc_info.pbc_multiplier_right
+
+    xleft = xleft_current + pbc_multiplier_left * box_x
+    xright = xright_current + pbc_multiplier_right * box_x
+
+    try:
+        crossing_event = detect_crossing_event(xleft_current, xright_current,
+            pbc_info.xleft_prev, pbc_info.xright_prev)
+    # Catch if we are in the state where no previous positions are set:
+    # If so, ignore the regular PBC check and only check whether the left
+    # edge is ahead of the right. If that is true, add to the right multiplier.
+    except TypeError:
+        if xleft_current > xright_current:
+            pbc_multiplier_right += 1
+    else:
+        if crossing_event:
+            dx_left = abs(xleft_current - pbc_info.xleft_prev)
+            dx_right = abs(xright_current - pbc_info.xright_prev)
+
+            if dx_left > dx_right:
+                pbc_multiplier_left += get_pbc_edge_multiplier_addition(
+                    xleft, box_x
+                )
+            else:
+                pbc_multiplier_right += get_pbc_edge_multiplier_addition(
+                    xright, box_x
+                )
+
+    pbc_info = PeriodicInfo(
+        xleft_prev=xleft_current,
+        xright_prev=xright_current,
+        pbc_multiplier_left=pbc_multiplier_left,
+        pbc_multiplier_right=pbc_multiplier_right
+    )
+
+    return pbc_info
+
+def add_pbc_multipliers_to_edges(pbc_info, box_x, xleft, xright):
+    """Adjust the input edge coordinates to their system absolute positions."""
+
+    return (
+            xleft + pbc_info.pbc_multiplier_left * box_x,
+            xright + pbc_info.pbc_multiplier_right * box_x
+        )
 
 # Output helper functions
 @prepare_path

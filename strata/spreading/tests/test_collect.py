@@ -185,6 +185,14 @@ def test_init_periodic_info_to_0_and_none():
     assert (pbc_info.pbc_multiplier_left == 0)
     assert (pbc_info.pbc_multiplier_right == 0)
 
+def test_init_periodic_info_to_xvalues():
+    pbc_info = init_periodic_info(xleft=1., xright=2.)
+
+    assert (pbc_info.xleft_prev == 1.)
+    assert (pbc_info.xright_prev == 2.)
+    assert (pbc_info.pbc_multiplier_left == 0)
+    assert (pbc_info.pbc_multiplier_right == 0)
+
 def test_periodic_info_check_updates_previous_positions():
     pbc_info = init_periodic_info()
 
