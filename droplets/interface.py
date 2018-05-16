@@ -166,7 +166,7 @@ def get_interface(flow, label, **kwargs):
             vmax = np.max(data[label])
             assert (vmin != vmax)
 
-            cutoff = 0.5*(vmin + vmax)
+            cutoff = 0.5 * (vmin + vmax)
 
         return cutoff
 
