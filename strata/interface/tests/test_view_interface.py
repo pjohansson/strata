@@ -15,10 +15,14 @@ cs = np.zeros(xs.shape)
 cs[:,1:10] = 1.
 
 data = {'X': xs, 'Y': ys, 'C': cs}
-flow = FlowData(data)
+info = {'shape': (11, 11), 'spacing': (1., 1.)}
+flow = FlowData(data, info=info)
 
 def test_get_series():
-    x, y = get_interface_coordinates(flow, 'C')
+    interface, _, _ = get_interface_coordinates(flow, 'C', None, None)
+    x = interface['X']
+    y = interface['Y']
+
     xs = [x, x + 1]
     ys = [y, y + 2]
 
@@ -32,7 +36,9 @@ def test_get_series():
         assert (np.array_equal(r, xs[i][split:]))
 
 def test_combine_interfaces():
-    x, y = get_interface_coordinates(flow, 'C')
+    interface, _, _ = get_interface_coordinates(flow, 'C', None, None)
+    x = interface['X']
+    y = interface['Y']
 
     xs = [x, x + 1]
     ys = [y, y + 2]
@@ -51,7 +57,10 @@ def test_combine_interfaces():
         assert (np.array_equal(right[i][inds], x[num:]))
 
 def test_stitch_edges():
-    x, y = get_interface_coordinates(flow, 'C')
+    interface, _, _ = get_interface_coordinates(flow, 'C', None, None)
+    x = interface['X']
+    y = interface['Y']
+
     control = pd.Series(x, index=y)
     left, right = all_coords_to_edges([x], [y])
     series = stitch_edge_series(left[0], right[0])
