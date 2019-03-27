@@ -855,12 +855,18 @@ def view_contour_cli(files, **kwargs):
         help='Whether or not to draw a colour bar. (True)')
 @add_option('-cmap', '--colourmap', 'colormap', default='viridis', type=str,
         help='Set a colour map. (viridis)')
+@add_option('--transparent/--notransparent', default=False,
+        help='Make the background transparent. (False)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
+@add_option('--dpi', type=int, default=150,
+        help='Set a dpi value for figure output. (150)')
 @add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
 @add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the y axis.')
+@add_option('--drawaxes/--nodrawaxes', 'drawaxes', default=True,
+        help='Whether or not to draw the axes of the figure. (True)')
 @add_option('--title', default='Droplet height map',
         help='Figure title.')
 @add_option('--xlabel', default='x (nm)',
@@ -878,6 +884,8 @@ def view_heightmap_cli(files, **kwargs):
 
     """
 
+    noaxis = not kwargs.pop('drawaxes')
+    kwargs['noaxis'] = noaxis
     view_flowmap_2d(*files, type='height', **kwargs)
 
 
@@ -888,7 +896,7 @@ def view_heightmap_cli(files, **kwargs):
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Minimum mass of bins to draw fields for. (0)')
 @add_option('-cl', '--colour_label', 'colour',
-        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow', 'visc']), default='T',
+        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow', 'visc', 'radial']), default='T',
         help='Colour the flow by values of this label.')
 @add_option('--scale', default=1., help='Scale for quiver arrows. (1)')
 @add_option('--width', default=0.0015, help='Width of quiver arrows. (0.0015)')

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from droplets.flow import FlowData
-from droplets.sample import sample_viscous_dissipation
+from droplets.sample import sample_center_of_mass, sample_viscous_dissipation
 from strata.dataformats.read import read_from_files
 from strata.utils import decorate_graph
 
@@ -23,7 +23,9 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
         cutoff_label (str, optional): Label for cutting data.
 
         colour (str, optional): Colour flow fields with data from this label,
-            or enter 'flow' to colour by flow magnitude.
+            or enter 'flow' to colour by flow magnitude, 'visc' to colour by
+            viscous dissipation or 'radial' by radial velocity from center
+            of mass.
 
         pivot (str, optional): Pivot for flow field arrows.
 
@@ -50,6 +52,9 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
             flow.data = add_absolute_flow(flow.data)
         elif colour == 'visc':
             add_viscous_dissipation(flow, viscosity=8.77e-4)
+        elif colour == 'radial':
+            com = sample_center_of_mass(flow)
+            flow.data = add_radial_flow(flow.data, com)
 
         xs, ys, us, vs, weights = get_quiver_data(flow.data,
                 list(labels), coord_labels, colour,
@@ -172,6 +177,7 @@ def view_flowmap_2d(*files, label='M', type='heightmap',
 
     print_avg_value = kwargs.get('average_value', False)
     kwargs.setdefault('axis', 'scaled')
+    kwargs.setdefault('noaxis', True)
     kwargs.setdefault('coord_labels', ('X', 'Y'))
 
     for i, (data, info, _) in enumerate(read_from_files(*files)):
@@ -247,7 +253,7 @@ def add_absolute_flow(data):
         data (ndarray): Record which must contain flow labels 'U' and 'V'.
 
     Returns:
-        ndarray: The same record with an added field with label 'flow'.
+        ndarray: The same record with an added field of label 'flow'.
 
     """
 
@@ -257,6 +263,31 @@ def add_absolute_flow(data):
 
     return append_fields(data, 'flow', absolute_flow, dtypes='float')
 
+
+def add_radial_flow(data, coord):
+    """Return a numpy array with the radial flow as a field named 'radial'.
+
+    The radial flow is calculated from the center of mass and is positive
+    in the clockwise direction.
+
+    Args:
+        data (ndarray): Record which must contain coordinate labels 'X' and 'Y'
+            as well as flow labels 'U' and 'V'.
+
+    Returns:
+        ndarray: The same record with an added field of label 'radial'.
+
+    """
+
+    from numpy.lib.recfunctions import append_fields
+
+    x0, y0 = coord
+    radial_angle = np.arctan2(data['Y'] - y0, data['X'] - x0)
+
+    radial_flow = data['U'] * np.sin(radial_angle) \
+        - data['V'] * np.cos(radial_angle)
+
+    return append_fields(data, 'radial', radial_flow, dtypes='float')
 
 def add_viscous_dissipation(flow, viscosity):
     """Add the viscous dissipation as a field named 'visc'.
