@@ -198,6 +198,8 @@ cmd_quiver = {
 @add_option('--recenter',
         type=click.Choice(['none', 'left', 'right', 'com']), default='none',
         help='Recenter data maps around a contact line or the center of mass. (none)')
+@add_option('--rolling/--norolling', default=False,
+        help='Perform a rolling average over the data. (False)')
 @add_option('--floor', type=float, default=None,
         help='Height to determine the contact line at. (None)')
 @add_option('-co', '--cutoff', type=float, default=0.,

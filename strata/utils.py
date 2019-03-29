@@ -61,6 +61,8 @@ def find_datamap_files(base, **kwargs):
         group (int, default=1): Yield the file names bundled in groups
             of this length.
 
+        rolling (bool, default=False): Use a rolling average over the files.
+
         ext (str, default='.dat'): File extension.
 
     Yields:
@@ -91,8 +93,12 @@ def find_datamap_files(base, **kwargs):
 
             if len(files) == group:
                 yield files
-                begin += group
-                group_end += group
+                if rolling:
+                    begin += 1
+                    group_end += 1
+                else:
+                    begin += group
+                    group_end += group
             else:
                 break
 
@@ -102,6 +108,7 @@ def find_datamap_files(base, **kwargs):
             kwargs.pop('ext', '.dat')
             ]
     group = kwargs.pop('group', None)
+    rolling = kwargs.pop('rolling', False)
 
     try:
         if group == None:
@@ -148,7 +155,7 @@ def find_singles_to_singles(base, output, **fopts):
         yield path, next(out)
 
 
-def find_groups_to_singles(base, output, group=1, **kwargs):
+def find_groups_to_singles(base, output, group=1, rolling=False, **kwargs):
     """Groups input file names and return with a single file name.
 
     Finds file names at input path and bundle in groups of input length,
@@ -173,6 +180,8 @@ def find_groups_to_singles(base, output, group=1, **kwargs):
         group (int, default=1): Group input files in bundles of this length.
             Can be input as the third positional argument.
 
+        rolling (bool, default=False): Use a rolling average over the files.
+
         ext (str, default='.dat'): Input file extension.
 
         outext (str, default=ext): Output file extension, defaults to input.
@@ -184,10 +193,14 @@ def find_groups_to_singles(base, output, group=1, **kwargs):
     """
 
     opts = pop_fileopts(kwargs)
-    begin_out_num = np.ceil(opts['begin']/group)
+
+    if rolling:
+        begin_out_num = opts['begin']
+    else:
+        begin_out_num = np.ceil(opts['begin']/group)
 
     output_gen = gen_filenames(output, begin=begin_out_num, ext=opts['outext'])
-    input_gen = find_datamap_files(base, group=group, **opts)
+    input_gen = find_datamap_files(base, group=group, rolling=rolling, **opts)
     for input_group in input_gen:
         yield input_group, next(output_gen)
 
@@ -315,7 +328,7 @@ def decorate_graph(func):
                     (['title', 'xlabel', 'ylabel'], ''),
                     (['xlim', 'ylim', 'save_fig', 'axis', 'colormap'], None),
                     (['show', 'clf'], True),
-                    (['loglog', 'colorbar', 'legend'], False),
+                    (['loglog', 'colorbar', 'legend', 'noaxis', 'transparent'], False),
                     (['dpi'], 150)
             )
 
@@ -355,14 +368,19 @@ def decorate_graph(func):
         if fargs['legend']:
             plt.legend()
 
+        if fargs['noaxis']:
+            ax = plt.gca()
+            ax.set_axis_off()
+
         if fargs['save_fig'] != None:
-            plt.savefig(fargs['save_fig'], dpi=fargs['dpi'])
+            plt.savefig(fargs['save_fig'], dpi=fargs['dpi'], transparent=fargs['transparent'])
 
         if fargs['show']:
             plt.show()
 
         if fargs['clf']:
             plt.clf()
+
 
         return None
 

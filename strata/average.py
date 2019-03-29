@@ -10,7 +10,7 @@ from strata.spreading.collect import get_spreading_edges
 from strata.utils import find_groups_to_singles, pop_fileopts
 
 
-def average(base, output, group=1, **kwargs):
+def average(base, output, group=1, rolling=False, **kwargs):
     """Average and output data maps from input base.
 
     Joins the file bases and extensions with a five-digit integer
@@ -64,6 +64,8 @@ def average(base, output, group=1, **kwargs):
         group (int, default=1): Group input files in bundles of this length.
             Can be input as the third positional argument.
 
+        rolling (bool, default=False): Use a rolling average over the files.
+
         ext (str, default='.dat'): File extension.
 
         quiet (bool, default=False): Do not print progress.
@@ -90,7 +92,7 @@ def average(base, output, group=1, **kwargs):
     if combine != (None, None):
         nx, ny = int(combine[0]), int(combine[1])
 
-    groups_singles = list(find_groups_to_singles(base, output, group, **fopts))
+    groups_singles = list(find_groups_to_singles(base, output, group, rolling, **fopts))
 
     if not quiet:
         widgets = ['Averaging files: ',

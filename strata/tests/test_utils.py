@@ -138,6 +138,42 @@ def test_groups_to_singles_filenames():
                 assert (to_fn == next(out_gen))
 
 
+def test_groups_to_singles_rolling():
+    fnbase = "input_"
+    num_files = 8
+    window = 4
+    begin = 3
+
+    with tmp.TemporaryDirectory() as tmpdir:
+        base = os.path.join(tmpdir, fnbase)
+        outbase = os.path.join(tmpdir, 'out_')
+        files = []
+        for filename in gen_filenames(base, num_files):
+            files.append(filename)
+            open(filename, 'w')
+
+        gen = find_groups_to_singles(base, outbase, window, rolling=True, begin=begin)
+
+        input_fns, to_fn = next(gen)
+        assert input_fns == ["{}{:05d}.dat".format(base, i)
+            for i in range(begin, begin + window)]
+        assert to_fn == "{}{:05d}.dat".format(outbase, begin)
+
+        begin += 1
+
+        input_fns, to_fn = next(gen)
+        assert input_fns == ["{}{:05d}.dat".format(base, i)
+            for i in range(begin, begin + window)]
+        assert to_fn == "{}{:05d}.dat".format(outbase, begin)
+
+        begin += 1
+
+        input_fns, to_fn = next(gen)
+        assert input_fns == ["{}{:05d}.dat".format(base, i)
+            for i in range(begin, begin + window)]
+        assert to_fn == "{}{:05d}.dat".format(outbase, begin)
+
+
 def test_groups_to_singles_otherext():
     num_files = 10
     group = 5
