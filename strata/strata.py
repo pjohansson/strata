@@ -810,6 +810,12 @@ def view(name=cmd_flowview['name'], short_help=cmd_flowview['desc']):
         metavar='MIN MAX', help='Set limits for the contour values.')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=False,
         help='Whether or not to draw a colour bar. (False)')
+@add_option('--cbarlabel', default=None,
+        help='Set colourbar label.')
+@add_option('--cbarticks', default=None, type=STR_FLOATS,
+        help='Set colourbar tick levels.')
+@add_option('--cbarticklabels', default=None, type=STR_LIST,
+        help='Set colourbar tick level labels.')
 @add_option('-cmap', '--colourmap', 'colormap', default='viridis', type=str,
         help='Set a colour map. (viridis)')
 @add_option('--show/--noshow', default=True,
@@ -857,6 +863,12 @@ def view_contour_cli(files, **kwargs):
         help='Whether or not to draw a colour bar. (True)')
 @add_option('-cmap', '--colourmap', 'colormap', default='viridis', type=str,
         help='Set a colour map. (viridis)')
+@add_option('--cbarlabel', default=None,
+        help='Set colourbar label.')
+@add_option('--cbarticks', default=None, type=STR_FLOATS,
+        help='Set colourbar tick levels.')
+@add_option('--cbarticklabels', default=None, type=STR_LIST,
+        help='Set colourbar tick level labels.')
 @add_option('--transparent/--notransparent', default=False,
         help='Make the background transparent. (False)')
 @add_option('--show/--noshow', default=True,
@@ -908,6 +920,12 @@ def view_heightmap_cli(files, **kwargs):
         metavar='MIN MAX', help='Set limits for the shown colour values.')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=False,
         help='Whether or not to draw a colour bar. (True)')
+@add_option('--cbarlabel', default=None,
+        help='Set colourbar label.')
+@add_option('--cbarticks', default=None, type=STR_FLOATS,
+        help='Set colourbar tick levels.')
+@add_option('--cbarticklabels', default=None, type=STR_LIST,
+        help='Set colourbar tick level labels.')
 @add_option('-cmap', '--colourmap', 'colormap', default='viridis', type=str,
         help='Set a colour map. (viridis)')
 @add_option('--show/--noshow', default=True,

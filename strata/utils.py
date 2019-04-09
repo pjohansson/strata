@@ -326,7 +326,7 @@ def decorate_graph(func):
         def pop_figure_kwargs(kwargs):
             key_defaults = (
                     (['title', 'xlabel', 'ylabel'], ''),
-                    (['xlim', 'ylim', 'save_fig', 'axis', 'colormap'], None),
+                    (['xlim', 'ylim', 'save_fig', 'axis', 'colormap', 'cbarlabel', 'cbarticks', 'cbarticklabels'], None),
                     (['show', 'clf'], True),
                     (['loglog', 'colorbar', 'legend', 'noaxis', 'transparent'], False),
                     (['dpi'], 150)
@@ -363,7 +363,19 @@ def decorate_graph(func):
                 print(err)
 
         if fargs['colorbar']:
-            plt.colorbar()
+            from mpl_toolkits.axes_grid1 import make_axes_locatable
+            divider = make_axes_locatable(plt.gca())
+            cax = divider.append_axes("right", "5%", pad="3%")
+            cbar = plt.colorbar(cax=cax)
+
+            if fargs['cbarlabel']:
+                cbar.set_label(fargs['cbarlabel'])
+
+            if fargs['cbarticks']:
+                cbar.set_ticks(fargs['cbarticks'])
+
+            if fargs['cbarticklabels']:
+                cbar.set_ticklabels(fargs['cbarticklabels'])
 
         if fargs['legend']:
             plt.legend()
@@ -372,11 +384,14 @@ def decorate_graph(func):
             ax = plt.gca()
             ax.set_axis_off()
 
+        plt.tight_layout()
+
         if fargs['save_fig'] != None:
             plt.savefig(fargs['save_fig'], dpi=fargs['dpi'], transparent=fargs['transparent'])
 
         if fargs['show']:
             plt.show()
+
 
         if fargs['clf']:
             plt.clf()
