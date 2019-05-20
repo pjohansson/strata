@@ -290,7 +290,7 @@ def get_averaged_contact_line_edges(filenames, average, rolling,
             xadj_per_edge.append(xadj_mean)
 
             avg_flow_per_edge.append(average_flow_data(flow_data,
-                    weights=weights, exclude_empty_sets=True))
+                    weights=weights, exclude_empty_sets=True, coord_decimals=2))
 
         yadj = get_coord_on_grid(0, spacing[1])
         avg_flow_per_edge = adjust_coordinates(avg_flow_per_edge,
