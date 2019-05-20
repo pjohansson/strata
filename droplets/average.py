@@ -35,6 +35,9 @@ def average_flow_data(input_flow_maps, weights=[],
         exclude_empty_sets (bool, optional): Whether or not to exclude empty
             data sets from the averaging process.
 
+        coord_decimals (float, optional): Use this many decimals to decide
+            grids for the averaged data.
+
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
     Returns:
