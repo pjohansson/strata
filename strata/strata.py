@@ -670,6 +670,8 @@ def contact_line(name=cmd_contactline['name'], short_help=cmd_contactline['desc'
         help='Perform a rolling average over the data. (False)')
 @add_option('--recenter/--norecenter', default=True,
         help='Recenter the extracted edges around zero. (True)')
+@add_option('--fuse/--nofuse', default=False,
+        help='Fuse the edges into one whole. (False)')
 @add_option('--floor', type=float, default=None,
         help='Height to determine the contact line at. (None)')
 @add_option('-ea', '--extract_area', type=float, default=(1., 1.), nargs=2,

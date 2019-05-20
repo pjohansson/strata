@@ -11,7 +11,8 @@ from strata.sample_average import sample_value
 from strata.utils import gen_filenames, find_datamap_files, pop_fileopts, prepare_path, write_module_header
 
 
-def extract_contact_line_bins(base, output, average=1, rolling=False,
+def extract_contact_line_bins(base, output, average=1,
+                              fuse=False, rolling=False,
                               recenter=False, **kwargs):
     """Extract bins from the contact line of a wetting system.
 
@@ -30,6 +31,8 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
         rolling (bool, optional): Perform a rolling average over the data.
 
         recenter (bool, optional): Recenter the contact line edges around zero.
+
+        fuse (bool, optional): Fuse the contact lines.
 
         begin (int, default=1): First data map number.
 
@@ -59,11 +62,29 @@ def extract_contact_line_bins(base, output, average=1, rolling=False,
     averaged_data = get_averaged_contact_line_edges(filenames, average,
         rolling, recenter, weights, **kwargs)
 
-    #for spacing, avg_flow_per_edge in averaged_data:
     for avg_flow_per_edge in averaged_data:
         spacing = avg_flow_per_edge[0].spacing
+
+        if fuse:
+            fuse_edges(avg_flow_per_edge, spacing)
+
         recombined_flow_data = combine_flow_data(avg_flow_per_edge, spacing)
         write(next(fnout), recombined_flow_data.data)
+
+
+"""Fuse the left and right edges in the center."""
+def fuse_edges(flow_edges, spacing):
+    dx, _ = spacing
+    left, right = flow_edges
+
+    left_xmax = np.max(left.data['X'])
+    right_xmin = np.min(right.data['X'])
+
+    left_xshift = left_xmax + 0.5 * dx
+    right_xshift = right_xmin - 0.5 * dx
+
+    left.data['X'] -= left_xshift
+    right.data['X'] -= right_xshift
 
 
 def sample_contact_line_edges(base, labels, save=None,
