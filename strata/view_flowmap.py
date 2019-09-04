@@ -8,7 +8,7 @@ from strata.utils import decorate_graph
 
 
 def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
-        colour=None, vlim=(None, None), pivot='middle', **kwargs):
+        colour=None, vlim=(None, None), pivot='middle', streamlines=False, **kwargs):
     """View flow fields of input files.
 
     Args:
@@ -28,6 +28,8 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
             of mass.
 
         pivot (str, optional): Pivot for flow field arrows.
+
+        streamlines (bool, optional): Plot field as stream lines instead of quiver.
 
         vlim (floats, optional): 2-tuple with limits for the colour map if
             a label has been supplied.
@@ -56,16 +58,88 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
             com = sample_center_of_mass(flow)
             flow.data = add_radial_flow(flow.data, com)
 
-        xs, ys, us, vs, weights = get_quiver_data(flow.data,
-                list(labels), coord_labels, colour,
-                clim, xlim, ylim)
-
         try:
-            plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs)
+            if not streamlines:
+                xs, ys, us, vs, weights = get_quiver_data(flow.data,
+                        list(labels), coord_labels, colour,
+                        clim, xlim, ylim)
+
+                plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs)
+            else:
+                x, y, u, v, weights, line_weights = get_streamline_data(
+                    flow, list(labels), coord_labels, colour, clim, xlim, ylim
+                )
+
+                plot_streamlines(x, y, u, v, weights, line_weights, **kwargs)
         except Exception as err:
             print("Could not draw/save figure: ", end='')
             print(err)
             break
+
+def get_streamline_data(flow, labels, coord_labels, colour, clim, xlim, ylim):
+    x0, y0 = flow.origin
+    dx, dy = flow.spacing
+
+    data = flow.data
+
+    cutoff_label, cutoff_value = clim
+
+    xlabel, ylabel = coord_labels
+    xmin, xmax = xlim
+    ymin, ymax = ylim
+
+    mask = (data[cutoff_label] < cutoff_value) 
+    
+    data = np.ma.array(data, mask=mask)
+
+    x0 = max(data['X'].min(), xmin if xmin else -np.inf)
+    x1 = min(data['X'].max(), xmax if xmax else np.inf)
+    y0 = max(data['Y'].min(), ymin if ymin else -np.inf)
+    y1 = min(data['Y'].max(), ymax if ymax else np.inf)
+    
+    inds = (data[xlabel] >= x0) \
+        & (data[xlabel] <= x1) \
+        & (data[ylabel] >= y0) \
+        & (data[ylabel] <= y1)
+    
+    data = data[inds]
+
+    x0 = data[xlabel].min()
+    x1 = data[xlabel].max()
+    y0 = data[ylabel].min()
+    y1 = data[ylabel].max()
+
+    nx = int((x1 - x0) / dx) + 2
+    ny = int((y1 - y0) / dy) + 2
+
+    data = data.reshape(nx, ny).transpose()
+
+    x = x0 + np.arange(nx) * dx
+    y = y0 + np.arange(ny) * dy
+
+    u = data['U']
+    v = data['V']
+
+    weights = data[colour]
+    line_weights = data['M']
+
+    return x, y, u, v, weights, line_weights
+
+
+@decorate_graph
+def plot_streamlines(xs, ys, us, vs, weights, line_weights=None, **kwargs):
+    """Draw a streamlines plot of input data."""
+
+    ny, nx = us.shape
+
+    density_x = nx // 30
+    density_y = ny // 30
+
+    linewidth = 1.5 * line_weights / line_weights.max()
+
+    fig = plt.streamplot(xs, ys, us, vs, (density_x, density_y), color=weights, linewidth=linewidth)
+
+    return fig
 
 
 def get_quiver_data(data, labels, coord_labels, colour, clim, xlim, ylim):

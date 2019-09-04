@@ -918,6 +918,8 @@ def view_heightmap_cli(files, **kwargs):
 @add_option('--width', default=0.0015, help='Width of quiver arrows. (0.0015)')
 @add_option('--pivot', default='middle', type=click.Choice(['tail', 'middle', 'tip']),
         help='Pivot for flow arrows. (middle)')
+@add_option('--streamlines/--nostreamlines', default=False, 
+        help='Draw a stream lines plot instead of quiver. (false)')
 @add_option('--vlim', nargs=2, default=(None, None), type=OPT_FLOAT,
         metavar='MIN MAX', help='Set limits for the shown colour values.')
 @add_option('--colourbar/--nocolourbar', 'colorbar', default=False,
