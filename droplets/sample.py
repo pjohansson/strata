@@ -151,8 +151,8 @@ def sample_viscous_dissipation(flow, viscosity,
                 "(is {!r}, expected (float, float))".format(flow.spacing)
             )
 
-    coord_order = list(reversed(coord_labels))
-    flow.data.sort(order=coord_order)
+    flow.sort(coord_labels=coord_labels)
+
     data = flow.data.reshape(ny, nx)
     weights = data[weight_label] if weight_label != None else 1.
     U, V = [data[l] * weights for l in flow_labels]
