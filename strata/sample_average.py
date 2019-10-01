@@ -162,7 +162,7 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
             value = np.mean(sampled_values[i])
 
             try:
-                std = np.mean(sampled_stds[i])
+                std = np.std(sampled_values[i])
                 print(l, value, std)
             except:
                 print(l, np.mean(sampled_values[i]))
