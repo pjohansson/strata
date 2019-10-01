@@ -352,6 +352,18 @@ class FlowData(object):
         return nx * dx, ny * dy
 
 
+    def sort(self, coord_labels=('X', 'Y')):
+        """Sort the data in-place using the bin coordinates.
+
+        Args:
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
+
+        """
+
+        order = list(reversed(coord_labels))
+        self.data.sort(order=order)
+
+
     def translate(self, label, value):
         """Return a copy with the data of input label translated by input value.
 
