@@ -59,6 +59,122 @@ def downsample_flow_data(flow, num_combine,
     return FlowData(*resampled_flow, info=info)
 
 
+def supersample_flow_data(flow, factor, coord_labels=('X', 'Y'), weights=[]):
+    """Supersample input data by splitting bins into [factor] smaller ones.
+
+    Data types can be averaged by weighing
+    against another value by supplying a list of tuples in
+    (label, weight) format. If the weighting sums to zero in
+    an area the result is returned as zero.
+
+    Args:
+        flow (FlowData): Object to downsample. Must have a `shape`
+                and `spacing` attached as metadata.
+
+        factor (int): Factor of bin splitting.
+
+    Keyword args:
+        coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
+
+        weights (label, weight): A list of 2-tuples with labels of data
+            and weights to calculate a weighted mean for.
+
+    Returns:
+        FlowData: A new object with downsampled grid.
+
+    """
+
+    if factor in (None, 1):
+        return flow.copy()
+
+    flow = flow.copy()
+    flow.sort(coord_labels=coord_labels)
+
+    info = _get_superscaled_grid_info(flow, factor, coord_labels)
+    xs, ys = _get_superscaled_grid_coords(info)
+
+    xl, yl = coord_labels
+    nx, ny = info['shape']
+
+    grid_data = flow.data.reshape(ny // factor, nx // factor)
+
+    data_labels = set(flow.properties) - set(coord_labels)
+
+    finer_grid_data = _transfer_data_to_finer_grid(
+        grid_data, xs, ys, factor, coord_labels, data_labels
+    )
+
+    resampled_data = _supersample_data_on_grid(
+        finer_grid_data, factor, data_labels, weights
+    )
+
+    data = [(l, resampled_data[l]) for l in resampled_data.dtype.names]
+
+    supersampled_flow = FlowData(*data, info=info)
+
+    return supersampled_flow
+
+def _supersample_data_on_grid(data, factor, data_labels, weights):
+    resampled_data = data.copy()
+    ny, nx = data.shape
+
+    weight_labels = [l for l, _ in weights]
+    non_weighted_labels = [l for l in data_labels if l not in weight_labels]
+
+    for (l, w) in weights:
+        data[l] *= data[w]
+
+    n = factor - 1
+
+    for i in range(ny):
+        i0 = max(0, i - n)
+        i1 = i + n + 1
+
+        for j in range(nx):
+            j0 = max(0, j - n)
+            j1 = j + n + 1
+
+            bins = data[i0:i1, j0:j1]
+
+
+            for l in non_weighted_labels:
+                resampled_data[i, j][l] = np.mean(bins[l])
+
+            for (l, w) in weights:
+                value = np.sum(bins[l])
+                total_weight = np.sum(bins[w])
+
+                if total_weight != 0.0:
+                    resampled_data[i, j][l] = value / total_weight
+                else:
+                    resampled_data[i, j][l] = 0.0
+
+    return resampled_data
+
+def _transfer_data_to_finer_grid(data, xs, ys, n, coord_labels, data_labels):
+    finer_data = np.empty_like(xs, dtype=data.dtype)
+
+    xl, yl = coord_labels
+    ny, nx = data.shape
+
+    for i in range(ny):
+        i0 = i * n
+        i1 = (i + 1) * n
+
+        for j in range(nx):
+            j0 = j * n
+            j1 = (j + 1) * n
+
+            for l in data_labels:
+                value = data[i, j][l]
+                finer_data[i0:i1, j0:j1][l] = value
+
+    finer_data[xl] = xs
+    finer_data[yl] = ys
+
+    return finer_data
+
+
 def _combine_bins(coords, flow, num_combine, info, coord_labels, weights):
     # Create container for result and add coords data
     data = np.zeros(coords[0].shape, dtype=flow.data.dtype)
@@ -145,4 +261,28 @@ def _get_downscaled_grid_coords(info):
             zip(info['origin'], info['spacing'], info['shape']))
 
     return np.meshgrid(x, y)
-    
+
+
+def _get_superscaled_grid_info(flow, n, coord_labels):
+    xl, yl = coord_labels
+
+    shape = [v * n for v in flow.shape]
+    spacing = [v / n for v in flow.spacing]
+
+    origin = np.min(flow.data[xl]), np.min(flow.data[yl])
+
+    info = {
+        'spacing': spacing,
+        'shape': shape,
+        'origin': origin,
+        'num_bins': shape[0] * shape[1],
+    }
+
+    return info
+
+
+def _get_superscaled_grid_coords(info):
+    x, y = (x0 + dx * np.arange(nx) for x0, dx, nx in
+            zip(info['origin'], info['spacing'], info['shape']))
+
+    return np.meshgrid(x, y)
