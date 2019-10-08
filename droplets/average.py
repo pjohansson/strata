@@ -84,12 +84,18 @@ def average_flow_data(input_flow_maps, weights=[],
             flow.data['Y'] = np.around(flow.data['Y'], decimals=coord_decimals)
 
     xl, yl = coord_labels
-    data_list = [flow.data for flow in input_flow_maps
-            if (exclude_empty_sets == False or flow.data.size > 0)]
+
+    data_list = [
+        flow.data for flow in input_flow_maps
+        if (exclude_empty_sets == False or flow.data.size > 0)
+        ]
 
     grid = get_combined_grid(data_list, spacing, coord_labels)
-    data_on_grid = [transfer_data(grid, data, coord_labels)
-            for data in data_list]
+
+    data_on_grid = [
+        transfer_data(grid, data, coord_labels)
+        for data in data_list
+        ]
 
     avg_data = average_data(data_on_grid, weights, coord_labels)
 
@@ -257,17 +263,19 @@ def get_combined_grid(data, spacing, coord_labels=('X', 'Y')):
 
     xmin, xmax = get_min_and_max(nonempty_data, xl)
     ymin, ymax = get_min_and_max(nonempty_data, yl)
+
     dx, dy = spacing
-    nx, ny = round((xmax - xmin)/dx), round((ymax - ymin)/dy)
 
-    x = np.arange(xmin, xmax+dx, dx)
-    y = np.arange(ymin, ymax+dy, dy)
-    x = np.linspace(xmin, xmax, nx+1)
-    y = np.linspace(ymin, ymax, ny+1)
+    nx = int(round((xmax - xmin) / dx)) + 1
+    ny = int(round((ymax - ymin) / dy)) + 1
 
-    xs, ys = np.meshgrid(x, y)
+    x = xmin + dx * np.arange(nx)
+    y = ymin + dy * np.arange(ny)
 
-    combined_grid = np.zeros(xs.size, dtype=data[-1].dtype)
+    xs, ys = np.meshgrid(x, y, indexing='ij')
+
+    combined_grid = np.zeros(xs.size, dtype=data[0].dtype)
+
     combined_grid[xl] = xs.ravel()
     combined_grid[yl] = ys.ravel()
 
