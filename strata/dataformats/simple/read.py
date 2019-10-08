@@ -2,7 +2,7 @@ import numpy as np
 
 """Read data from simple, naive file formats."""
 
-def read_data(filename, decimals=3):
+def read_data(filename, decimals=5):
     """Read field data from a file name.
 
     Determines which of the simple formats in this module to use and
@@ -45,6 +45,18 @@ def read_data(filename, decimals=3):
 
     info = calc_information(data['X'], data['Y'])
 
+    x0, y0 = info['origin']
+    dx, dy = info['spacing']
+    nx, ny = info['shape']
+
+    x = x0 + dx * np.arange(nx, dtype=np.float64)
+    y = y0 + dy * np.arange(ny, dtype=np.float64)
+
+    xs, ys = np.meshgrid(x, y, indexing='ij')
+
+    data['X'] = xs.ravel()
+    data['Y'] = ys.ravel()
+
     return data, info
 
 
@@ -62,18 +74,54 @@ def calc_information(X, Y):
 
     """
 
+    def calc_shape(X, Y):
+        data = np.zeros((len(X), ), dtype=[('X', np.float), ('Y', np.float)])
+        data['X'] = X
+        data['Y'] = Y
+
+        data.sort(order=['Y', 'X'])
+
+        y0 = data['Y'][0]
+        nx = 1
+
+        while np.abs(data['Y'][nx] - y0) < 1e-4:
+            nx += 1
+
+        ny = len(X) // nx
+
+        return nx, ny
+
+    def calc_spacing(X, Y, nx, ny):
+        def calc_1d(xs, n):
+            x0 = np.min(xs)
+            x1 = np.max(xs)
+
+            try:
+                return (x1 - x0) / (n - 1)
+            except:
+                return 0.0
+
+        dx = calc_1d(X, nx)
+        dy = calc_1d(Y, ny)
+
+        return dx, dy
+
+    def calc_origin(X, Y):
+        return X.min(), Y.min()
+
     if len(X) != len(Y):
         raise ValueError("Lengths of X and Y arrays not equal")
 
-    xs, ys = map(np.unique, (X, Y))
+    nx, ny = calc_shape(X, Y)
+    dx, dy = calc_spacing(X, Y, nx, ny)
+    x0, y0 = calc_origin(X, Y)
 
-    info = {}
-    info['num_bins'] = len(X)
-    info['shape'] = [len(a) for a in (xs, ys)]
-    info['spacing'] = [a[1] - a[0]
-            if len(a) > 1 else 2*a[0]
-            for a in (xs, ys)]
-    info['origin'] = [np.min(vals) for vals in (xs, ys)]
+    info = {
+        'shape': (nx, ny),
+        'spacing': (dx, dy),
+        'num_bins': nx * ny,
+        'origin': (x0, y0),
+    }
 
     return info
 
