@@ -332,11 +332,13 @@ def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
     j = 0
     for fn in fns:
         data, info, _ = read_data_file(fn)
-        left_cells, right_cells = get_contact_line_cells(FlowData(data),
-            label, **kwargs)
 
-        left.append(add_adjusted_flow(left_cells, 'left', info))
-        right.append(add_adjusted_flow(right_cells, 'right', info))
+        left_bins, right_bins = get_contact_line_cells(
+            FlowData(data), label, **kwargs
+        )
+
+        left.append(add_adjusted_flow(left_bins, 'left', info))
+        right.append(add_adjusted_flow(right_bins, 'right', info))
 
         if len(left) == average:
             if not quiet:
@@ -355,60 +357,105 @@ def get_grouped_data(fns, average, rolling, progress, quiet, **kwargs):
 def combine_flow_data(avg_flow, spacing):
     """Return a combined FlowData object of the left and right edges."""
 
-    def merge_data(grid, left, right):
+    def merge_data(grid, left, right, spacing):
         """Merge the data from averaged edges onto a grid."""
 
-        def average_value(left, right, label):
-            """Average the value based on type."""
+        weights = [('U', 'M'), ('V', 'M'), ('T', 'N')]
 
-            if label in ('U', 'V'):
-                weight = 'M'
-            elif label == 'T':
-                weight = 'N'
-            else:
-                return 0.5 * (left[label] + right[label])
+        weighted_labels = [l for l, _ in weights]
+        nonweighted_labels = set(grid.dtype.names) - set(weighted_labels)
 
-            return (left[label] * left[weight] + right[label] * right[weight]) \
-                / (left[weight] + right[weight])
+        # The grid and input left, right edges are sorted
+        # in y-major, x-minor order. Average each bin:
+        for bin, left_bin, right_bin in zip(
+            grid.ravel(), left.ravel(), right.ravel()
+        ):
+            for (l, w) in weights:
+                if (left_bin[l] != 0.0) and (right_bin[l] != 0.0):
+                    total_weight = left_bin[w] + right_bin[w]
 
-        coord_labels = ('X', 'Y')
-        value_labels = set(grid.dtype.names).difference(coord_labels)
+                    if total_weight != 0.0:
+                        bin[l] = (
+                            left_bin[w] * left_bin[l]
+                            + right_bin[w] * right_bin[l]
+                            ) / total_weight
 
-        data = np.empty_like(grid)
+                elif left_bin[l] != 0.0:
+                    bin[l] = left_bin[l]
+                elif right_bin[l] != 0.0:
+                    bin[l] = right_bin[l]
 
-        for d, l, r in zip(data, left, right):
-            for k in coord_labels:
-                d[k] = l[k]
-            for k in value_labels:
-                # Choose either set if the other is empty else average
-                # the value properly
-                if l[k] == 0. or r[k] == 0.:
-                    d[k] = l[k] + r[k]
-                else:
-                    d[k] = average_value(l, r, k)
+            for l in nonweighted_labels:
+                if (left_bin[l] != 0.0) and (right_bin[l] != 0.0):
+                    bin[l] = 0.5 * (left_bin[l] + right_bin[l])
 
-        return [(k, data[k]) for k in data.dtype.names]
+                elif left_bin[l] != 0.0:
+                    bin[l] = left_bin[l]
+                elif right_bin[l] != 0.0:
+                    bin[l] = right_bin[l]
 
-    flowdata = [flow.data for flow in avg_flow]
-    grid = get_combined_grid(flowdata, spacing)
-    left, right = (transfer_data(grid, flow.data) for flow in avg_flow)
+        dx, dy = spacing
 
-    data = merge_data(grid, left, right)
+        grid['X'] -= 0.5 * dx
+        grid['Y'] -= 0.5 * dy
 
-    # Estimate the shape of the constructed grid
-    nx = len(np.unique(grid['X']))
-    ny = len(np.unique(grid['Y']))
-    shape = (nx, ny)
+        grid.sort(order=['X', 'Y'])
 
-    return FlowData(*data, info={'spacing': spacing, 'shape': shape})
+        return [(l, grid[l]) for l in grid.dtype.names]
+
+    left, right = avg_flow
+
+    grid = get_combined_grid(avg_flow, spacing)
+
+    xs = grid.ravel()['X']
+    ys = grid.ravel()['Y']
+
+    left, right = (
+        transfer_data(grid, flow.data, flow.shape, spacing)
+        for flow in avg_flow
+    )
+
+    combined_data = merge_data(grid, left, right, spacing)
+
+    ny, nx = grid.shape
+
+    return FlowData(*combined_data, info={'spacing': spacing, 'shape': (nx, ny)})
 
 
-def add_adjusted_flow(cells, direction, info):
-    """Return adjusted FlowData object."""
+def add_adjusted_flow(bins, direction, info):
+    """Return adjusted FlowData object.
 
-    xadj, data = adjust_cell_coordinates(cells, direction)
-    adj_data = [(l, data[l]) for l in cells.dtype.names]
+    The `info` object is adjusted to the final shape of the contact line bins.
+
+    """
+
+    def get_cut_shape(data, dx, dy):
+        # After sorting, the data is in y-major, x-minor order
+        ys = data['Y']
+        y0 = ys[0]
+        nx = 1
+
+        while (ys[nx] >= y0 - 0.5 * dy) and (ys[nx] < y0 + 0.5 * dx):
+            nx += 1
+
+        ny = data.size // nx
+
+        return nx, ny
+
+    dx, dy = info['spacing']
+
+    xadj, data = adjust_cell_coordinates(bins, direction)
+
+    adj_data = [(l, data[l]) for l in bins.dtype.names]
+
     flow = FlowData(*adj_data, info=info)
+    flow.sort()
+
+    nx, ny = get_cut_shape(flow.data, dx, dy)
+
+    flow.origin = xadj
+    flow.shape = (nx, ny)
+    flow.num_bins = nx * ny
 
     return xadj, flow
 

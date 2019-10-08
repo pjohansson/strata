@@ -60,10 +60,14 @@ def average_flow_data(input_flow_maps, weights=[],
         return flow_maps[0].spacing
 
     def get_flowdata(data, grid, spacing):
+        ny, nx = grid.shape
+        x0 = grid[0, 0]['X']
+        y0 = grid[0, 0]['Y']
+
         info = {
-                'shape': tuple(len(np.unique(grid[l])) for l in (xl, yl)),
-                'num_bins': grid.size,
-                'origin': [grid[l][0] for l in (xl, yl)],
+                'shape': (nx, ny),
+                'num_bins': nx * ny,
+                'origin': (x0, y0),
                 'spacing': spacing
                 }
 
@@ -77,19 +81,26 @@ def average_flow_data(input_flow_maps, weights=[],
     except AssertionError:
         raise ValueError("No bin spacings set in FlowData input.")
 
-    if coord_decimals:
+    #if coord_decimals:
+    if False:
         spacing = [np.around(s, decimals=coord_decimals) for s in spacing]
         for flow in input_flow_maps:
             flow.data['X'] = np.around(flow.data['X'], decimals=coord_decimals)
             flow.data['Y'] = np.around(flow.data['Y'], decimals=coord_decimals)
 
     xl, yl = coord_labels
-    data_list = [flow.data for flow in input_flow_maps
-            if (exclude_empty_sets == False or flow.data.size > 0)]
+
+    data_list = [
+        flow for flow in input_flow_maps
+        if (exclude_empty_sets == False or flow.data.size > 0)
+        ]
 
     grid = get_combined_grid(data_list, spacing, coord_labels)
-    data_on_grid = [transfer_data(grid, data, coord_labels)
-            for data in data_list]
+
+    data_on_grid = [
+        transfer_data(grid, flow.data, flow.shape, spacing, coord_labels)
+        for flow in data_list
+        ]
 
     avg_data = average_data(data_on_grid, weights, coord_labels)
 
@@ -128,9 +139,10 @@ def average_data(data_records, weights=[], coord_labels=('X', 'Y')):
 
     def assert_grids_equal(data_records):
         control = data_records[0]
+
         for data in data_records[1:]:
-            assert np.allclose(data[xl], control[xl], atol=1e-4)
-            assert np.allclose(data[yl], control[yl], atol=1e-4)
+            assert np.allclose(data[xl], control[xl], atol=1e-1)
+            assert np.allclose(data[yl], control[yl], atol=1e-1)
 
     def calc_arithmetic_mean(label, data_records):
         data = get_container(label)
@@ -154,19 +166,23 @@ def average_data(data_records, weights=[], coord_labels=('X', 'Y')):
 
     xl, yl = coord_labels
 
-    try:
-        assert_grids_equal(data_records)
-    except AssertionError:
-        raise ValueError("Input grids of data not identical.")
-    except IndexError:
-        avg_data = np.array([])
-        data_labels = set()
-    else:
-        avg_data = data_records[0].copy()
-        data_labels = set(avg_data.dtype.names).difference(set([xl, yl]))
+    # try:
+    #     assert_grids_equal(data_records)
+    # except AssertionError:
+    #     raise ValueError("Input grids of data not identical.")
+    # except IndexError:
+    #     avg_data = np.array([])
+    #     data_labels = set()
+    # else:
+    #     avg_data = data_records[0].copy()
+    #     data_labels = set(avg_data.dtype.names) - set(coord_labels)
+
+    avg_data = data_records[0].copy()
+    data_labels = set(avg_data.dtype.names) - set(coord_labels)
 
     weighted_labels = [l for l, _ in weights]
     data_labels.difference_update(weighted_labels)
+
     get_container = lambda l: np.empty((len(data_records), avg_data.size),
             dtype=avg_data[l].dtype)
 
@@ -179,7 +195,7 @@ def average_data(data_records, weights=[], coord_labels=('X', 'Y')):
     return avg_data
 
 
-def transfer_data(grid, data, coord_labels=('X', 'Y')):
+def transfer_data(grid, data, shape, spacing, coord_labels=('X', 'Y')):
     """Return a projection of data onto an input grid.
 
     The input grid must be a superset of the input data for the projection
@@ -188,8 +204,14 @@ def transfer_data(grid, data, coord_labels=('X', 'Y')):
 
     Args:
         grid (ndarray): Data record with final grid coordinates.
+            Has to be regular and sorted in y-major, x-minor order.
 
         data (ndarray): Data record to project onto new grid.
+            Has to be regular and sorted in y-major, x-minor order.
+
+        shape (2-tuple): Shape of input data.
+
+        spacing (2-tuple): Spacing of input data.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
@@ -202,39 +224,40 @@ def transfer_data(grid, data, coord_labels=('X', 'Y')):
     """
 
     xl, yl = coord_labels
-    full_data = grid.copy()
+    projected_data = grid.copy()
 
-    for d in data:
-        # Ensure that the data has the same coordinates as
-        # the constructed grid
-        x, y = np.array([d[l] for l in (xl, yl)])
-        ind = np.isclose(full_data[xl], x, atol=1e-4) & np.isclose(full_data[yl], y, atol=1e-4)
+    dx, dy = spacing
+    nx, ny = shape
 
-        try:
-            ind_input = (data[xl] == x) & (data[yl] == y)
-            assert (len(data[ind_input]) == 1)
-            assert (len(full_data[ind]) == 1)
-        except AssertionError:
-            raise ValueError("Input data or grid has duplicate coordinates: "
-                    "Input %r, grid %r" % (data[ind_input], full_data[ind]))
+    x0_grid = projected_data[xl].min()
+    y0_grid = projected_data[yl].min()
 
-        full_data[ind] = d.copy()
+    x0_data = data[xl].min()
+    y0_data = data[yl].min()
 
-    return full_data
+    i0 = max(int(round(-(x0_grid - x0_data) / dx)), 0)
+    j0 = max(int(round(-(y0_grid - y0_data) / dy)), 0)
+
+    i1 = i0 + nx
+    j1 = j0 + ny
+
+    projected_data[j0:j1, i0:i1] = data.reshape(ny, nx)
+
+    return projected_data.ravel()
 
 
-def get_combined_grid(data, spacing, coord_labels=('X', 'Y')):
+def get_combined_grid(data_list, spacing, coord_labels=('X', 'Y')):
     """Return a grid with input bin spacing that contains all input data.
 
     Args:
-        data (ndarray): List of numpy records with coordinate labels.
+        data_list (FlowData array): List of FlowData objects to get grid for.
 
         spacing (int's): 2-tuple with bin spacings along the coordinate axes.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
     Returns:
-        ndarray: A container of the same dtype as input data.
+        ndarray: A container of the same dtype as input data and of shape (ny, nx).
 
     """
 
@@ -247,28 +270,33 @@ def get_combined_grid(data, spacing, coord_labels=('X', 'Y')):
         return np.min(min_of_each), np.max(max_of_each)
 
 
-    if data == []:
+    if data_list == []:
         raise ValueError("No data to get a combined grid from.")
 
     xl, yl = coord_labels
 
     # Handle empty sets
-    nonempty_data = [d for d in data if d.size > 0]
+    nonempty_data = [flow.data for flow in data_list if flow.data.size > 0]
 
     xmin, xmax = get_min_and_max(nonempty_data, xl)
     ymin, ymax = get_min_and_max(nonempty_data, yl)
-    dx, dy = spacing
-    nx, ny = round((xmax - xmin)/dx), round((ymax - ymin)/dy)
 
-    x = np.arange(xmin, xmax+dx, dx)
-    y = np.arange(ymin, ymax+dy, dy)
-    x = np.linspace(xmin, xmax, nx+1)
-    y = np.linspace(ymin, ymax, ny+1)
+    dx, dy = spacing
+
+    nx = int(round((xmax - xmin) / dx)) + 1
+    ny = int(round((ymax - ymin) / dy)) + 1
+
+    x = xmin + dx * np.arange(nx, dtype=np.float64)
+    y = ymin + dy * np.arange(ny, dtype=np.float64)
 
     xs, ys = np.meshgrid(x, y)
 
-    combined_grid = np.zeros(xs.size, dtype=data[-1].dtype)
-    combined_grid[xl] = xs.ravel()
-    combined_grid[yl] = ys.ravel()
+    dtype = [(l, np.float64) for l in data_list[0].data.dtype.names]
+    combined_grid = np.zeros(
+        xs.size, dtype=dtype
+    ).reshape(ny, nx)
+
+    combined_grid[xl] = xs
+    combined_grid[yl] = ys
 
     return combined_grid

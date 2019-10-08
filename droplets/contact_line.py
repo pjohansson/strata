@@ -107,8 +107,10 @@ def get_contact_line_cells(flow, label, extract_area=(0., 0.),
     width, height = extract_area
 
     interface_inds = get_interface_of_height(height)
-    left, right = [get_cells_of_edge(edge_inds, edge, width, extract_height)
-            for edge_inds, edge in zip(interface_inds, ('left', 'right'))]
+    left, right = [
+        get_cells_of_edge(edge_inds, edge, width, extract_height)
+        for edge_inds, edge in zip(interface_inds, ('left', 'right'))
+        ]
 
     return left, right
 
