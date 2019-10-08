@@ -24,8 +24,8 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
 
         colour (str, optional): Colour flow fields with data from this label,
             or enter 'flow' to colour by flow magnitude, 'visc' to colour by
-            viscous dissipation or 'radial' by radial velocity from center
-            of mass.
+            viscous dissipation, 'radial' by radial velocity from center
+            of mass, 'diffusion' by phase field diffusion.
 
         pivot (str, optional): Pivot for flow field arrows.
 
@@ -57,6 +57,8 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
         elif colour == 'radial':
             com = sample_center_of_mass(flow)
             flow.data = add_radial_flow(flow.data, com)
+        elif colour == 'diffusion':
+            add_diffusion(flow)
 
         try:
             if not streamlines:
@@ -88,20 +90,20 @@ def get_streamline_data(flow, labels, coord_labels, colour, clim, xlim, ylim):
     xmin, xmax = xlim
     ymin, ymax = ylim
 
-    mask = (data[cutoff_label] < cutoff_value) 
-    
+    mask = (data[cutoff_label] < cutoff_value)
+
     data = np.ma.array(data, mask=mask)
 
     x0 = max(data['X'].min(), xmin if xmin else -np.inf)
     x1 = min(data['X'].max(), xmax if xmax else np.inf)
     y0 = max(data['Y'].min(), ymin if ymin else -np.inf)
     y1 = min(data['Y'].max(), ymax if ymax else np.inf)
-    
+
     inds = (data[xlabel] >= x0) \
         & (data[xlabel] <= x1) \
         & (data[ylabel] >= y0) \
         & (data[ylabel] <= y1)
-    
+
     data = data[inds]
 
     x0 = data[xlabel].min()
@@ -264,6 +266,13 @@ def view_flowmap_2d(*files, label='M', type='heightmap',
             label = 'visc'
             add_viscous_dissipation(flow, viscosity=8.77e-4)
 
+        if label == 'diffusion':
+            label = 'diff'
+            add_diffusion(flow)
+
+        if label in ['grad_rho_x', 'grad_rho_y']:
+            add_density_gradient(flow)
+
         if cutoff != None and cutoff_label != None:
             flow = flow.lims(cutoff_label, cutoff, None)
 
@@ -380,4 +389,67 @@ def add_viscous_dissipation(flow, viscosity):
         weight_label='M')
 
     flow.data = append_fields(flow.data, 'visc', viscous_dissipation.ravel(),
+        dtypes='float')
+
+
+def add_density_gradient(flow):
+    from numpy.lib.recfunctions import append_fields
+
+    (nx, ny) = flow.shape
+    spacing = flow.spacing
+
+    flow.sort()
+
+    data = flow.data.reshape(ny, nx)
+
+    mass_gradient_y, mass_gradient_x = np.gradient(
+        data['M'], *spacing, edge_order=1
+        )
+
+    flow.data = append_fields(flow.data, 'grad_rho_x', mass_gradient_x.ravel(),
+        dtypes='float')
+    flow.data = append_fields(flow.data, 'grad_rho_y', mass_gradient_y.ravel(),
+        dtypes='float')
+
+
+
+def add_diffusion(flow):
+    """Add the `u . (grad rho)` diffusion term as a field named 'diff'.
+
+    `u` here is the flow field and `rho` the density.
+
+    Args:
+        data (ndarray): Record which must contain coordinate labels 'X' and 'Y',
+            flow labels 'U' and 'V' and mass label 'M'.
+
+    """
+
+    from numpy.lib.recfunctions import append_fields
+
+    (nx, ny) = flow.shape
+    spacing = flow.spacing
+
+    flow.sort()
+
+    data = flow.data.reshape(ny, nx)
+
+    mass_gradient_y, mass_gradient_x = np.gradient(
+        data['M'], *spacing, edge_order=1
+        )
+
+    print('x: ', data['X'])
+    print('y: ', data['Y'])
+    print('m: ', data['M'])
+    print('u: ', data['U'])
+    print('v: ', data['V'])
+    print('grad x: ', mass_gradient_x)
+    print('grad y: ', mass_gradient_y)
+
+    us = data['U']
+    vs = data['V']
+
+    diffusion = us * mass_gradient_x + vs * mass_gradient_y
+    print('diff: ', diffusion)
+
+    flow.data = append_fields(flow.data, 'diff', diffusion.ravel(),
         dtypes='float')
