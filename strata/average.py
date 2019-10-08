@@ -3,6 +3,7 @@ import progressbar as pbar
 
 from droplets.flow import FlowData
 from droplets.sample import sample_center_of_mass
+from droplets.resample import supersample_flow_data
 
 from strata.dataformats.read import read_from_files
 from strata.dataformats.write import write
@@ -53,6 +54,9 @@ def average(base, output, group=1, rolling=False, **kwargs):
 
         cutoff_radius (float, default=1.): Radius to include bins within.
 
+        supersample (int, default=None): Supersample maps before averaging
+            with this factor.
+
         xlim (2-tuple, default=(None, None)): Limit the system along x.
 
         ylim (2-tuple, default=(None, None)): Limit the system along y.
@@ -91,6 +95,8 @@ def average(base, output, group=1, rolling=False, **kwargs):
     combine = kwargs.pop('combine', (None, None))
     if combine != (None, None):
         nx, ny = int(combine[0]), int(combine[1])
+
+    supersample = kwargs.pop('supersample', None)
 
     groups_singles = list(find_groups_to_singles(base, output, group, rolling, **fopts))
 
@@ -145,6 +151,24 @@ def average(base, output, group=1, rolling=False, **kwargs):
 
         if combine != (None, None):
             avg_data, _ = module.combine_bins(avg_data, info, nx, ny)
+
+        if supersample != None:
+            data = [(l, avg_data[l]) for l in avg_data.keys()]
+            info = {
+                'shape': info['shape'],
+                'spacing': info['spacing'],
+            }
+
+            flow = FlowData(*data, info=info)
+
+            supersampled_data = supersample_flow_data(
+                flow, supersample, weights=[('U', 'M'), ('V', 'M'), ('T', 'N')]
+            )
+
+            avg_data = {
+                l: supersampled_data.data[l]
+                for l in supersampled_data.properties
+            }
 
         write(fn_out, avg_data)
 

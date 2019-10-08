@@ -195,6 +195,8 @@ cmd_quiver = {
 @add_option('--combine',
         type=OPT_INT, nargs=2, default=[None, None],
         help='Combine bins of the system along x and y. (None)')
+@add_option('--supersample', type=OPT_INT, nargs=1, default=None,
+        help='Supersample bins with this factor along x and y. (None)')
 @add_option('--recenter',
         type=click.Choice(['none', 'left', 'right', 'com']), default='none',
         help='Recenter data maps around a contact line or the center of mass. (none)')
