@@ -168,8 +168,6 @@ def test_create_superset_of_yvalues_fails_if_dy_are_not_the_same():
     with pytest.raises(ValueError) as exc:
         transfer_values(xs, yindex_data_dy1, yindex_data_dy2)
 
-    assert ("different dy" in str(exc))
-
 
 def test_create_interface_from_ys_and_xs_values():
     n = 10
