@@ -416,7 +416,7 @@ def add_evaporation(flow):
     """Add the `u . (grad rho)` evaporation term as a field named 'evaporation'.
 
     `u` here is the flow field and `rho` the density.
-    
+
     Args:
         data (ndarray): Record which must contain coordinate labels 'X' and 'Y',
             flow labels 'U' and 'V' and mass label 'M'.

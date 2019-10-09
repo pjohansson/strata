@@ -4,7 +4,7 @@ import pytest
 import tempfile as tmp
 
 from droplets.flow import FlowData
-from strata.view_flowmap import add_diffusion
+from strata.view_flowmap import add_evaporation
 
 def test_gradient_which_is_one_everywhere():
     xs = [0., 1., 0., 1.]
@@ -18,9 +18,9 @@ def test_gradient_which_is_one_everywhere():
         info={'shape': (2, 2), 'spacing': (1., 1.)}
         )
 
-    add_diffusion(flow)
+    add_evaporation(flow)
 
-    assert np.array_equal(flow.data['diff'], [2., 2., 2., 2.])
+    assert np.array_equal(flow.data['evaporation'], [2., 2., 2., 2.])
 
 
 def test_calculate_gradient_with_non_unity_bin_spacing():
@@ -35,15 +35,15 @@ def test_calculate_gradient_with_non_unity_bin_spacing():
         info={'shape': (2, 2), 'spacing': (0.5, 0.25)}
         )
 
-    add_diffusion(flow)
+    add_evaporation(flow)
 
-    assert np.array_equal(flow.data['diff'], [6., 6., 6., 6.])
+    assert np.array_equal(flow.data['evaporation'], [6., 6., 6., 6.])
 
 
 def test_calculate_gradient_which_changes_along_x():
     xs = [0., 1., 2., 0., 1., 2.]
     ys = [0., 0., 0., 1., 1., 1.]
-    ms = [0., 1., 0., 1., 0., 1.]
+    ms = [0., 1., 2., 0., 1., 2.]
     us = [1., 1., 1., 1., 1., 1.]
     vs = [2., 2., 2., 2., 2., 2.]
 
@@ -52,15 +52,15 @@ def test_calculate_gradient_which_changes_along_x():
         info={'shape': (3, 2), 'spacing': (1.0, 1.0)}
         )
 
-    add_diffusion(flow)
+    add_evaporation(flow)
 
-    assert np.array_equal(flow.data['diff'], [1., 1., 1., 1., 1., 1.])
+    assert np.array_equal(flow.data['evaporation'], [1., 1., 1., 1., 1., 1.])
 
 
 def test_calculate_gradient_which_changes_along_y():
     xs = [0., 1., 0., 1., 0., 1.]
     ys = [0., 0., 1., 1., 2., 2.]
-    ms = [0., 0., 0., 1., 1., 1.]
+    ms = [0., 0., 1., 1., 2., 2.]
     us = [1., 1., 1., 1., 1., 1.]
     vs = [2., 2., 2., 2., 2., 2.]
 
@@ -69,9 +69,9 @@ def test_calculate_gradient_which_changes_along_y():
         info={'shape': (2, 3), 'spacing': (1.0, 1.0)}
         )
 
-    add_diffusion(flow)
+    add_evaporation(flow)
 
-    assert np.array_equal(flow.data['diff'], [2., 2., 2., 2., 2., 2.])
+    assert np.array_equal(flow.data['evaporation'], [2., 2., 2., 2., 2., 2.])
 
 
 def test_calculate_gradient_which_varies_in_top_right_corner_only_with_only_u():
@@ -86,9 +86,9 @@ def test_calculate_gradient_which_varies_in_top_right_corner_only_with_only_u():
         info={'shape': (3, 2), 'spacing': (1.0, 1.0)}
         )
 
-    add_diffusion(flow)
+    add_evaporation(flow)
 
-    assert np.array_equal(flow.data['diff'], [0., 0., 0., 0., 0.5, 1.])
+    assert np.array_equal(flow.data['evaporation'], [0., 0., 0., 0., 0.5, 1.])
 
 
 def test_calculate_gradient_which_varies_in_top_right_corner_only_with_only_v():
@@ -103,6 +103,6 @@ def test_calculate_gradient_which_varies_in_top_right_corner_only_with_only_v():
         info={'shape': (3, 2), 'spacing': (1.0, 1.0)}
         )
 
-    add_diffusion(flow)
+    add_evaporation(flow)
 
-    assert np.array_equal(flow.data['diff'], [0., 0., 2., 0., 0., 2.])
+    assert np.array_equal(flow.data['evaporation'], [0., 0., 2., 0., 0., 2.])
