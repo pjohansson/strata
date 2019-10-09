@@ -90,16 +90,17 @@ def average_flow_data(input_flow_maps, weights=[],
 
     xl, yl = coord_labels
 
-    data_list = [
+    flow_data_list = [
         flow for flow in input_flow_maps
         if (exclude_empty_sets == False or flow.data.size > 0)
         ]
-
+        
+    data_list = [flow.data for flow in flow_data_list]
     grid = get_combined_grid(data_list, spacing, coord_labels)
 
     data_on_grid = [
         transfer_data(grid, flow.data, flow.shape, spacing, coord_labels)
-        for flow in data_list
+        for flow in flow_data_list
         ]
 
     avg_data = average_data(data_on_grid, weights, coord_labels)
@@ -276,7 +277,7 @@ def get_combined_grid(data_list, spacing, coord_labels=('X', 'Y')):
     xl, yl = coord_labels
 
     # Handle empty sets
-    nonempty_data = [flow.data for flow in data_list if flow.data.size > 0]
+    nonempty_data = [data for data in data_list if data.size > 0]
 
     xmin, xmax = get_min_and_max(nonempty_data, xl)
     ymin, ymax = get_min_and_max(nonempty_data, yl)
@@ -291,7 +292,7 @@ def get_combined_grid(data_list, spacing, coord_labels=('X', 'Y')):
 
     xs, ys = np.meshgrid(x, y)
 
-    dtype = [(l, np.float64) for l in data_list[0].data.dtype.names]
+    dtype = [(l, np.float64) for l in data_list[0].dtype.names]
     combined_grid = np.zeros(
         xs.size, dtype=dtype
     ).reshape(ny, nx)

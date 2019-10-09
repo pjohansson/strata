@@ -27,43 +27,88 @@ def get_minmax(data):
 
     return x0, x1, y0, y1
 
-def test_find_common_grid():
-    spacing = np.array([v[1] - v[0] for v in (x, y)])
-    num_maps = 100
-    num_samples = 99
-
-    data = [gen_data(num_samples) for i in range(num_maps)]
-    x0, x1, y0, y1 = get_minmax(data)
-
-    combined_grid = get_combined_grid(data, spacing=spacing)
-
-    # Assert dtype and null default
-    assert (combined_grid.dtype == data[0].dtype)
-    assert (np.array_equiv(combined_grid['C'], 0))
-    assert (np.array_equiv(combined_grid['M'], 0))
-
-    # Assert that all elements are present
-    for ds in data:
-        for d in ds:
-            cx, cy = np.array([d[l] for l in ('X', 'Y')])
-            ind = np.isclose(ds['X'], cx) & np.isclose(ds['Y'], cy)
-            assert len(ds[ind]) == 1
-
-def test_find_common_grid_nodata():
+def test_create_combined_grid_yields_error_if_no_input_grid_is_given():
     with pytest.raises(ValueError):
         get_combined_grid([], spacing=(0.1, 0.1))
 
-def test_fill_data():
-    for i in range(100):
-        spacing = np.array([v[1] - v[0] for v in (x, y)])
-        num_samples = 10
+def test_create_combined_grid_from_given_regular_grids():
+    x0 = np.array([0., 1.])
+    y0 = np.array([0., 1.])
+    xs0, ys0 = np.meshgrid(x0, y0, indexing='xy')
 
-        data = gen_data(num_samples)
-        combined_grid = get_combined_grid([data], spacing=spacing)
-        filled_data = transfer_data(combined_grid, data)
+    x1 = np.array([2., 3.])
+    y1 = np.array([2., 3.])
+    xs1, ys1 = np.meshgrid(x1, y1, indexing='xy')
 
-        for d in data:
-            assert (d in filled_data)
+    data0 = np.zeros((xs0.size, ), dtype=[('X', np.float), ('Y', np.float)])
+    data1 = data0.copy()
+
+    data0['X'] = xs0.ravel()
+    data0['Y'] = ys0.ravel()
+
+    data1['X'] = xs1.ravel()
+    data1['Y'] = ys1.ravel()
+
+    combined_grid = get_combined_grid([data0, data1], spacing=(1., 1.))
+
+    x = np.array([0., 1., 2., 3.])
+    y = np.array([0., 1., 2., 3.])
+    xs, ys = np.meshgrid(x, y, indexing='xy')
+
+    assert np.array_equal(combined_grid['X'], xs)
+    assert np.array_equal(combined_grid['Y'], ys)
+
+def test_common_grid_is_created_from_min_and_max_values_and_spacing():
+    # x from -5 to 10
+    x0 = np.array([0., 10.])
+    x1 = np.array([-5., 5.])
+
+    # y from -10 to 5
+    y0 = np.array([-10., 0.])
+    y1 = np.array([-5., 5.])
+
+    data0 = np.zeros((2, ), dtype=[('X', np.float), ('Y', np.float)])
+    data1 = data0.copy()
+
+    data0['X'] = x0
+    data0['Y'] = y0
+    data1['X'] = x1
+    data1['Y'] = y1
+
+    dx = 0.25
+    dy = 0.5
+
+    combined_grid = get_combined_grid([data0, data1], (dx, dy))
+
+    x = np.arange(-5., 10. + dx, dx)
+    y = np.arange(-10., 5. + dy, dy)
+    xs, ys = np.meshgrid(x, y, indexing='xy')
+
+    assert np.array_equal(combined_grid['X'], xs)
+    assert np.array_equal(combined_grid['Y'], ys)
+
+def test_combined_grid_is_returned_with_shape_which_is_y_major_x_minor():
+    data = np.zeros((6, ), dtype=[('X', np.float), ('Y', np.float)])
+
+    data['X'] = np.array([0., 1., 0., 1., 0., 1.])
+    data['Y'] = np.array([0., 0., 1., 1., 2., 2.])
+
+    combined_grid = get_combined_grid([data], spacing=(1., 1.))
+
+    assert (combined_grid.shape == (3, 2))
+
+def test_combined_grid_is_created_with_same_dtype_as_input():
+    data = np.zeros(
+        (4, ), dtype=[('X', np.float), ('Y', np.float), ('C', np.float)]
+    )
+
+    data['X'] = np.array([0., 1., 0., 1.])
+    data['Y'] = np.array([0., 0., 1., 1.])
+
+    combined_grid = get_combined_grid([data], spacing=(1., 1.))
+
+    assert (data.dtype == combined_grid.dtype)
+    assert np.array_equal(combined_grid['C'].ravel(), np.zeros((4, )))
 
 def test_fill_data_baddata():
     spacing = np.array([v[1] - v[0] for v in (x, y)])
