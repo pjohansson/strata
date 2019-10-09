@@ -310,8 +310,11 @@ def get_averaged_contact_line_edges(filenames, average, rolling,
             xadj_mean = np.mean(coord_adjs, axis=0)[0]
             xadj_per_edge.append(xadj_mean)
 
-            avg_flow_per_edge.append(average_flow_data(flow_data,
-                    weights=weights, exclude_empty_sets=True, coord_decimals=2))
+            avg_flow_per_edge.append(
+                average_flow_data(
+                    flow_data, weights=weights, exclude_empty_sets=True
+                )
+            )
 
         yadj = get_coord_on_grid(0, spacing[1])
         avg_flow_per_edge = adjust_coordinates(avg_flow_per_edge,
@@ -405,7 +408,8 @@ def combine_flow_data(avg_flow, spacing):
 
     left, right = avg_flow
 
-    grid = get_combined_grid(avg_flow, spacing)
+    data = [flow.data for flow in avg_flow]
+    grid = get_combined_grid(data, spacing)
 
     xs = grid.ravel()['X']
     ys = grid.ravel()['Y']
