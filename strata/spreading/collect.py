@@ -338,13 +338,18 @@ def write_header(output_path, input_base, kwargs):
     with open(output_path, 'w') as fp:
         time_str = time.strftime('%c', time.localtime())
 
+        try:
+            version = strata.strata.version
+        except:
+            version = "UNKNOWN"
+
         header = (
                 "# Spreading radius of a droplet impacting a substrate\n"
                 "# \n"
                 "# Creation date: %s\n"
                 "# Using module version: %s\n"
                 "# \n"
-                % (time_str, strata.strata.version))
+                % (time_str, version))
 
         inputs = (
                 "# Input:\n"

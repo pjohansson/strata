@@ -286,6 +286,11 @@ def write_spreading_data(path, all_series):
         with open(path, 'w') as fp:
             time_str = time.strftime('%c', time.localtime())
 
+            try:
+                version = strata.strata.version
+            except:
+                version = "UNKNOWN"
+
             header = (
                     "# Spreading radius of a droplet impacting a substrate\n"
                     "# \n"
@@ -293,7 +298,7 @@ def write_spreading_data(path, all_series):
                     "# Creation date: %s\n"
                     "# Using module version: %s\n"
                     "# \n"
-                    % (__name__, time_str, strata.strata.version))
+                    % (__name__, time_str, version))
 
             inputs = (
                     "# Working directory: '%s'\n"
