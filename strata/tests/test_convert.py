@@ -9,7 +9,13 @@ from strata.dataformats.simple.read import read_plainsimple, read_binsimple
 
 num_files = 8
 datasize = 4
-save_data = {l: np.arange(datasize) for l in ('X', 'Y')}
+
+x = np.arange(np.sqrt(datasize))
+xs, ys = np.meshgrid(x, x, indexing='ij')
+save_data = {
+    'X': xs.ravel(),
+    'Y': ys.ravel(),
+}
 fields = ('U', 'V', 'N', 'T', 'M')
 all_fields = ('X', 'Y', 'U', 'V', 'N', 'T', 'M')
 
@@ -27,6 +33,7 @@ def test_convert():
             for l in fields:
                 save_data[l] = np.random.sample(datasize)
             save_data_list.append(save_data.copy())
+            print(save_data)
             write(fn, save_data, ftype='simple_plain')
 
         convert(tmpbase, outbase)
