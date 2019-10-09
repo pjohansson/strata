@@ -84,8 +84,11 @@ def calc_information(X, Y):
         y0 = data['Y'][0]
         nx = 1
 
-        while np.abs(data['Y'][nx] - y0) < 1e-4:
-            nx += 1
+        try:
+            while np.abs(data['Y'][nx] - y0) < 1e-4:
+                nx += 1
+        except IndexError:
+           pass
 
         ny = len(X) // nx
 
