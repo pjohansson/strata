@@ -25,7 +25,7 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
         colour (str, optional): Colour flow fields with data from this label,
             or enter 'flow' to colour by flow magnitude, 'visc' to colour by
             viscous dissipation, 'radial' by radial velocity from center
-            of mass, 'diffusion' by phase field diffusion.
+            of mass, 'evaporation' by phase field evaporation.
 
         pivot (str, optional): Pivot for flow field arrows.
 
@@ -57,8 +57,8 @@ def view_flowfields(*files, labels=('U', 'V'), cutoff_label='M', cutoff=None,
         elif colour == 'radial':
             com = sample_center_of_mass(flow)
             flow.data = add_radial_flow(flow.data, com)
-        elif colour == 'diffusion':
-            add_diffusion(flow)
+        elif colour == 'evaporation':
+            add_evaporation(flow)
 
         try:
             if not streamlines:
@@ -266,9 +266,8 @@ def view_flowmap_2d(*files, label='M', type='heightmap',
             label = 'visc'
             add_viscous_dissipation(flow, viscosity=8.77e-4)
 
-        if label == 'diffusion':
-            label = 'diff'
-            add_diffusion(flow)
+        if label == 'evaporation':
+            add_evaporation(flow)
 
         if label in ['grad_rho_x', 'grad_rho_y']:
             add_density_gradient(flow)
@@ -413,11 +412,11 @@ def add_density_gradient(flow):
 
 
 
-def add_diffusion(flow):
-    """Add the `u . (grad rho)` diffusion term as a field named 'diff'.
+def add_evaporation(flow):
+    """Add the `u . (grad rho)` evaporation term as a field named 'evaporation'.
 
     `u` here is the flow field and `rho` the density.
-
+    
     Args:
         data (ndarray): Record which must contain coordinate labels 'X' and 'Y',
             flow labels 'U' and 'V' and mass label 'M'.
@@ -437,19 +436,11 @@ def add_diffusion(flow):
         data['M'], *spacing, edge_order=1
         )
 
-    print('x: ', data['X'])
-    print('y: ', data['Y'])
-    print('m: ', data['M'])
-    print('u: ', data['U'])
-    print('v: ', data['V'])
-    print('grad x: ', mass_gradient_x)
-    print('grad y: ', mass_gradient_y)
-
     us = data['U']
     vs = data['V']
 
-    diffusion = us * mass_gradient_x + vs * mass_gradient_y
-    print('diff: ', diffusion)
+    evaporation = us * mass_gradient_x + vs * mass_gradient_y
 
-    flow.data = append_fields(flow.data, 'diff', diffusion.ravel(),
-        dtypes='float')
+    flow.data = append_fields(
+        flow.data, 'evaporation', evaporation.ravel(), dtypes='float'
+    )
