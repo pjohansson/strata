@@ -7,12 +7,12 @@ from strata.dataformats.write import write
 
 
 def average_flow_data(input_flow_maps, weights=[],
-        exclude_empty_sets=False, coord_decimals=None, coord_labels=('X', 'Y')):
+        exclude_empty_sets=False, coord_labels=('X', 'Y')):
     """Average input FlowData objects.
 
     The input data is projected onto a common coordinate grid before
     being averaged. All input data hence must have spacings set
-    and identical.
+    and identical. The data also requires the shape to be set.
 
     By default the data is averaged using an arithmetic mean. By inputting
     a list of (label, weight) tuples some data can be averaged instead
@@ -23,10 +23,9 @@ def average_flow_data(input_flow_maps, weights=[],
     or by excluding the entire set from the averaging. This is controlled
     by the `exclude_empty_sets` flag.
 
-    The coordinate vectors of all input data must be identical.
-
     Args:
-        flow_data (FlowData): List of objects to average.
+        flow_data (FlowData): List of objects to average. Must have `shape`
+            and `spacing` information set.
 
     Keyword Args:
         weights (label, weight): A list of 2-tuples with labels of data
@@ -34,9 +33,6 @@ def average_flow_data(input_flow_maps, weights=[],
 
         exclude_empty_sets (bool, optional): Whether or not to exclude empty
             data sets from the averaging process.
-
-        coord_decimals (float, optional): Use this many decimals to decide
-            grids for the averaged data.
 
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
@@ -81,20 +77,13 @@ def average_flow_data(input_flow_maps, weights=[],
     except AssertionError:
         raise ValueError("No bin spacings set in FlowData input.")
 
-    #if coord_decimals:
-    if False:
-        spacing = [np.around(s, decimals=coord_decimals) for s in spacing]
-        for flow in input_flow_maps:
-            flow.data['X'] = np.around(flow.data['X'], decimals=coord_decimals)
-            flow.data['Y'] = np.around(flow.data['Y'], decimals=coord_decimals)
-
     xl, yl = coord_labels
 
     flow_data_list = [
         flow for flow in input_flow_maps
         if (exclude_empty_sets == False or flow.data.size > 0)
         ]
-        
+
     data_list = [flow.data for flow in flow_data_list]
     grid = get_combined_grid(data_list, spacing, coord_labels)
 
@@ -167,17 +156,6 @@ def average_data(data_records, weights=[], coord_labels=('X', 'Y')):
 
     xl, yl = coord_labels
 
-    # try:
-    #     assert_grids_equal(data_records)
-    # except AssertionError:
-    #     raise ValueError("Input grids of data not identical.")
-    # except IndexError:
-    #     avg_data = np.array([])
-    #     data_labels = set()
-    # else:
-    #     avg_data = data_records[0].copy()
-    #     data_labels = set(avg_data.dtype.names) - set(coord_labels)
-
     avg_data = data_records[0].copy()
     data_labels = set(avg_data.dtype.names) - set(coord_labels)
 
@@ -197,7 +175,7 @@ def average_data(data_records, weights=[], coord_labels=('X', 'Y')):
 
 
 def transfer_data(grid, data, shape, spacing, coord_labels=('X', 'Y')):
-    """Return a projection of data onto an input grid.
+    """Return a projection of `data` onto an input `grid`.
 
     The input grid must be a superset of the input data for the projection
     to succeed. Their dtype must be identical. A copy of the input grid
@@ -218,9 +196,6 @@ def transfer_data(grid, data, shape, spacing, coord_labels=('X', 'Y')):
 
     Returns:
         ndarray: Data record with projected data.
-
-    Raises:
-        ValueError: If input data or grid has coordinate duplicates.
 
     """
 
@@ -258,7 +233,8 @@ def get_combined_grid(data_list, spacing, coord_labels=('X', 'Y')):
         coord_labels (2-tuple, default=('X', 'Y'): Record labels for coordinates.
 
     Returns:
-        ndarray: A container of the same dtype as input data and of shape (ny, nx).
+        ndarray: A container of the same dtype as input data and of shape
+            (ny, nx). Will be sorted as y-major, x-minor.
 
     """
 
