@@ -852,7 +852,7 @@ def view_contour_cli(files, **kwargs):
 @add_argument('files', type=click.Path(exists=True), nargs=-1)
 @add_option('-o', '--save_fig', type=click.Path(), default=None,
         help='Save figure to path. (None)')
-@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V', 'flow', 'visc_diss']),
+@add_option('-l', '--label', type=click.Choice(['M', 'N', 'T', 'U', 'V', 'flow', 'visc_diss', 'evaporation']),
         default='M', help='Label of data to use as height map. (M)')
 @add_option('--clim', nargs=2, default=(None, None), type=OPT_FLOAT,
         metavar='MIN MAX', help='Set cut-offs for the binned values to include.')
@@ -914,7 +914,7 @@ def view_heightmap_cli(files, **kwargs):
 @add_option('-co', '--cutoff', type=float, default=None,
         help='Minimum mass of bins to draw fields for. (0)')
 @add_option('-cl', '--colour_label', 'colour',
-        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow', 'visc', 'radial']), default='T',
+        type=click.Choice(['M', 'N', 'T', 'U', 'V', 'None', 'flow', 'visc', 'radial', 'evaporation']), default='T',
         help='Colour the flow by values of this label.')
 @add_option('--scale', default=1., help='Scale for quiver arrows. (1)')
 @add_option('--width', default=0.0015, help='Width of quiver arrows. (0.0015)')
