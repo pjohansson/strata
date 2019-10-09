@@ -68,7 +68,7 @@ def view_interfaces(base, average=1, save_xvg='', **kwargs):
     if not quiet:
         widgets = ['Reading files: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
-        progress = pbar.ProgressBar(widgets=widgets, maxval=len(groups_singles))
+        progress = pbar.ProgressBar(widgets=widgets, max_value=len(groups_singles))
         progress.start()
 
     for i, (fngroup, fnout) in enumerate(groups_singles):

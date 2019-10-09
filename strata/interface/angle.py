@@ -58,7 +58,7 @@ def interface_contact_angle(base, fit=False, height=None, delta_t=1., save_xvg=N
     if not quiet:
         widgets = ['Calculating angles: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
-        progress = pbar.ProgressBar(widgets=widgets, maxval=len(filenames))
+        progress = pbar.ProgressBar(widgets=widgets, max_value=len(filenames))
         progress.start()
 
     contact_angles = {

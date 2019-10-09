@@ -54,7 +54,7 @@ def sample_interfaces(base, variable, save_xvg='', delta_t=1., **kwargs):
     if not quiet:
         widgets = ['Calculating the %s of files: ' % variable,
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
-        progress = pbar.ProgressBar(widgets=widgets, maxval=len(files))
+        progress = pbar.ProgressBar(widgets=widgets, max_value=len(files))
         progress.start()
 
     for i, fn in enumerate(files):

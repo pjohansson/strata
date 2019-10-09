@@ -103,7 +103,7 @@ def average(base, output, group=1, rolling=False, **kwargs):
     if not quiet:
         widgets = ['Averaging files: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
-        progress = pbar.ProgressBar(widgets=widgets, maxval=len(groups_singles))
+        progress = pbar.ProgressBar(widgets=widgets, max_value=len(groups_singles))
         progress.start()
 
     for i, (fn_group, fn_out) in enumerate(groups_singles):

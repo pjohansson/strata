@@ -39,7 +39,7 @@ def convert(base, output, **kwargs):
     if not quiet:
         widgets = ['Converting files: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
-        progress = pbar.ProgressBar(widgets=widgets, maxval=len(zip_files))
+        progress = pbar.ProgressBar(widgets=widgets, max_value=len(zip_files))
         progress.start()
 
     for i, (fnin, fnout) in enumerate(zip_files):

@@ -108,7 +108,7 @@ def sample_average_files(base, labels, output=None, sum=False, dt=1.,
     if not quiet:
         widgets = ['Sampling from files: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
-        progress = pbar.ProgressBar(widgets=widgets, maxval=len(files))
+        progress = pbar.ProgressBar(widgets=widgets, max_value=len(files))
         progress.start()
 
     for i, (data, info, _) in enumerate(read_from_files(*files)):

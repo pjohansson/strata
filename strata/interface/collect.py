@@ -56,7 +56,7 @@ def collect_interfaces(base, output, recenter=None, **kwargs):
     if not quiet:
         widgets = ['Collecting from files: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
-        progress = pbar.ProgressBar(widgets=widgets, maxval=len(files))
+        progress = pbar.ProgressBar(widgets=widgets, max_value=len(files))
         progress.start()
 
     for i, (fn, fnout) in enumerate(files):

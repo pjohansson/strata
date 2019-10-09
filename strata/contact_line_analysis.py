@@ -276,7 +276,7 @@ def get_averaged_contact_line_edges(filenames, average, rolling,
 
         widgets = ['Extracting/sampling contact line: ',
                 pbar.Bar(), ' (', pbar.SimpleProgress(), ') ', pbar.ETA()]
-        progress = pbar.ProgressBar(widgets=widgets, maxval=length)
+        progress = pbar.ProgressBar(widgets=widgets, max_value=length)
         progress.start()
 
     # Get a generator which reads data to average over.
