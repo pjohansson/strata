@@ -16,7 +16,14 @@ group = 5
 
 datasize = 4
 fields = ('U', 'V', 'N', 'T', 'M')
-save_data = {l: np.arange(datasize) for l in ('X', 'Y')}
+
+x = np.arange(np.sqrt(datasize))
+xs, ys = np.meshgrid(x, x, indexing='ij')
+
+save_data = {
+    'X': xs.ravel(),
+    'Y': ys.ravel(),
+}
 
 
 def test_average_datamaps():
