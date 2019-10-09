@@ -1,5 +1,7 @@
+import numpy as np
 import strata.dataformats as formats
 from strata.dataformats.read import *
+
 
 bin_filename = 'strata/dataformats/simple/tests/data_binsimple.dat'
 plain_filename = 'strata/dataformats/simple/tests/data_plainsimple.dat'
@@ -20,9 +22,9 @@ def test_read_file():
 
     # Verify that plaintext file was read
     assert (info['num_bins'] == NUM_BINS)
-    assert (info['shape'] == [NUM_X, NUM_Y])
-    assert (info['origin'] == [MIN_X, MIN_Y])
-    assert (info['spacing'] == [BIN_X, BIN_Y])
+    assert np.array_equal(info['shape'], [NUM_X, NUM_Y])
+    assert np.array_equal(info['origin'], [MIN_X, MIN_Y])
+    assert np.array_equal(info['spacing'], [BIN_X, BIN_Y])
 
 def test_read_files_generator():
     files = []
@@ -32,9 +34,9 @@ def test_read_files_generator():
     files = [plain_filename]
     for i, (_, info, _) in enumerate(read_from_files(*files)):
         assert (info['num_bins'] == NUM_BINS)
-        assert (info['shape'] == [NUM_X, NUM_Y])
-        assert (info['origin'] == [MIN_X, MIN_Y])
-        assert (info['spacing'] == [BIN_X, BIN_Y])
+        assert np.array_equal(info['shape'], [NUM_X, NUM_Y])
+        assert np.array_equal(info['origin'], [MIN_X, MIN_Y])
+        assert np.array_equal(info['spacing'], [BIN_X, BIN_Y])
 
     files = [bin_filename, plain_filename]
     for i, (_, info, _) in enumerate(read_from_files(*files)):

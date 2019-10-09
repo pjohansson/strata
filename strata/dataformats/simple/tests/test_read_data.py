@@ -82,9 +82,9 @@ def test_calc_info():
 
     # Verify control values
     assert (info['num_bins'] == NUM_BINS)
-    assert (info['shape'] == [NUM_X, NUM_Y])
-    assert (info['origin'] == [MIN_X, MIN_Y])
-    assert (info['spacing'] == [BIN_X, BIN_Y])
+    assert np.array_equal(info['shape'], [NUM_X, NUM_Y])
+    assert np.array_equal(info['origin'], [MIN_X, MIN_Y])
+    assert np.array_equal(info['spacing'], [BIN_X, BIN_Y])
 
 def test_calc_badinfo():
     X = np.arange(4)
