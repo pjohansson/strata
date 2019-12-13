@@ -212,7 +212,9 @@ def plot_quiver(xs, ys, us, vs, weights, pivot, vlim, **kwargs):
     scale = kwargs.get('scale', 1.)
     width = kwargs.get('width', 0.0015)
 
-    fig = plt.quiver(xs, ys, us, vs, weights, clim=vlim,
+    fig, ax = create_figure(**kwargs)
+
+    ax.quiver(xs, ys, us, vs, weights, clim=vlim,
             scale=scale, width=width, pivot=pivot)
 
     return fig
@@ -282,6 +284,22 @@ def view_flowmap_2d(*files, label='M', type='heightmap',
         plt.clf()
 
 
+def create_figure(**kwargs):
+    dpi = kwargs.get('dpi', 300)
+
+    try:
+        width, height = kwargs.get('dims')
+    except Exception:
+        fig = plt.figure(dpi=dpi)
+    else:
+        size = (width / dpi, height / dpi)
+        fig = plt.figure(figsize=size, dpi=dpi)
+
+    ax = fig.add_subplot(111)
+
+    return fig, ax
+
+
 @decorate_graph
 def height(data, info, label, **kwargs):
     """Draw a heightmap using a 2d histogram."""
@@ -290,7 +308,10 @@ def height(data, info, label, **kwargs):
     vmin, vmax = (float(v) if v != None else v for v in kwargs['vlim'])
 
     xs, ys = (data[l] for l in kwargs['coord_labels'])
-    fig = plt.hist2d(xs, ys, weights=data[label], bins=info['shape'],
+
+    fig, ax = create_figure(**kwargs)
+
+    ax.hist2d(xs, ys, weights=data[label], bins=info['shape'],
             cmin=cmin, cmax=cmax, vmin=vmin, vmax=vmax)
 
     return fig
@@ -314,12 +335,12 @@ def contour(data, info, label, **kwargs):
     xs, ys = (grid_data[l] for l in kwargs['coord_labels'])
     cs = grid_data[label]
 
-    if not filled:
-        func = plt.contour
-    else:
-        func = plt.contourf
+    fig, ax = create_figure(**kwargs)
 
-    fig = func(xs, ys, cs, num_contours, levels=levels, colors=colors)
+    if not filled:
+        ax.contour(xs, ys, cs, num_contours, levels=levels, colors=colors)
+    else:
+        ax.contourf(xs, ys, cs, num_contours, levels=levels, colors=colors)
 
     return fig
 

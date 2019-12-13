@@ -824,6 +824,12 @@ def view(name=cmd_flowview['name'], short_help=cmd_flowview['desc']):
         help='Set a colour map. (viridis)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
+@add_option('--transparent/--notransparent', default=False,
+        help='Make the background transparent. (False)')
+@add_option('--noaxis', default=False,
+        help='Do not draw the figure axes. (False)')
+@add_option('--dims', default=None, type=OPT_FLOAT, nargs=2,
+        help='Set (width, height) of figure in pixels. (None)')
 @add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
 @add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
@@ -877,8 +883,12 @@ def view_contour_cli(files, **kwargs):
         help='Make the background transparent. (False)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
+@add_option('--noaxis', default=False,
+        help='Do not draw the figure axes. (False)')
 @add_option('--dpi', type=int, default=150,
         help='Set a dpi value for figure output. (150)')
+@add_option('--dims', default=None, type=OPT_FLOAT, nargs=2,
+        help='Set (width, height) of figure in pixels. (None)')
 @add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
 @add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),
@@ -936,8 +946,14 @@ def view_heightmap_cli(files, **kwargs):
         help='Set a colour map. (viridis)')
 @add_option('--show/--noshow', default=True,
         help='Whether or not to draw graph. (True)')
+@add_option('--transparent/--notransparent', default=False,
+        help='Make the background transparent. (False)')
+@add_option('--noaxis', default=False,
+        help='Do not draw the figure axes. (False)')
 @add_option('--dpi', type=int, default=150,
         help='Set a dpi value for figure output. (150)')
+@add_option('--dims', default=None, type=OPT_FLOAT, nargs=2,
+        help='Set (width, height) of figure in pixels. (None)')
 @add_option('--xlim', type=OPT_FLOAT, nargs=2, default=(None, None),
         metavar='MIN MAX', help='Set limits on the x axis.')
 @add_option('--ylim', type=OPT_FLOAT, nargs=2, default=(None, None),

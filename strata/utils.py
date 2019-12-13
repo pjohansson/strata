@@ -316,6 +316,8 @@ def decorate_graph(func):
 
         show (bool, default=True): Show the graph.
 
+        no_axis(bool, default=False): Hide the graph axis elements.
+
         clf (bool, default=True): Clear figure when finished.
 
     """
@@ -364,9 +366,14 @@ def decorate_graph(func):
 
         if fargs['colorbar']:
             from mpl_toolkits.axes_grid1 import make_axes_locatable
-            divider = make_axes_locatable(plt.gca())
+
+            ax = plt.gca()
+            mappable = ax.get_children()[0]
+
+            divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", "5%", pad="3%")
-            cbar = plt.colorbar(cax=cax)
+
+            cbar = plt.colorbar(mappable, cax=cax)
 
             if fargs['cbarlabel']:
                 cbar.set_label(fargs['cbarlabel'])
@@ -381,8 +388,10 @@ def decorate_graph(func):
             plt.legend()
 
         if fargs['noaxis']:
-            ax = plt.gca()
-            ax.set_axis_off()
+            fig = plt.gcf()
+
+            for ax in fig.axes:
+                ax.set_axis_off()
 
         plt.tight_layout()
 
@@ -392,10 +401,8 @@ def decorate_graph(func):
         if fargs['show']:
             plt.show()
 
-
         if fargs['clf']:
             plt.clf()
-
 
         return None
 
