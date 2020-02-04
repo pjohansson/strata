@@ -6,7 +6,7 @@ import tempfile as tmp
 from strata.average import *
 from strata.utils import gen_filenames, find_datamap_files
 from strata.dataformats.read import read_data_file
-from strata.dataformats.simple.main import average_data, write_data
+from strata.dataformats.gmx_flow_version_1.main import average_data, write_data
 
 tmpfn = 'tmp_'
 outfn = 'out_'
@@ -17,7 +17,9 @@ group = 5
 datasize = 4
 fields = ('U', 'V', 'N', 'T', 'M')
 
-x = np.arange(np.sqrt(datasize))
+info = { 'shape': (2, 2), 'origin': (0., 0.), 'spacing': (1., 1.), 'num_bins': 4 }
+
+x = np.arange(np.sqrt(datasize)) + 0.5
 xs, ys = np.meshgrid(x, x, indexing='ij')
 
 save_data = {
@@ -38,7 +40,7 @@ def test_average_datamaps():
                 save_data.update({l: np.random.sample(datasize)})
             tmp_data.append(save_data.copy())
 
-            write_data(path, save_data)
+            write_data(path, save_data, info)
 
         # Average data
         average(tmpbase, outbase, group)
@@ -46,7 +48,7 @@ def test_average_datamaps():
         # Verify output files against averaging directly
         out_files = find_datamap_files(outbase)
         for i, filename in enumerate(out_files):
-            control_tmpdata = tmp_data[i*group:(i+1)*group]
+            control_tmpdata = tmp_data[(i * group):((i + 1) * group)]
             control = average_data(*control_tmpdata)
 
             data, _, _ = read_data_file(filename)
@@ -73,7 +75,7 @@ def test_average_datamaps_othernums():
             for l in fields:
                 save_data.update({l: np.random.sample(datasize)})
             tmp_data.append(save_data.copy())
-            write_data(path, save_data)
+            write_data(path, save_data, info)
 
         # Average data
         average(tmpbase, outbase, group, begin=begin, end=end, ext=ext)

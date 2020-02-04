@@ -17,14 +17,16 @@ save_data = {l: np.arange(datasize) for l in ('X', 'Y')}
 for l in fields:
     save_data[l] = np.random.sample(datasize)
 
+info = { 'shape': (2, 2), 'origin': (0., 0.), 'spacing': (1., 1.), 'num_bins': 4 }
+
 # Set defaults
 tmpfn = 'tmp.dat'
-default_module = formats.simple.main
+default_module = formats.gmx_flow_version_1.main
 
 def test_default_write():
     with tmp.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, tmpfn)
-        write(path, save_data)
+        write(path, save_data, info)
         assert (guess_read_module(path) == default_module)
 
 def test_write_formats_simple():

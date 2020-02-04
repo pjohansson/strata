@@ -170,7 +170,7 @@ def average(base, output, group=1, rolling=False, **kwargs):
                 for l in supersampled_data.properties
             }
 
-        write(fn_out, avg_data)
+        write(fn_out, avg_data, info)
 
         if not quiet:
             progress.update(i+1)

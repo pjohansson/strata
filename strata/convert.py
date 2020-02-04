@@ -1,4 +1,5 @@
 import progressbar as pbar
+import strata
 
 from strata.dataformats.read import read_data_file
 from strata.dataformats.write import write
@@ -21,7 +22,8 @@ def convert(base, output, **kwargs):
 
         end (int, default=inf): Final data map number.
 
-        ftype (str, default='simple'): File type to write. Choices:
+        ftype (str, default='gmx'): File type to write. Choices:
+            'gmx'          - Gromacs flow format (strata.dataformats.gmx_flow_version_1)
             'simple'       - Simple binary    (strata.dataformats.simple)
             'simple_plain' - Simple plaintext (strata.dataformats.simple)
 
@@ -33,6 +35,7 @@ def convert(base, output, **kwargs):
 
     fopts = pop_fileopts(kwargs)
     quiet = kwargs.pop('quiet', False)
+    to_ftype = kwargs.pop('ftype', 'gmx')
 
     zip_files = list(find_singles_to_singles(base, output, **fopts))
 
@@ -43,8 +46,9 @@ def convert(base, output, **kwargs):
         progress.start()
 
     for i, (fnin, fnout) in enumerate(zip_files):
-        data, _, _ = read_data_file(fnin)
-        write(fnout, data, **kwargs)
+        data, info, metadata = read_data_file(fnin)
+
+        write(fnout, data, info, ftype=to_ftype, **kwargs)
 
         if not quiet:
             progress.update(i+1)

@@ -26,7 +26,17 @@ def guess_read_module(filename):
 
     """
 
-    return formats.simple.main
+    try:
+        with open(filename, "r") as fp:
+            buf = fp.read(100)
+
+            if buf.startswith("FORMAT GMX_FLOW_1"):
+                return formats.gmx_flow_version_1.main
+            else:
+                return formats.simple.main
+    except: 
+        return formats.simple.main
+
 
 
 def read_from_files(*files):

@@ -258,8 +258,8 @@ def average_cli(base, output, group, **kwargs):
 @add_argument('base', type=str)
 @add_argument('output', type=str)
 @add_option('--ftype',
-        type=click.Choice(['simple', 'simple_plain']), default='simple',
-        help='Format to convert files into. (simple)')
+        type=click.Choice(['gmx', 'simple', 'simple_plain']), default='gmx',
+        help='Format to convert files into. (gmx)')
 @add_option('-b', '--begin', default=1,
         type=click.IntRange(0, None), metavar='INTEGER',
         help='Begin reading from BASE at this number. (1)')
