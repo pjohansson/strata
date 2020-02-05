@@ -3,6 +3,8 @@ from strata.utils import prepare_path
 
 """Module for writing data to disk in a specified format."""
 
+FIELDS_ORDERED = ['N', 'T', 'M', 'U', 'V']
+
 @prepare_path
 def write_data(path, data, info, check_label='M'):
     """Write data to disk in a data format with only non-empty bins.
@@ -17,64 +19,59 @@ def write_data(path, data, info, check_label='M'):
         spacing (2-tuple, float): Spacing between bins along x and y.
 
         origin (2-tuple, float): Position of bottom-left cell along x and y.
-    
+
     Keyword args:
         check_label (str): Label in dict which must be non-zero for a bin.
-    
+
     """
 
     nx, ny = info['shape']
 
-    with open(path, "w") as fp:
-        columns = list(data.keys())
+    inds = data[check_label] != 0.0
+    num_elements = data[check_label][inds].size
 
-        try:
-            columns.remove('X')
-        except:
-            pass
-        try:
-            columns.remove('Y')
-        except:
-            pass
+    ix = np.arange(nx, dtype=np.uint64)
+    iy = np.arange(ny, dtype=np.uint64)
+    ixs, iys = np.meshgrid(ix, iy, indexing='ij')
 
-        write_header(fp, info['shape'], info['spacing'], info['origin'], columns)
+    output_data = [
+            ixs.ravel()[inds],
+            iys.ravel()[inds]
+        ] + [np.array(data[l][inds], dtype=np.float32) for l in FIELDS_ORDERED]
 
-        grid_data = { l: vs.reshape(nx, ny) for l, vs in data.items() }
-        inds = data[check_label] != 0.0
+    with open(path, "wb") as fp:
+        write_header(
+            fp, info['shape'], info['spacing'], info['origin'], num_elements
+        )
 
-        for ix in np.arange(nx):
-            for iy in np.arange(ny):
-                if grid_data[check_label][ix, iy] != 0.0:
-                    fp.write("{} {}".format(ix, iy))
+        for vs in output_data:
+            vs.tofile(fp)
 
-                    for l in columns:
-                        fp.write(" {:9f}".format(grid_data[l][ix, iy]))
-                    
-                    fp.write("\n")
+def write_header(fp, shape, spacing, origin, num_elements):
+    fp.write("FORMAT GMX_FLOW_1\n".encode())
+    fp.write("ORIGIN {:12f} {:12f}\n".format(origin[0], origin[1]).encode())
+    fp.write("SHAPE {} {}\n".format(shape[0], shape[1]).encode())
+    fp.write("SPACING {:12f} {:12f}\n".format(spacing[0], spacing[1]).encode())
+    fp.write("NUMDATA {}\n".format(num_elements).encode())
 
-def write_header(fp, shape, spacing, origin, columns):
-    fp.write("FORMAT GMX_FLOW_1\n")
-    fp.write("ORIGIN {:12f} {:12f}\n".format(origin[0], origin[1]))
-    fp.write("SHAPE {} {}\n".format(shape[0], shape[1]))
-    fp.write("SPACING {:12f} {:12f}\n".format(spacing[0], spacing[1]))
-    fp.write("COMMENT Grid is regular but only non-empty bins are output\n")
-    fp.write("COMMENT Every output bin has a separate row\n")
-    fp.write("COMMENT 'ix' and 'iy' are bin indices along x and y respectively\n")
-    fp.write("COMMENT Values are white space separated\n")
-    fp.write("COMMENT Bin data begins after 'COLUMNS' row\n")
-    fp.write("COMMENT 'N' is the average number of atoms\n")
-    fp.write("COMMENT 'M' is the average mass\n")
-    fp.write("COMMENT 'T' is the temperature\n")
-    fp.write("COMMENT 'U' and 'V' is the mass flow along x and y respectively\n")
+    fp.write("FIELDS IX IY".encode())
+    for l in FIELDS_ORDERED:
+        fp.write(" {}".format(l).encode())
+    fp.write("\n".encode())
 
-    fp.write("COLUMNS IX IY")
+    fp.write("COMMENT Grid is regular but only non-empty bins are output\n".encode())
+    fp.write("COMMENT There are 'NUMDATA' non-empty bins and that many values are stored for each field\n".encode())
+    fp.write("COMMENT 'FIELDS' is the different fields for each bin:\n".encode())
+    fp.write("COMMENT 'IX' and 'IY' are bin indices along x and y respectively\n".encode())
+    fp.write("COMMENT 'N' is the average number of atoms\n".encode())
+    fp.write("COMMENT 'M' is the average mass\n".encode())
+    fp.write("COMMENT 'T' is the temperature\n".encode())
+    fp.write("COMMENT 'U' and 'V' is the mass flow along x and y respectively\n".encode())
+    fp.write("COMMENT Data is stored as 'NUMDATA' counts for each field in 'FIELDS', in order\n".encode())
+    fp.write("COMMENT 'IX' and 'IY' are 64-bit unsigned integers\n".encode())
+    fp.write("COMMENT Other fields are 32-bit floating point numbers\n".encode())
+    fp.write("COMMENT Example: with 'NUMDATA' = 4 and 'FIELDS' = 'IX IY N T', "
+             "the data following the '\\0' marker is 4 + 4 64-bit integers "
+             "and then 4 + 4 32-bit floating point numbers\n".encode())
 
-    for l in columns:
-        fp.write(" {}".format(l))
-    
-    fp.write("\n")
-
-
-        
-        
-        
+    fp.write(b"\0")

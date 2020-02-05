@@ -16,8 +16,6 @@ def guess_read_module(filename):
     its characteristics, judging which of the implemented data formats is
     the best match.
 
-    Currently only one module is implemented: A very simple format.
-
     Args:
         filename (str): File to read.
 
@@ -27,14 +25,14 @@ def guess_read_module(filename):
     """
 
     try:
-        with open(filename, "r") as fp:
+        with open(filename, "rb") as fp:
             buf = fp.read(100)
 
-            if buf.startswith("FORMAT GMX_FLOW_1"):
+            if buf.startswith(b"FORMAT GMX_FLOW_1"):
                 return formats.gmx_flow_version_1.main
             else:
                 return formats.simple.main
-    except: 
+    except:
         return formats.simple.main
 
 
